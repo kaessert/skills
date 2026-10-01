@@ -88,6 +88,7 @@ More questions it handles:
 <!-- BEGIN skills-table -->
 | Skill | What it is for |
 |---|---|
+| [`author-composition`](skills/author-composition/SKILL.md) | Write, extend, and debug Crossplane composition functions in an Upbound control-plane project, in KCL, Python, TypeScript, or Go. |
 | [`upbound-hub`](skills/upbound-hub/SKILL.md) | Query and mutate Upbound Hub, the central API for an Upbound Platform deployment, which gives one cross-fleet view of control planes, spaces, realms, types, packages, resources, identity providers, and the image catalog. |
 <!-- END skills-table -->
 
