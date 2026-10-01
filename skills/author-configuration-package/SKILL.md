@@ -40,6 +40,13 @@ not prove (§8).
 - ❌ Create tests → Use `author-tests`
 - ❌ Run verification → Use `verify-configuration`
 
+**When the request goes past scaffolding, hand off — do not carry on from the charter alone.**
+Before writing any function code, load the `author-composition` skill and follow it; before
+writing any composition or E2E test, load the `author-tests` skill. The charter holds the
+shared rules, but the composition checklist (provider-validity checks, the `render.log` audit,
+the coverage rules) lives only in those skills, and skipping them is how a green suite ends up
+claiming more than it checked.
+
 ## Prefer the CLI generators over hand-writing YAML
 
 `up` generates XRDs, compositions, and examples from each other. **Use them.** Hand-writing an

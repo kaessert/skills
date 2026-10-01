@@ -139,6 +139,24 @@ See [knowledge.md](references/knowledge.md) for report templates and detailed pa
 Only when the user asked to run, deploy, or try the project — verification alone stops at
 Phase 3. **Never run `up project run` without working through this phase.**
 
+**Wait for the run inside your turn.** `up project run` takes several minutes. Run it in the
+foreground if your shell can hold one command that long. Otherwise start it detached with an
+exit-code file and poll until that file exists:
+
+```bash
+nohup bash -c 'up project run --local --timeout=20m > /tmp/run.log 2>&1; echo $? > /tmp/run.exit' >/dev/null 2>&1 &
+until [ -f /tmp/run.exit ]; do sleep 10; done; echo "exit $(cat /tmp/run.exit)"; tail -25 /tmp/run.log
+```
+
+Never end your turn with the run still in flight, planning to check back later. In many agents
+the jobs a session started die with it, and what is left is a half-created KIND cluster and no
+result. Observed in a headless session: the run was killed at "Building functions..." and the
+cluster `up-<project>` had to be deleted by hand.
+
+**Tear down with `up project stop`** from the project root. If you delete the KIND cluster
+directly instead, also remove its registry container: `kind delete cluster --name up-<project>`
+leaves `up-<project>-registry` running (`docker rm -f up-<project>-registry`).
+
 **1. Detect what your context points at.** The context, *not* a flag, decides which kind of
 dev control plane you get. One command settles it:
 
