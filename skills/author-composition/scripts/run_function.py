@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -203,13 +204,15 @@ def load_embedded_main(fn_dir: Path):
     import importlib
     import types
 
-    pkg_name = "_upfn_" + fn_dir.name.replace("-", "_")
+    pkg_name = "_upfn_" + re.sub(r"\W", "_", fn_dir.name)
     if pkg_name not in sys.modules:
         pkg = types.ModuleType(pkg_name)
         pkg.__path__ = [str(fn_dir)]  # noqa: A003 - namespace package by hand
         pkg.__package__ = pkg_name
         sys.modules[pkg_name] = pkg
-    return importlib.import_module(f"{pkg_name}.main")
+    # Importing the project's own function is this script's purpose: it runs the code the
+    # user is authoring. The name is built from the function directory, not from input.
+    return importlib.import_module(f"{pkg_name}.main")  # nosemgrep: python.lang.security.audit.non-literal-import.non-literal-import
 
 
 def invoke(fn_dir: Path, layout: str, req):
