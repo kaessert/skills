@@ -1,0 +1,281 @@
+# Test Authoring Knowledge Base (language-agnostic)
+
+The object model, patterns, and mistakes that apply to Crossplane configuration tests **regardless of language**. For syntax, see the per-language references: `languages/kcl.md` in `control-plane-project-charter`, `languages/python.md` in `control-plane-project-charter`, `languages/yaml.md` in `control-plane-project-charter`.
+
+## Table of Contents
+
+- [The Test Object Model](#the-test-object-model)
+- [Provider API Versions](#provider-api-versions)
+- [Patterns](#patterns)
+  - [Resource-Focused Bundle](#resource-focused-bundle)
+  - [Parameterized Test Matrix](#parameterized-test-matrix)
+  - [Sequential Testing with observedResources](#sequential-testing-with-observedresources)
+- [Common Mistakes](#common-mistakes)
+- [Refactoring Plan Template](#refactoring-plan-template)
+
+---
+
+## The Test Object Model
+
+Every test - in any language - produces one of two objects under `apiVersion: meta.dev.upbound.io/v1alpha1`. KCL/Python builders and raw YAML all render to exactly this shape.
+
+### CompositionTest (fast, local, no cloud)
+
+| Field | Meaning |
+|-------|---------|
+| `metadata.name` | Test name (unique within its directory) |
+| `spec.compositionPath` | Path to the composition under test (e.g. `apis/<xr>/composition.yaml`) |
+| `spec.xrdPath` | Path to the XRD (`apis/<xr>/definition.yaml`) |
+| `spec.xr` | The XR under test, defined **inline** (recommended). Some layouts use `xrPath` instead |
+| `spec.validate` | Keep `false` - the scaffold default, and what the training labs use. (Set on every generated test; leave it `false`.) |
+| `spec.timeoutSeconds` | **≥60** |
+| `spec.assertResources` | Expected rendered resources. Assert **all critical fields**, not just names. Matches the **composite** as well as composed resources - include the XR with a `status` block to assert composition outputs (see knowledge pitfall 9) |
+| `spec.observedResources` | Optional. Pre-existing resources (with mocked `status`) fed into the render - used to test dependency ordering and status-driven branches |
+
+### E2ETest (real cloud lifecycle)
+
+**Different spec from CompositionTest** - it has **no** `compositionPath` / `xrdPath` / `xr`. It applies real manifests to a live control plane and waits for conditions.
+
+| Field | Meaning |
+|-------|---------|
+| `metadata.name` | Test name |
+| `spec.crossplane` | `autoUpgrade.channel: Stable\|Rapid`, optionally `version: <current>` (see SKILL.md rule) |
+| `spec.defaultConditions` | Conditions every manifest must reach. Default `["Ready"]`; add `"Synced"` only when you specifically want to gate on sync |
+| `spec.manifests` | Resources under test (≥1 required) - typically the XR(s) |
+| `spec.extraResources` | Prerequisites applied first: the `ProviderConfig` the XR references, and any credential `Secret` |
+| `spec.timeoutSeconds` | Sized to the resources provisioned (see SKILL.md sizing note) |
+| `spec.cleanupTimeoutSeconds` | Proportional to teardown time |
+| `spec.skipDelete` | **Always `false`** |
+
+---
+
+## Provider API Versions
+
+**ALL Upbound providers expose BOTH API surfaces:**
+
+| API Type | Format | Use in tests |
+|----------|--------|--------------|
+| **Namespaced** | `aws.m.upbound.io/v1beta1` | ✅ ALWAYS |
+| Cluster-scoped | `aws.upbound.io/v1beta1` | ❌ Not in tests |
+
+The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See `control-plane-project-charter` §5. How the `.m.` is expressed depends on language (import path for KCL/Python, `apiVersion` string for YAML) — see the per-language references.
+
+### Provider credentials (E2E `extraResources`)
+
+Prefer Upbound-injected / web identity over static Secrets.
+
+**AWS** - web identity:
+```yaml
+credentials:
+  source: Upbound
+  upbound:
+    webIdentity:
+      roleARN: arn:aws:iam::123456789012:role/provider-aws
+```
+
+**Azure** - web identity:
+```yaml
+credentials:
+  source: Upbound
+  upbound:
+    webIdentity:
+      clientID: "00000000-0000-0000-0000-000000000000"
+```
+
+**GCP** - workload identity federation:
+```yaml
+projectID: YOUR_GCP_PROJECT
+credentials:
+  source: Upbound
+  upbound:
+    federation:
+      providerID: projects/NUMBER/locations/global/workloadIdentityPools/POOL/providers/PROVIDER
+      serviceAccount: SA@PROJECT.iam.gserviceaccount.com
+```
+
+If a project genuinely requires a static-Secret ProviderConfig, use `source: Secret` with a `Secret` in `extraResources` (Python E2E example in `languages/python.md` in `control-plane-project-charter` shows the pattern; source the value from an env var into `stringData`, as the training labs do). The env var **must be named `UP_*`**: manifest generation runs in a container that receives only `UP_`-prefixed variables and has no `~/.aws`, so `AWS_ACCESS_KEY_ID` and friends arrive empty — see the container boundary (charter §7 in `control-plane-project-charter`). Never inline real long-lived credentials.
+
+### Two ProviderConfig kinds (v2)
+
+v2 has two provider-config kinds:
+
+| Kind | Scope | `namespace`? |
+|------|-------|--------------|
+| `ClusterProviderConfig` | Cluster-scoped | **none** (omit it) |
+| `ProviderConfig` | Namespaced | **required** (`namespace: default`) |
+
+**A managed resource with no `providerConfigRef` is defaulted by the API server to
+`{kind: ClusterProviderConfig, name: default}`** - so `ClusterProviderConfig` is what an E2E test
+should create (and what the generated E2E tests do create). Only when a composition deliberately
+sets `providerConfigRef.kind: ProviderConfig` must the test create a namespaced `ProviderConfig`
+in the XR's namespace instead. A mismatch here leaves the managed resource with **no status
+conditions and no events at all** - inert, with nothing to debug.
+
+---
+
+## Patterns
+
+These are ways of *structuring* tests. Each per-language reference shows the concrete syntax.
+
+### Resource-Focused Bundle
+
+Group 3-5 related tests in one directory that share a base spec (composition/xrd path, timeout, validate) and vary only the XR config and expected resources. Reduces duplication and keeps related scenarios (basic, feature-enabled, feature-disabled) together. Syntax: KCL spread / Python helper / YAML `---` documents.
+
+### Parameterized Test Matrix
+
+When you have 5+ near-identical variants (one per flag/region/size), generate them from a data list instead of copy-pasting. Guarantees consistency. KCL and Python can build these programmatically; YAML lists them out explicitly (still fine, just verbose).
+
+### Sequential Testing with observedResources
+
+Test resource **dependencies** and **status-driven branches** without real cloud, by feeding `observedResources` with mocked `status` into the render:
+
+- Test N asserts the resources that render given the observed state of prior resources.
+- Set `validate: false` for these - you are deliberately mocking status the schema would not populate.
+- Mock only the status fields the composition actually reads (e.g. `status.atProvider.state: deployed`, a condition `type: Ready, status: "True"`, or a provider-specific status contract like `status.eks.clusterArn`).
+
+This is how you verify "resource B only renders once resource A is Ready" and "the XR surfaces field X once the observed endpoint is known". See the real multi-step examples in `languages/yaml.md` in `control-plane-project-charter`.
+
+---
+
+## Common Mistakes
+
+Language-neutral mistakes. (KCL import-syntax and Python dump-mode mistakes live in their own references.)
+
+### 1. Wrong ProviderConfig authentication
+❌ Hardcoded long-lived keys inlined in the test.
+✅ Web identity / injected identity (`source: Upbound`) where available; otherwise a `source: Secret` ProviderConfig whose value is sourced from a **`UP_`-prefixed** env var into `stringData` (the training-lab pattern; the prefix is what gets it across the generation container's boundary). Never commit real keys.
+
+### 2. Stale or missing crossplane block (E2E)
+❌ Copying a pinned `version:` from an old example (rots immediately).
+✅ Track a channel (`autoUpgrade.channel: Stable`), or pin a **current** version deliberately.
+
+### 3. Guessed composed-resource names
+❌ `name: test-vpc` (a guess).
+✅ The exact generated name from `up composition render` (e.g. `vpc-test-vpc`).
+
+### 4. Timeouts that don't fit
+❌ `timeoutSeconds: 30` (composition) or an E2E timeout too small for what you provision.
+✅ ≥60 for composition; size E2E to the real resources - a couple of Azure resources ≈ 900s, a full EKS cluster + add-ons ≈ 3600-5400s.
+
+### 5. Missing `namespace: default` (v2)
+❌ XR without a namespace, or a namespaced `ProviderConfig` without one.
+✅ `namespace: default` on the XR, and on the `ProviderConfig` kind (namespaced). `ClusterProviderConfig` is cluster-scoped - omit namespace there.
+
+### 6. Existence-only assertions
+❌ Asserting a resource exists but none of its fields.
+✅ Assert every critical field - region, CIDRs, chart name/version/repo, and the `forProvider` config. Don't assert `providerConfigRef` or `managementPolicies`: they are API-server defaults the composition should not be setting, and `exclude_unset=True` keeps them out anyway.
+
+### 7. A composed resource with no assertion at all
+`assertResources` is a *partial, positive* check: it verifies the resources you list and ignores every other resource the composition emits. Adding a managed resource to a function and re-running the suite therefore **passes without testing anything** - verified: a whole extra MR plus new `spec` fields left a 2-test suite at 2/2 PASS with assertions untouched.
+✅ Every resource a composition can emit needs an assertion, including ones behind a condition (give those their own test with the triggering XR/observed state).
+✅ Cross-check against reality with `up test run "tests/<t>" --function-logs`, then read `_output/composition_test/<ts>/<test>/render.log` - it lists the rendered XR and every composed resource.
+
+### 8. `skipDelete: true` in E2E
+❌ Leaves real cloud resources running and costing money.
+✅ Always `skipDelete: false`.
+
+---
+
+## Refactoring Plan Template
+
+Create at `.agents/tasks/REFACTOR_TESTS.md`:
+
+```markdown
+# Test Refactoring Plan
+
+Last updated: YYYY-MM-DD
+
+## High Priority
+
+- [ ] **P1: [Title]** - [Description] (reduces [metric] by [amount])
+- [ ] **P2: [Title]** - [Description]
+
+## Medium Priority
+
+- [ ] **P3: [Title]** - [Description]
+- [ ] **P4: [Title]** - [Description]
+
+## Low Priority
+
+- [ ] **P5: [Title]** - [Description]
+
+## Completed
+
+- [x] **P0: Initial analysis** - Identified refactoring opportunities (YYYY-MM-DD)
+```
+
+### 9. Assuming you cannot assert the composite's own `status`
+`assertResources` is named for composed resources and typed
+`Optional[List[Dict[str, Any]]]`, so it looks like composed resources are all it takes.
+**It matches the rendered composite too.** Drop the XR itself into `assertResources`
+with a `status` block and composition outputs become testable.
+
+❌ Concluding "the CompositionTest model has no `assertComposite`/`assertStatus` field,
+so composition outputs cannot be verified" - and then leaving `assertResources=[]` on
+the very test written to cover status propagation. Observed: a status-propagation test
+that exercised the code path and asserted nothing.
+✅ Assert the composite:
+```python
+assertResources=[
+    {
+        "apiVersion": "platform.example.com/v1alpha1",
+        "kind": "EncryptedTable",
+        "metadata": k8s.ObjectMeta(name="user-sessions", namespace="default")
+                       .model_dump(by_alias=True, exclude_unset=True),
+        "status": {"tableName": "user-sessions", "kmsKeyId": "1111-..."},
+    },
+]
+```
+Verified by mutating one expected value, which fails with an exact field path and a diff:
+```text
+* status.kmsKeyId: Invalid value: "1111-...": Expected value: "MY-OWN-DELIBERATE-MUTATION"
+--- expected
++++ actual
+-  kmsKeyId: MY-OWN-DELIBERATE-MUTATION
++  kmsKeyId: 1111-...
+```
+Any XR whose `status` is populated from observed resources needs this - it is the only
+programmatic check on composition outputs.
+
+### 10. Partial for objects, exact for lists — and the two fail differently
+Pitfall 7 is about whole resources going unasserted. Inside a resource the rule splits, and
+the split is not intuitive:
+
+| What you assert | Behaviour |
+|---|---|
+| An **object**/mapping | partial, at every depth. Two keys asserted against ten rendered: **passes**. The surplus is never reported. |
+| A **list** | exact. Two entries asserted against five rendered: **fails**, with `lengths of slices don't match`. Order matters too. |
+
+Verified against the assertion engine (`sliceNode.Assert` compares `len` before comparing
+elements) and reproduced end to end.
+
+So the two mistakes are opposite:
+
+❌ Asserting two keys of a ten-key mapping and concluding the mapping is correct — a
+superset match is exactly what a passing partial assertion means.
+❌ Asserting a two-entry subset of a five-entry list expecting a lenient pass — you get a
+confusing length error instead.
+
+✅ For a **list**, assert the whole thing, in order. That is also what makes the count part
+of the test.
+✅ For a **mapping**, if the *exact* key set is the property under test, that property is not
+expressible in `assertResources`. Read the rendered object out of `render.log`
+(`--function-logs`), or assert something that changes when a surplus key appears.
+✅ State plainly which you did. "Asserted the keys I expect are present" and "confirmed these
+are the only keys emitted" are different claims.
+
+### 11. Designing coverage without reading the XRD's defaults
+A test's input is not the XR you wrote — it is the XR **after the XRD's defaults have been
+applied**. A field you deliberately omitted to exercise the "unset" branch is not unset if
+the XRD gives it a `default`, and the branch you meant to cover never runs.
+
+Read the XRD before choosing the shapes to test:
+
+```bash
+yq '.spec.versions[].schema.openAPIV3Schema.properties.spec' apis/<kind>/definition.yaml \
+  | grep -nE 'default:|required:|enum:'
+```
+
+❌ "The minimal XR omits `retentionDays`, so this test covers the no-retention branch."
+✅ Check first. If the XRD defaults `retentionDays: 30`, no XR can omit it, that branch is
+unreachable from the API, and the honest coverage note says so — or the default is the bug.

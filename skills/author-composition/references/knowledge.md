@@ -2,8 +2,8 @@
 
 The language-agnostic half of composition authoring: what each pattern is *for*, when it
 applies, and how it fails. The syntax for every one of them is in
-[`languages/`](languages/); the rules that bind this skill are in
-[`charter.md`](charter.md).
+the `languages/` references of the `control-plane-project-charter` skill; the rules that bind every
+skill in the suite are in that skill's `SKILL.md`.
 
 Nothing here is repeated from the charter. If you are looking for what a v2 managed resource
 needs, the container boundary, the TDD loop, or what a green run proves, that is the charter.
@@ -40,8 +40,8 @@ domain keeps each conditional local to the resources it actually governs.
 A single-file function is fine for a genuinely simple composition. The test is whether you
 can name the domains; if you can, split.
 
-Syntax: [`kcl.md` Pattern 1-3](languages/kcl.md), [`python.md` Part 3](languages/python.md),
-[`typescript.md` Part 3](languages/typescript.md).
+Syntax: `kcl.md` Pattern 1-3 (`languages/kcl.md` in `control-plane-project-charter`), `python.md` Part 3 (`languages/python.md` in `control-plane-project-charter`),
+`typescript.md` Part 3 (`languages/typescript.md` in `control-plane-project-charter`).
 
 ---
 
@@ -136,7 +136,7 @@ Before writing the loop, answer three questions about the specific cloud API:
    configurations.
 3. **Is there an account- or region-scoped limit** that N elements would breach?
 
-[`charter.md` §6](charter.md#6-the-provider-schema-is-a-lower-bound-not-the-constraint-set)
+charter §6
 has the full rule classes and where they are written down. If you cannot establish the answer
 from the models, say which API-level rule you were unable to confirm rather than assuming
 independence.
