@@ -8,22 +8,20 @@ boundary, what a green run proves, reporting discipline — are in
 file only tells you how Python expresses it.
 
 The helper scripts referenced below ship with the `author-composition` skill, in its
-`scripts/` directory, not with the project under test. `$SCRIPTS` is that directory: set it
-once to its absolute path and check it exists — a wrong path makes every call below die with
-a bare "No such file":
-
-```bash
-SCRIPTS=<absolute path of the author-composition skill>/scripts
-[ -f "$SCRIPTS/probe_project.py" ] || echo "probe_project.py not found — fix SCRIPTS"
-```
+`scripts/` directory, not with the project under test. They are written
+`<author-composition>/scripts/<file>`: replace `<author-composition>` with that skill
+directory's absolute path in every command, not through a shell variable — most agents start
+each command in a fresh shell, so a variable set earlier is gone. `probe_project.py` and
+`setup_venv.py` need only the standard library; `run_function.py` needs the venv that
+`setup_venv.py` builds.
 
 | | |
 |---|---|
 | Scaffold a function | `up function generate <n> --language python` |
 | Scaffold a test | `up test generate <n> --language python` (add `--e2e`) — writes `tests/test-<n>/`; the CLI prepends `test-` itself, so do not pass it |
-| **Set up the venv — do this first** | `python3 "$SCRIPTS/setup_venv.py" --project <root>` — right after the first `up project build`, so imports resolve for whoever is reading along |
-| Probe the project | `python3 "$SCRIPTS/probe_project.py" --project <root>` |
-| Fast inner loop | `python3 "$SCRIPTS/run_function.py" --project <root> --minimal examples/<x>/example.yaml` — the only host-side step that needs a venv; see below |
+| **Set up the venv — do this first** | `python3 "<author-composition>/scripts/setup_venv.py" --project <root>` — right after the first `up project build`, so imports resolve for whoever is reading along |
+| Probe the project | `python3 "<author-composition>/scripts/probe_project.py" --project <root>` |
+| Fast inner loop | `python3 "<author-composition>/scripts/run_function.py" --project <root> --minimal examples/<x>/example.yaml` — the only host-side step that needs a venv; see below |
 
 
 ## Host-side Python: set the venv up first
@@ -32,7 +30,7 @@ SCRIPTS=<absolute path of the author-composition skill>/scripts
 first `up project build`, which is what creates the models it installs. It takes ~11s.
 
 ```bash
-python3 "$SCRIPTS/setup_venv.py"
+python3 "<author-composition>/scripts/setup_venv.py"
 ```
 
 **The person you are working for is reading this code in an editor while you write it.**
@@ -69,7 +67,7 @@ running a different serializer from the container is not a proxy for the real ru
 
 ```bash
 up project build                       # .up/python must exist first
-python3 "$SCRIPTS/setup_venv.py"       # ~11s
+python3 "<author-composition>/scripts/setup_venv.py"       # ~11s
 ```
 
 That creates `.venv` at the project root, installs every function and test directory from
@@ -221,7 +219,7 @@ current and you will meet both:
 Detect it before writing a line — the probe script reports it per directory:
 
 ```bash
-python3 "$SCRIPTS/probe_project.py" --project <project-root>
+python3 "<author-composition>/scripts/probe_project.py" --project <project-root>
 # function  functions/compose-bucket     layout=embedded  import prefix='.model.'
 # test      tests/test-storagebucket     layout=embedded  import prefix='.model.'
 ```

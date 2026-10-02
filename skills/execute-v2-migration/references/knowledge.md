@@ -134,7 +134,7 @@ For each function section in migration plan (Phase 3.X):
    [function migration brief](#function-migration-brief). If your agent can delegate work,
    you may instead hand the function to a delegated agent with that brief; otherwise do it
    inline.
-3. If it fails → Report error, retry once with an adjusted approach
+3. If it fails → Report error, offer retry once (as a delegated agent: retry once with an adjusted approach, and report it)
 4. Validate syntax:
 ```bash
 kcl functions/{function-name}/main.k >/dev/null 2>&1
@@ -199,7 +199,7 @@ For each test section in migration plan (Phase 6.X):
 3. Load the `author-tests` skill and follow it with the
    [test migration brief](#test-migration-brief) — or, if your agent can delegate work, hand
    the test to a delegated agent with that brief; otherwise do it inline.
-4. If it fails → Report error, retry once with an adjusted approach
+4. If it fails → Report error, offer retry once (as a delegated agent: retry once with an adjusted approach, and report it)
 5. Validate syntax:
 ```bash
 kcl tests/{test-name}/main.k >/dev/null 2>&1
@@ -386,7 +386,11 @@ deploy to a control plane.
 ```text
 Skill: e2e-test-configuration
 
-Run all E2E tests to completion with monitoring.
+Run these E2E tests to completion, one at a time, with monitoring:
+<list every test name: ls -1d tests/e2etest-* | sed 's|tests/||'>
+
+Name every test. A delegated run with no test named lists the tests and stops,
+because each run creates real resources.
 
 **SUCCESS CRITERIA:**
 1. All E2E tests complete (pass or fail with clear reason)
@@ -669,7 +673,7 @@ If still failing → Report error, check dependency versions, exit.
 
 **Resolution:**
 1. Check the error message for specifics
-2. Retry once with an adjusted brief
+2. Offer the user one retry with an adjusted brief (as a delegated agent: retry once yourself, and report it)
 3. If retry fails → Report error, suggest manual intervention
 
 ```markdown

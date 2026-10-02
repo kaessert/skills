@@ -1,0 +1,366 @@
+# SPDX-License-Identifier: Apache-2.0
+"""Tests for check_xrd_schema.py.
+
+Three properties are verified rather than trusted, because a naming checker can
+be wrong in ways that look exactly like compliance:
+
+1. `good.yaml` exits clean. A suite where everything fails proves nothing -- it
+   is equally consistent with a checker that rejects every schema.
+2. Casing is checked on two surfaces with OPPOSITE rules. A Kind carries the
+   initialism in full (`HTTPLoadBalancer`); a field never does (`vpcId`,
+   `cacheTtlSeconds`). `originPoolId` must pass while `backendPoolID` fails.
+3. Extraction failure exits with its own code, distinguishable at the call site
+   from both a clean pass and a finding.
+"""
+
+from __future__ import annotations
+
+import io
+import shutil
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "skills" / "author-configuration-package" / "scripts"))
+FIXTURES = Path(__file__).resolve().parent / "fixtures" / "check_xrd_schema"
+
+try:
+    import yaml  # noqa: F401  -- check_xrd_schema needs PyYAML
+    import check_xrd_schema as c
+except ImportError:
+    c = None
+
+
+def run(paths, min_corpus=None):
+    """Run the checker over `paths`, returning (exit_code, output)."""
+    out = io.StringIO()
+    if min_corpus is None:
+        min_corpus = c.DEFAULT_MIN_CORPUS
+    code = c.run([str(p) for p in paths], min_corpus=min_corpus, out=out)
+    return code, out.getvalue()
+
+
+@unittest.skipIf(c is None, "PyYAML is not installed; check_xrd_schema.py needs it")
+class CheckXrdSchemaTest(unittest.TestCase):
+    """Ported from the pytest suite that shipped with the internal plugin."""
+
+    def tmp(self) -> Path:
+        d = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        return d
+
+
+
+
+    # ---------------------------------------------------------------------------
+    # Property 1: the control passes
+    # ---------------------------------------------------------------------------
+
+    def test_good_schema_is_clean(self):
+        """The valid control must pass, or every other assertion here is vacuous."""
+        good_xrd = FIXTURES / 'good.yaml'
+        code, output = run([good_xrd])
+        assert code == c.EXIT_CLEAN, output
+        assert "FAIL:" not in output
+        assert "REVIEW:" not in output
+
+    def test_good_schema_corpus_is_real(self):
+        """A clean verdict is only meaningful if something was actually extracted."""
+        good_xrd = FIXTURES / 'good.yaml'
+        _code, output = run([good_xrd])
+        assert "corpus: 12 field names, 1 kind(s), 1 file(s)" in output
+
+    # ---------------------------------------------------------------------------
+    # Property 2: one planted defect per rule, each one caught
+    # ---------------------------------------------------------------------------
+
+    def test_bad_schema_is_rejected(self):
+        bad_xrd = FIXTURES / 'bad.yaml'
+        code, _output = run([bad_xrd])
+        assert code == c.EXIT_FINDINGS
+
+    def test_collision_check_catches_one_concept_two_spellings(self):
+        """projectID beside ProjectId -- registry-free, so no false positive."""
+        bad_xrd = FIXTURES / 'bad.yaml'
+        _code, output = run([bad_xrd])
+        assert "one concept, two spellings: ProjectId / projectID" in output
+
+    def test_field_canonicalised_initialism_is_caught(self):
+        """vpcID is the defect, not vpcId. The field surface is title-case."""
+        bad_xrd = FIXTURES / 'bad.yaml'
+        _code, output = run([bad_xrd])
+        assert "field name 'projectID' canonicalises 'ID'" in output
+        assert "write 'Id'" in output
+
+    def test_field_not_lowercamel_is_caught(self):
+        bad_xrd = FIXTURES / 'bad.yaml'
+        _code, output = run([bad_xrd])
+        assert "field name 'ProjectId' is not lowerCamel" in output
+
+    def test_invented_abbreviation_is_told_to_expand_not_recase(self):
+        """adminsSG -> adminsSg answers the casing question and keeps the worse one.
+
+        Detection stays registry-free; the table only picks the advice.
+        """
+        bad_xrd = FIXTURES / 'bad.yaml'
+        _code, output = run([bad_xrd])
+        assert "'SG' is not an acronym with a written-down expansion" in output
+        assert "expand it into a word instead" in output
+
+    def test_group_stutter_is_review_not_fail(self):
+        """Stutter is prefix-anchored, and the prefix does not tell you the shape.
+
+        `artifactoryRepositoryName` restates the object's own identity and is real
+        stutter. `gatewayName` on a Route names a different object. Both are
+        prefix matches, so the call is semantic and belongs in REVIEW.
+        """
+        bad_xrd = FIXTURES / 'bad.yaml'
+        _code, output = run([bad_xrd])
+        line = "field name 'artifactoryRepositoryName' starts with the group 'artifactory'"
+        hits = [ln for ln in output.splitlines() if line in ln]
+        assert len(hits) == 1, output
+        assert hits[0].startswith("REVIEW:")
+
+    def test_missing_description_is_caught(self):
+        bad_xrd = FIXTURES / 'bad.yaml'
+        _code, output = run([bad_xrd])
+        assert "spec.artifactoryRepositoryName: no description" in output
+
+    def test_lowercase_enum_values_are_caught(self):
+        bad_xrd = FIXTURES / 'bad.yaml'
+        _code, output = run([bad_xrd])
+        assert "enum value 'maven' is not CamelCase with an initial capital" in output
+        assert "enum value 'tls12' is not CamelCase with an initial capital" in output
+
+    def test_proper_noun_enum_value_is_not_flagged(self):
+        """npm is a proper noun with established casing; Npm would be wrong."""
+        bad_xrd = FIXTURES / 'bad.yaml'
+        _code, output = run([bad_xrd])
+        assert "enum value 'npm'" not in output
+
+    def test_unbounded_list_is_caught(self):
+        bad_xrd = FIXTURES / 'bad.yaml'
+        _code, output = run([bad_xrd])
+        assert "array with no x-kubernetes-list-type" in output
+        assert "array with no maxItems" in output
+
+    def test_unique_items_is_caught(self):
+        """Not style: the API server refuses to create a CRD that carries it.
+
+        An agent reached for `uniqueItems: true` to express the vendor's
+        "duplicates are rejected" and produced a CRD the API server rejects
+        outright. The correct construct is x-kubernetes-list-type: set.
+        """
+        trial_xrd = FIXTURES / 'trial-gateway.yaml'
+        code, output = run([trial_xrd])
+        assert code == c.EXIT_FINDINGS
+        assert "uniqueItems: true is forbidden in a CRD schema" in output
+        assert any(
+            "uniqueItems" in ln for ln in output.splitlines() if ln.startswith("FAIL:")
+        )
+
+    def test_duplicate_printer_column_is_caught(self):
+        bad_xrd = FIXTURES / 'bad.yaml'
+        _code, output = run([bad_xrd])
+        assert "printer column READY is already appended by Crossplane" in output
+
+    def test_booleans_and_bare_strings_are_review_not_fail(self):
+        """A check that fails every boolean gets disabled. The call is a judgement."""
+        bad_xrd = FIXTURES / 'bad.yaml'
+        _code, output = run([bad_xrd])
+        review = [ln for ln in output.splitlines() if ln.startswith("REVIEW:")]
+        assert any("xrayIndex: boolean" in ln for ln in review)
+        assert any("bare `type: string`" in ln for ln in review)
+        assert not any("xrayIndex" in ln for ln in output.splitlines() if ln.startswith("FAIL:"))
+
+    # ---------------------------------------------------------------------------
+    # Property 3: the word boundary, and the Kind
+    # ---------------------------------------------------------------------------
+
+    def test_kind_acronym_is_caught(self):
+        """A Kind is the GVK. This is the one name that cannot be renamed later."""
+        kind_xrd = FIXTURES / 'kind.yaml'
+        code, output = run([kind_xrd])
+        assert code == c.EXIT_FINDINGS
+        assert "Kind 'HttpLoadbalancer' carries mis-cased acronym 'Http' (want 'HTTP')" in output
+
+    def test_the_two_surfaces_do_not_leak_into_each_other(self):
+        """The same file has a Kind that must canonicalise and fields that must not.
+
+        `originPoolId` and `vmiId` are correct field names under the title-case
+        rule, while `backendPoolID` is the defect. The allowlist applies to the
+        Kind only.
+        """
+        kind_xrd = FIXTURES / 'kind.yaml'
+        _code, output = run([kind_xrd])
+        assert "backendPoolID" in output
+        assert "originPoolId'" not in output
+        assert "vmiId" not in output
+
+    def test_word_boundary_spares_apiep(self):
+        """apiepPort must NOT be flagged.
+
+        A bare ReplaceAll(s, "Api", "API") would rewrite apiep (from api_ep) to
+        APIep. The boundary test is end-of-word or a following uppercase letter.
+        """
+        kind_xrd = FIXTURES / 'kind.yaml'
+        _code, output = run([kind_xrd])
+        assert "apiepPort" not in output
+
+    def test_kind_check_ignores_field_spellings(self):
+        assert c.kind_acronym_violations("HttpLoadbalancer") == [("Http", "HTTP")]
+        assert c.kind_acronym_violations("VPC") == []
+        assert c.kind_acronym_violations("OIDCProvider") == []
+        assert c.kind_acronym_violations("DNSRecord") == []
+
+    def test_field_check_is_registry_free(self):
+        """No table is consulted: any all-caps run of two or more is a defect."""
+        assert c.field_casing_violations("vpcID") == [("ID", "Id")]
+        assert c.field_casing_violations("vpcArnXYZ") == [("XYZ", "Xyz")]
+        assert c.field_casing_violations("vpcId") == []
+        assert c.field_casing_violations("cacheTtlSeconds") == []
+        assert c.field_casing_violations("bucketArn") == []
+        assert c.field_casing_violations("enableIpForwarding") == []
+        assert c.field_casing_violations("primaryIpv4Address") == []
+        assert c.field_casing_violations("enableResourceNameDnsARecordOnLaunch") == []
+
+    def test_split_words_boundaries(self):
+        assert c.split_words("apiepPort") == ["apiep", "Port"]
+        assert c.split_words("projectId") == ["project", "Id"]
+        assert c.split_words("HTTPServer") == ["HTTP", "Server"]
+        assert c.split_words("primaryIpv4Address") == ["primary", "Ipv4", "Address"]
+        assert c.split_words("") == []
+
+    def test_leading_acronym_is_never_flagged(self):
+        """Word 0 is lowercase by the lowerCamel convention: tlsConfig is correct."""
+        assert c.field_casing_violations("tlsConfig") == []
+        assert c.field_casing_violations("httpGet") == []
+        assert c.field_casing_violations("urlPrefix") == []
+
+    # ---------------------------------------------------------------------------
+    # Property 4: the corpus assertion
+    # ---------------------------------------------------------------------------
+
+    def test_missing_file_is_an_error_not_a_pass(self):
+        """Extraction failure must be distinguishable from a clean pass."""
+        tmp_path = self.tmp()
+        code, output = run([tmp_path / "nosuch.yaml"])
+        assert code == c.EXIT_NO_CORPUS
+        assert code != c.EXIT_CLEAN
+        assert code != c.EXIT_FINDINGS
+        assert "CORPUS ERROR" in output
+
+    def test_empty_corpus_is_an_error_not_a_pass(self):
+        """A file with no XRD in it extracts nothing, and nothing is not clean."""
+        tmp_path = self.tmp()
+        empty = tmp_path / "notanxrd.yaml"
+        empty.write_text("apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: x\n")
+        code, output = run([empty])
+        assert code == c.EXIT_NO_CORPUS
+        assert "CORPUS ERROR" in output
+
+    def test_min_corpus_makes_a_small_api_an_explicit_choice(self):
+        """A genuinely tiny API is allowed, but only by saying so."""
+        fixtures_dir = FIXTURES
+        tmp_path = self.tmp()
+        tiny = tmp_path / "tiny.yaml"
+        tiny.write_text(
+            "apiVersion: apiextensions.crossplane.io/v2\n"
+            "kind: CompositeResourceDefinition\n"
+            "metadata:\n  name: pings.net.example.com\n"
+            "spec:\n"
+            "  group: net.example.com\n"
+            "  names:\n    kind: Ping\n    plural: pings\n"
+            "  versions:\n"
+            "  - name: v1alpha1\n"
+            "    schema:\n"
+            "      openAPIV3Schema:\n"
+            "        type: object\n"
+            "        properties:\n"
+            "          spec:\n"
+            "            type: object\n"
+            "            properties:\n"
+            "              target:\n"
+            "                type: string\n"
+            "                description: Host to ping\n"
+            "                maxLength: 253\n"
+        )
+        assert run([tiny])[0] == c.EXIT_NO_CORPUS
+        assert run([tiny], min_corpus=1)[0] == c.EXIT_CLEAN
+
+    # ---------------------------------------------------------------------------
+    # Property 5: stutter is scoped to the document that declares the group
+    # ---------------------------------------------------------------------------
+
+    def test_group_stutter_does_not_leak_across_documents(self):
+        """`repositoryClass` under group artifactory is a good name.
+
+        Reading it in the same file as a second XRD in group `repository.example.com`
+        must not report it as stutter -- a naming check that fires falsely gets
+        switched off, which is the failure mode this whole file exists to avoid.
+        """
+        two_groups_xrd = FIXTURES / 'two-groups.yaml'
+        code, output = run([two_groups_xrd])
+        assert code == c.EXIT_CLEAN, output
+        assert "repositoryClass" not in output
+        assert "corpus: 5 field names, 2 kind(s), 1 file(s)" in output
+
+    # ---------------------------------------------------------------------------
+    # Cross-file behaviour
+    # ---------------------------------------------------------------------------
+
+    def test_collision_is_found_across_files(self):
+        """The corpus is every file passed, so a collision spanning two files counts."""
+        fixtures_dir = FIXTURES
+        code, output = run([fixtures_dir / "good.yaml", fixtures_dir / "kind.yaml"])
+        assert code == c.EXIT_FINDINGS
+        assert "corpus: 19 field names, 2 kind(s), 2 file(s)" in output
+
+    # ---------------------------------------------------------------------------
+    # Property 6: real agent output, kept as a regression fixture
+    # ---------------------------------------------------------------------------
+
+    def test_trial_output_defects_are_all_caught(self):
+        """Every defect below was produced by an agent working from a vendor spec
+        with no design guidance, not planted by hand."""
+        trial_xrd = FIXTURES / 'trial-gateway.yaml'
+        code, output = run([trial_xrd])
+        assert code == c.EXIT_FINDINGS
+        for expected in [
+            "enum value 'http' is not CamelCase with an initial capital",
+            "enum value 'grpc' is not CamelCase with an initial capital",
+            "printer column READY is already appended by Crossplane",
+            "printer column AGE is already appended by Crossplane",
+            "uniqueItems: true is forbidden in a CRD schema",
+        ]:
+            assert expected in output, expected
+
+    def test_trial_output_spares_every_id_field(self):
+        """apiId, routeId, resolvedUrl and cacheTtlSeconds are all CORRECT.
+
+        An earlier draft of this check flagged all four and pushed an agent into
+        writing apiID/routeID/resolvedURL/cacheTTLSeconds, which is the defect,
+        not the fix. They must never appear as FAIL again.
+        """
+        trial_xrd = FIXTURES / 'trial-gateway.yaml'
+        _code, output = run([trial_xrd])
+        fails = [ln for ln in output.splitlines() if ln.startswith("FAIL:")]
+        for correct in ("apiId", "routeId", "resolvedUrl", "cacheTtlSeconds",
+                        "apiEndpointPort"):
+            assert not any(correct in ln for ln in fails), correct
+
+    def test_both_stutter_shapes_are_review(self):
+        """gatewayName names another object; gatewayTimeoutSeconds is HTTP 504.
+
+        Neither is a defect the check can assert, and both are prefix matches on
+        the group, so both belong in REVIEW.
+        """
+        trial_xrd = FIXTURES / 'trial-gateway.yaml'
+        _code, output = run([trial_xrd])
+        fails = [ln for ln in output.splitlines() if ln.startswith("FAIL:")]
+        reviews = [ln for ln in output.splitlines() if ln.startswith("REVIEW:")]
+        assert any("gatewayName" in ln for ln in reviews)
+        assert any("gatewayTimeoutSeconds" in ln for ln in reviews)
+        assert not any("gatewayName" in ln or "gatewayTimeoutSeconds" in ln for ln in fails)

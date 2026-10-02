@@ -203,11 +203,12 @@ This is a real design decision rather than a rule: a team may keep the field del
 ## Check the names mechanically, and assert the corpus
 
 `check_xrd_schema.py` ships with the `author-configuration-package` skill, in its `scripts/`
-directory, and needs only the Python standard library. Set `$SCRIPTS` once to that
-directory's absolute path and check the script exists before relying on its verdict.
+directory, and needs PyYAML (the project venv that `author-composition`'s `setup_venv.py`
+builds has it). Replace `<author-configuration-package>` below with that skill directory's
+absolute path, and check the script exists before relying on its verdict.
 
 ```bash
-python3 "$SCRIPTS/check_xrd_schema.py" \
+python3 <author-configuration-package>/scripts/check_xrd_schema.py \
   apis/*/definition.yaml
 ```
 

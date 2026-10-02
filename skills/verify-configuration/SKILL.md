@@ -144,9 +144,14 @@ foreground if your shell can hold one command that long. Otherwise start it deta
 exit-code file and poll until that file exists:
 
 ```bash
-nohup bash -c 'up project run --local --timeout=20m > /tmp/run.log 2>&1; echo $? > /tmp/run.exit' >/dev/null 2>&1 &
+# <flags> is what step 4 below settled — never default to --local before then.
+rm -f /tmp/run.exit /tmp/run.log
+nohup bash -c 'up project run <flags> --timeout=20m > /tmp/run.log 2>&1; echo $? > /tmp/run.exit' >/dev/null 2>&1 &
 until [ -f /tmp/run.exit ]; do sleep 10; done; echo "exit $(cat /tmp/run.exit)"; tail -25 /tmp/run.log
 ```
+
+Clear `/tmp/run.exit` first: a file left by an earlier run reports its exit code, not this
+one's.
 
 Never end your turn with the run still in flight, planning to check back later. In many agents
 the jobs a session started die with it, and what is left is a half-created KIND cluster and no

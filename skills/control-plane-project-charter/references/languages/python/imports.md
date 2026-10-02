@@ -14,7 +14,7 @@ Language-agnostic rules are in [the charter](../../../SKILL.md); the Python inde
 import prefix, the exact import line, and the model's class names:
 
 ```bash
-python3 "$SCRIPTS/probe_project.py" --project <project-root> Bucket StorageBucket
+python3 "<author-composition>/scripts/probe_project.py" --project <project-root> Bucket StorageBucket
 # functions/compose-bucket  layout=embedded  import prefix='.model.'
 # Bucket:
 #     from .model.io.upbound.m.aws.s3.bucket import v1beta1  <- USE THIS
@@ -83,7 +83,7 @@ for XRs, composed child XRs, and MRs alike.
 ### Don't derive it — resolve it
 
 ```bash
-python3 "$SCRIPTS/probe_project.py" --project <project-root> StorageBucket Bucket
+python3 "<author-composition>/scripts/probe_project.py" --project <project-root> StorageBucket Bucket
 ```
 
 prints the project's layout, the correct import prefix for it, the exact import line (flagging

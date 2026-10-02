@@ -173,7 +173,7 @@ MODIFY EXISTING:
 3. up project build           # FIRST - generates models
    # Hand-edited the XRD after this? Run it again - the models come FROM the XRD
 4. up function generate ...   # Uses models from step 3
-5. python3 "$SCRIPTS/setup_venv.py"   # Python: BEFORE you write the function body
+5. python3 <author-composition>/scripts/setup_venv.py   # Python: BEFORE you write the function body
 6. up project build           # FINAL - builds with function
 ```
 
@@ -221,7 +221,7 @@ the by-hand equivalent.
 | Phase | Action | Key Command |
 |-------|--------|-------------|
 | 1-2 | Project/Resource info | ask the user |
-| 3 | XRD schema wizard | Loop until user done, then `python3 "$SCRIPTS/check_xrd_schema.py" apis/*/definition.yaml` |
+| 3 | XRD schema wizard | Loop until user done, then `python3 <author-configuration-package>/scripts/check_xrd_schema.py apis/*/definition.yaml` |
 | 4 | Dependencies | `up dep update-cache` |
 | 5 | Composition + language | Create skeleton |
 | 6 | First build | `up project build` |
@@ -314,7 +314,7 @@ Two things worth confirming rather than guessing:
   This is a different group shape from every other resource in the family, which is exactly
   the kind of thing that gets guessed wrong. Confirm it from the generated tree, where the
   module path *is* the reversed group:
-  `python3 <author-composition skill>/scripts/probe_project.py --project <root> ClusterProviderConfig`
+  `python3 <author-composition>/scripts/probe_project.py --project <root> ClusterProviderConfig`
   (the probe ships with the `author-composition` skill)
   → `models.io.upbound.m.aws.clusterproviderconfig` = `aws.m.upbound.io`. (A `grep` for
   `Literal` in that module shows the credential `source` values, not the apiVersion.)
@@ -373,13 +373,16 @@ that an unbounded array leaves no CEL budget, or that redefining `READY` prints 
 XRD versions must round-trip, so all of that is permanent from the first version that ships.
 The charter skill's `charter/xrd-design.md` reference has the rules; run the mechanical
 ones before the first build with [`scripts/check_xrd_schema.py`](scripts/check_xrd_schema.py),
-which ships with this skill and needs only the Python standard library. Set `$SCRIPTS` once
-to the absolute path of this skill's [`scripts/`](scripts/) directory, and check it:
+which ships with this skill and needs PyYAML (the project venv from step 5 has it).
+
+**Script paths.** This skill writes two kinds of path, and they are different directories:
+`<author-configuration-package>/scripts/…` is this skill's own [`scripts/`](scripts/), and
+`<author-composition>/scripts/…` (`setup_venv.py`, `probe_project.py`) belongs to the
+`author-composition` skill. Replace each placeholder with that skill directory's absolute path
+in every command — not through a shell variable, which most agents lose between commands.
 
 ```bash
-SCRIPTS=<absolute path of this skill>/scripts
-[ -f "$SCRIPTS/check_xrd_schema.py" ] || echo "check_xrd_schema.py not found — fix SCRIPTS"
-python3 "$SCRIPTS/check_xrd_schema.py" apis/*/definition.yaml
+python3 <author-configuration-package>/scripts/check_xrd_schema.py apis/*/definition.yaml
 ```
 
 Exit `0` is clean, `10` is at least one finding, and `2` means it extracted nothing — a corpus

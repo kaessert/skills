@@ -181,8 +181,9 @@ is not overwritten — it is believed, fails to resolve, and the run **silently 
 from an earlier session contained an error string rather than a kubeconfig, and the run
 degraded to local KIND without a word.
 
-Never pass a fixed, predictable path you did not create in this run. Write it fresh with
-`mktemp`, and check it parses before handing it over. A file that exists is not a kubeconfig.
+Never pass a kubeconfig you did not write in this run. Delete it and write it fresh at the
+start of every run, and check it parses before handing it over. A file that exists is not a
+kubeconfig.
 
 **Never create a group, space or control plane as a side effect.** If the group your context
 names does not exist, that is a precondition to report, not something to fix with
@@ -195,7 +196,7 @@ path `--e2e` builds and pushes the project package, then installs it onto a cont
 it gives no pull credential. If the repository is private, the install cannot pull what the
 push just wrote: the run stalls on `Waiting for package to be ready` and eventually exits
 `context deadline exceeded`, a message that names neither half of the problem. The real
-error is in `kubectl describe configuration.pkg.crossplane.io <project> --kubeconfig "$KCFG"`.
+error is in `kubectl describe configuration.pkg.crossplane.io <project> --kubeconfig /tmp/e2e-<test-name>.kubeconfig`.
 
 `--public` is the flag that avoids it — `up test run --help`: *"Create new repositories
 with public visibility."* Note **new**: it governs repositories being created, so it is not
@@ -216,21 +217,22 @@ and it cannot be undone by re-running without the flag. So:
 Local KIND does not push to a repository at all, so none of this applies there.
 
 Derive the group from the context you just resolved — never hardcode one. The third
-segment of `up ctx . --short` is the group:
+segment of `up ctx . --short` is the group. **Write literal values into every command** —
+the group, and the paths under `/tmp/e2e-<test-name>.*`: most agents start each command in
+a fresh shell, so a variable set in one call is empty in the next poll or kill.
 
 ```bash
-GROUP=$(up ctx . --short | cut -d/ -f3)
-[ -n "$GROUP" ] || { echo "no group in context; pick one with 'up ctx <org>/<space>/<group>'"; exit 1; }
+up ctx . --short | cut -d/ -f3        # → <group>; empty means pick one with 'up ctx <org>/<space>/<group>'
 
-# --kubeconfig is an INPUT the CLI reads, never an output path it writes. Write the file
-# first, to a fresh name, and verify it before passing it.
-KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
-up ctx . -f- > "$KCFG"
-grep -q '^apiVersion:' "$KCFG" || { echo "not a kubeconfig: $KCFG"; head -3 "$KCFG"; exit 1; }
+# --kubeconfig is an INPUT the CLI reads, never an output path it writes. Write it fresh
+# for every run — a leftover file is the failure above — and verify it before passing it.
+rm -f /tmp/e2e-<test-name>.kubeconfig
+up ctx . -f- > /tmp/e2e-<test-name>.kubeconfig
+grep -q '^apiVersion:' /tmp/e2e-<test-name>.kubeconfig || { echo "not a kubeconfig"; head -3 /tmp/e2e-<test-name>.kubeconfig; }
 
 # Add --public ONLY if the caller has chosen it (see above). Never on your own.
 up test run tests/<test-name> --e2e \
-  --control-plane-group="$GROUP" --kubeconfig "$KCFG" \
+  --control-plane-group=<group> --kubeconfig /tmp/e2e-<test-name>.kubeconfig \
   2>&1 | tee /tmp/e2e-<test-name>.log
 echo "EXIT=${PIPESTATUS[0]}"
 ```
@@ -257,10 +259,10 @@ background execution if it has one. Otherwise detach it yourself, with the exit 
 into the log so a later shell can read it:
 
 ```bash
-LOG=/tmp/e2e-<test-name>.log
+rm -f /tmp/e2e-<test-name>.log /tmp/e2e-<test-name>.pid
 nohup bash -c 'up test run "tests/$0" --e2e --control-plane-group="$1" --kubeconfig "$2"
-               echo "EXIT=$?"' <test-name> "$GROUP" "$KCFG" > "$LOG" 2>&1 &
-echo $! > "$LOG.pid"
+               echo "EXIT=$?"' <test-name> <group> /tmp/e2e-<test-name>.kubeconfig > /tmp/e2e-<test-name>.log 2>&1 &
+echo $! > /tmp/e2e-<test-name>.pid
 ```
 
 - **Wait for it to exit.** The run is finished when `EXIT=` appears in the log (or your
@@ -290,7 +292,7 @@ Creating development control plane in Spaces         <- SPACE
 
   If that contradicts your announced target, **the run's result is void.** Report the
   mismatch, not the outcome — including when the exit code is 0. Do not report a pass.
-- **Background.** You can see the line while it runs (`head -5 "$LOG"`), so stop the run
+- **Background.** You can see the line while it runs (`head -5 /tmp/e2e-<test-name>.log`), so stop the run
   there and then rather than spending 30 minutes on a question nobody asked.
 
 Either way: a pass on local KIND is not evidence about the Space the user pointed at. It is
@@ -315,9 +317,9 @@ reach `Ready` after the last poll you took. Report progress from polls; report o
 from the exit code and the completed log.
 
 **Every 3 minutes:**
-1. Read the log without blocking — `tail -n 20 "$LOG"`, and `grep '^EXIT=' "$LOG"` to see
+1. Read the log without blocking — `tail -n 20 /tmp/e2e-<test-name>.log`, and `grep '^EXIT=' /tmp/e2e-<test-name>.log` to see
    whether it has finished
-2. Compare with the previous poll (`wc -c < "$LOG"` is enough) - If it grew, reset the
+2. Compare with the previous poll (`wc -c < /tmp/e2e-<test-name>.log` is enough) - If it grew, reset the
    progress timer
 3. Show brief update: `[00:05:30] Phase: Waiting for resources`
 4. **If no progress for the stuck threshold** → Check `crossplane beta trace` for "Creating"
@@ -395,7 +397,7 @@ When stuck (15 min no progress, not actively creating):
 4. **Stop the run** by PID. `up` is a child of the wrapper shell, so stop both:
 
    ```bash
-   PID=$(cat "$LOG.pid"); pkill -P "$PID"; kill "$PID" 2>/dev/null
+   PID=$(cat /tmp/e2e-<test-name>.pid); pkill -P "$PID"; kill "$PID" 2>/dev/null
    ```
 
    A terminated run skips teardown. Check `up controlplane list` for
@@ -415,7 +417,7 @@ produce all three, **the report is "UNVERIFIED — could not confirm", not a pas
 ```bash
 echo "exit code: ${PIPESTATUS[0]:-unknown}"     # or the exit status your shell reported
 tail -30 /tmp/e2e-<test-name>.log                # the run's own final output
-kubectl --kubeconfig "$KCFG" get managed -A   # if not yet torn down
+kubectl --kubeconfig /tmp/e2e-<test-name>.kubeconfig get managed -A   # if not yet torn down
 ```
 
 Then:
@@ -445,24 +447,18 @@ Then:
   `az ... show`, `gcloud ... describe` — **before teardown**, and quoted it. If the
   resource is already deleted, the honest report is "not verified at the provider".
 
-**Success:** Test name, exit code, duration *quoted from the log*, resources created,
-timeline (5-10 lines)
-
-**Stuck/Failure:** Test name, stuck duration, phase, last output, troubleshooting analysis,
-proposed fixes (50-100 lines)
-
 **Cannot verify:** Say exactly that, say which of the three artifacts above you could not
 produce, and stop. An unverified run reported as a pass is worse than a failed run — it
 gets relayed onward as fact.
 
-See [knowledge.md](references/knowledge.md) for report templates.
+See [knowledge.md](references/knowledge.md) for what a success and a stuck/failure report contain, with templates.
 
 ## Critical Requirements
 
 | Requirement | Details |
 |-------------|---------|
 | Control plane group | Pass `--control-plane-group` explicitly, derived from the current context (`up ctx . --short \| cut -d/ -f3`). Never hardcode a group |
-| Kubeconfig | Write the current context to a fresh `mktemp` file with `up ctx . -f-`, check it parses, pass it with `--kubeconfig` |
+| Kubeconfig | Delete and rewrite `/tmp/e2e-<test-name>.kubeconfig` from `up ctx . -f-` for every run, check it parses, pass it with `--kubeconfig` |
 | Pre-validation | Build + composition tests before E2E |
 | Monitoring | Every 3 minutes, don't passively wait |
 | Stuck threshold | `min(15 min, spec.timeoutSeconds / 3)` — read the test first; a fixed 15 min never fires on a 300s test |

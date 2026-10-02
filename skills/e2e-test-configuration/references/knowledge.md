@@ -29,14 +29,14 @@ The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" an
 ## Pre-Validation Commands
 
 ```bash
-# 1. Get kubeconfig for the CURRENT context (without changing it), to a fresh file
-KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
-up ctx . -f- > "$KCFG"
-grep -q '^apiVersion:' "$KCFG" || echo "not a kubeconfig: $KCFG"
-GROUP=$(up ctx . --short | cut -d/ -f3)   # 3rd segment of <org>/<space>/<group>[/<ctp>]
+# 1. Get kubeconfig for the CURRENT context (without changing it), written fresh
+rm -f /tmp/e2e-<test-name>.kubeconfig
+up ctx . -f- > /tmp/e2e-<test-name>.kubeconfig
+grep -q '^apiVersion:' /tmp/e2e-<test-name>.kubeconfig || echo "not a kubeconfig"
+up ctx . --short | cut -d/ -f3   # → <group>: 3rd segment of <org>/<space>/<group>[/<ctp>]
 
 # 2. Verify connectivity
-up ctp list --kubeconfig "$KCFG"
+up ctp list --kubeconfig /tmp/e2e-<test-name>.kubeconfig
 
 # 3. Build project
 up project build
@@ -67,8 +67,8 @@ Store as `RESOURCE_KIND`, `RESOURCE_NAME`, `RESOURCE_NAMESPACE` for monitoring.
 
 ```bash
 # --public only if the caller chose it; it permanently publishes the package.
-up test run tests/<test-name> --e2e --control-plane-group="$GROUP" \
-  --kubeconfig "$KCFG" 2>&1 | tee /tmp/e2e-<test-name>.log
+up test run tests/<test-name> --e2e --control-plane-group=<group> \
+  --kubeconfig /tmp/e2e-<test-name>.kubeconfig 2>&1 | tee /tmp/e2e-<test-name>.log
 echo "EXIT=${PIPESTATUS[0]}"
 ```
 
@@ -90,10 +90,9 @@ Progress reporting, not verdicts — the run is finished when the process exits.
 One poll, every 3 minutes, from any shell:
 
 ```bash
-LOG=/tmp/e2e-<test-name>.log
-grep '^EXIT=' "$LOG" && echo "finished"      # the only signal that the run is over
-wc -c < "$LOG"                                # compare with the last poll: grew = progress
-tail -n 20 "$LOG"                             # what to show the user
+grep '^EXIT=' /tmp/e2e-<test-name>.log && echo "finished"   # the only signal that the run is over
+wc -c < /tmp/e2e-<test-name>.log                             # compare with the last poll: grew = progress
+tail -n 20 /tmp/e2e-<test-name>.log                          # what to show the user
 ```
 
 The decision around it:
@@ -207,12 +206,17 @@ kubectl logs -n crossplane-system -l pkg.crossplane.io/function=function-kcl --t
 - <error/condition 2>
 ```
 
-Then stop the run by PID (`pkill -P "$(cat "$LOG.pid")"; kill "$(cat "$LOG.pid")"`) and
+Then stop the run by PID (`pkill -P "$(cat /tmp/e2e-<test-name>.pid)"; kill "$(cat /tmp/e2e-<test-name>.pid)"`) and
 report any control plane the terminated run left behind.
 
 ---
 
 ## Report Formats
+
+- **Success** (5-10 lines): test name, exit code, duration *quoted from the log*, resources
+  created, timeline.
+- **Stuck/Failure** (50-100 lines): test name, stuck duration, phase, last output,
+  troubleshooting analysis, proposed fixes.
 
 ### Success Report
 ```markdown

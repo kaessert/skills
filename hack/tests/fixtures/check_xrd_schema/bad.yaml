@@ -1,0 +1,77 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: repositories.artifactory.example.com
+spec:
+  scope: Namespaced
+  group: artifactory.example.com
+  names:
+    kind: Repository
+    plural: repositories
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    additionalPrinterColumns:
+    - name: CLASS
+      type: string
+      jsonPath: .spec.repositoryClass
+    - name: READY
+      type: string
+      jsonPath: .status.conditions[?(@.type=='Ready')].status
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              artifactoryRepositoryName:
+                type: string
+              projectID:
+                type: string
+                description: Project key
+                pattern: '^[a-z][a-z0-9-]{1,31}$'
+              ProjectId:
+                type: string
+                description: duplicate spelling
+                maxLength: 32
+              tlsConfig:
+                type: object
+                description: TLS settings
+                properties:
+                  caBundle:
+                    type: string
+                    description: PEM bundle
+                    maxLength: 65536
+              tlsParameters:
+                type: object
+                description: more TLS settings
+                properties:
+                  minVersion:
+                    type: string
+                    description: Minimum version
+                    enum: [tls12, TLS13]
+              xrayIndex:
+                type: boolean
+                description: Index in Xray
+              adminsSG:
+                type: array
+                description: Admin groups
+                items:
+                  type: string
+              packageType:
+                type: string
+                description: Package type
+                enum: [maven, Docker, npm]
+          status:
+            type: object
+            properties:
+              repositoryKey:
+                type: string
+                description: Key the repository was created with
+                maxLength: 64
+              url:
+                type: string
+                description: Base URL
+                format: uri

@@ -125,8 +125,8 @@ observed failing is where the false coverage claims come from.
 |------------|-------------|-----------------|---------------------|------------|
 | Dependencies | 1 | `up project build` succeeds | `up project build` succeeds | Exit with error |
 | XRDs | 2 | `yq '.' apis/*/definition.yaml` | `yq '.' apis/*/definition.yaml` | Report file, exit |
-| Functions | 3 | `kcl functions/*/main.k` | `python -c "import ast; ast.parse(open('functions/*/main.py').read())"` | Retry once |
-| Tests | 6 | `kcl tests/*/main.k` | `python -m pytest tests/` (syntax check) | Retry once |
+| Functions | 3 | `kcl functions/*/main.k` | `python -c "import ast; ast.parse(open('functions/*/main.py').read())"` | Offer retry once |
+| Tests | 6 | `kcl tests/*/main.k` | `python -m pytest tests/` (syntax check) | Offer retry once |
 | Full build | 8.1 | `up project build` succeeds | `up project build` succeeds | Exit with error |
 | Composition tests | 8.2 | All tests pass | All tests pass | Exit (user must fix) |
 | E2E tests | 8.4 | Tests pass or skipped | Tests pass or skipped | Report results |
@@ -156,7 +156,8 @@ For each phase, follow instructions in [knowledge.md](references/knowledge.md).
 - Load the skill and follow it with the brief from knowledge.md, including its success
   criteria
 - Validate syntax when it finishes
-- On failure: report the error, retry once
+- On failure: report the error, offer one retry. As a delegated agent there is no one to
+  offer it to: retry once yourself, and say so in the report
 
 ### Phase 8: Verification
 
@@ -253,8 +254,8 @@ these: take the default the brief implies, and list it under "Assumptions made".
 |------------|----------|
 | Build failure | Report error, check dependencies, exit |
 | XRD edit failure | Report file + location, exit |
-| Function migration failure | Report error, retry once, then exit |
-| Test update failure | Report error, retry once, then exit |
+| Function migration failure | Report error, offer one retry, then exit |
+| Test update failure | Report error, offer one retry, then exit |
 | Composition test failure | Report failures, exit (user must fix) |
 | E2E test failure | Use the `e2e-test-configuration` debugging, report results |
 

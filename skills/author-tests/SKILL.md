@@ -92,7 +92,7 @@ Scaffold in the chosen language:
 > prerequisite for the fast tier. One command, ~11s, after `up project build`:
 >
 > ```bash
-> python3 <absolute path of the author-composition skill>/scripts/setup_venv.py --project <root>
+> python3 <author-composition>/scripts/setup_venv.py --project <root>
 > ```
 >
 > The script ships with the `author-composition` skill in this suite.

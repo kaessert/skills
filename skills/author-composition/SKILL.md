@@ -82,33 +82,28 @@ These are the composition-specific additions:
 | What you need | How to get it — no question required |
 |---|---|
 | **Models missing entirely** (fresh clone) | `.up/` is gitignored and starts **empty**. Run `up dep update-cache`, then `up project build`. Nothing prompts for this and every model import fails until you do |
-| Function layout + import prefix | the language file's detection recipe — for Python, `python3 "$SCRIPTS/probe_project.py" --project <root>` |
+| Function layout + import prefix | the language file's detection recipe — for Python, `python3 "<author-composition>/scripts/probe_project.py" --project <root>` |
 | Exact import line and class names per Kind | same probe, with the Kinds named |
-| Field names and types on a managed resource | `python3 "$SCRIPTS/probe_project.py" --project <root> --fields <Kind>` — prints every `forProvider` field, flags list fields whose Upjet names are misleadingly **singular** (`attribute`, `globalSecondaryIndex`), and lists cross-resource `*Ref`/`*Selector` fields. For other languages, read the generated schema directly |
+| Field names and types on a managed resource | `python3 "<author-composition>/scripts/probe_project.py" --project <root> --fields <Kind>` — prints every `forProvider` field, flags list fields whose Upjet names are misleadingly **singular** (`attribute`, `globalSecondaryIndex`), and lists cross-resource `*Ref`/`*Selector` fields. For other languages, read the generated schema directly |
 
-`$SCRIPTS` is this skill's [`scripts/`](scripts/) directory, next to this file. Set it once
-to that directory's absolute path, and check it — a wrong path makes every call die with a
-bare "No such file":
+The scripts are in this skill's [`scripts/`](scripts/) directory, next to this file. Commands
+here write them as `<author-composition>/scripts/<file>`: replace `<author-composition>` with
+this skill directory's absolute path **in every command**. Do not keep it in a shell variable —
+most agents start each command in a fresh shell, so a variable set in one call is gone in the
+next and the path collapses to a bare "No such file".
 
-```bash
-SCRIPTS=<absolute path of this skill>/scripts
-[ -f "$SCRIPTS/probe_project.py" ] || echo "probe_project.py not found — fix SCRIPTS"
-```
-
-The scripts, all standard-library Python:
-
-| Script | What it does |
-|---|---|
-| `scripts/probe_project.py` | prints the function layout, Crossplane generation, exact import lines, and `forProvider` fields per Kind |
-| `scripts/setup_venv.py` | builds a project-local `.venv` from the project's own pins so imports resolve in the editor |
-| `scripts/run_function.py` | runs the function locally against example XRs — the sub-second fast tier |
+| Script | Needs | What it does |
+|---|---|---|
+| `scripts/probe_project.py` | standard library | prints the function layout, Crossplane generation, exact import lines, and `forProvider` fields per Kind |
+| `scripts/setup_venv.py` | standard library | builds a project-local `.venv` from the project's own pins so imports resolve in the editor |
+| `scripts/run_function.py` | the project venv that `setup_venv.py` builds (function SDK, pydantic, PyYAML) | runs the function locally against example XRs — the sub-second fast tier |
 
 The scripts are Python-specific; the other languages read their generated types directly.
 
 **Python: set up the venv now, before Phase 3.**
 
 ```bash
-python3 "$SCRIPTS/setup_venv.py" --project <root>     # ~11s, once
+python3 "<author-composition>/scripts/setup_venv.py" --project <root>     # ~11s, once
 ```
 
 Do this as part of discovery, not when something breaks. It builds `.venv` from the project's
