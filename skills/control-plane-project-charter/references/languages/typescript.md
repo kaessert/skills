@@ -29,7 +29,7 @@ TypeScript composition functions, for projects that already use them.
 > you had to do by hand, so the gap stays visible.
 
 The language-agnostic rules — the TDD loop, what a v2 managed resource needs, what a green
-run proves, reporting discipline — are in [`../CHARTER.md`](../../SKILL.md) and are **not**
+run proves, reporting discipline — are in [`control-plane-project-charter`](../../SKILL.md) and are **not**
 repeated here.
 
 | | |
@@ -44,7 +44,7 @@ repeated here.
 # Part 1 — API versions and types
 
 **Use the namespaced `.m.` API groups** — see
-[`../CHARTER.md` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
+[`control-plane-project-charter` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
 TypeScript carries them as plain `apiVersion` strings, and the generated types live under the
 `model/_schemas/` symlink.
 
@@ -906,7 +906,7 @@ Remove `providerConfigRef`, `managementPolicies` and managed-resource `metadata.
 Crossplane v2 supplies all three, and `kind: 'ProviderConfig'` selects a namespaced
 ProviderConfig nothing creates, leaving the resource with no status conditions at all while
 composition tests still pass. See
-[`../CHARTER.md` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
+[`control-plane-project-charter` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
 
 ```typescript
 spec: {

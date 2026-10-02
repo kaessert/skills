@@ -2,7 +2,7 @@
 
 Two full functions, plus the project files they assume.
 
-Language-agnostic rules are in [`../../CHARTER.md`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
+Language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
 
 ---
 

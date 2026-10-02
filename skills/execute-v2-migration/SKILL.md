@@ -119,7 +119,7 @@ your harness has no sub-agents, follow each brief yourself instead
 |------------|-------------|-----------------|---------------------|------------|
 | Dependencies | 1 | `up project build` succeeds | `up project build` succeeds | Exit with error |
 | XRDs | 2 | `yq '.' apis/*/definition.yaml` | `yq '.' apis/*/definition.yaml` | Report file, exit |
-| Functions | 3 | `kcl functions/*/main.k` | `python -c "import ast; ast.parse(open('functions/*/main.py').read())"` | Offer retry once |
+| Functions | 3 | `kcl functions/*/main.k` | `python3 -c "import ast, sys; [ast.parse(open(f).read(), f) for f in sys.argv[1:]]" functions/*/main.py` | Offer retry once |
 | Tests | 6 | `kcl tests/*/main.k` | `python -m pytest tests/` (syntax check) | Offer retry once |
 | Full build | 8.1 | `up project build` succeeds | `up project build` succeeds | Exit with error |
 | Composition tests | 8.2 | All tests pass | All tests pass | Exit (user must fix) |

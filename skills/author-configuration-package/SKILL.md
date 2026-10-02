@@ -69,7 +69,7 @@ up example generate --scope=namespace --name example --namespace default \
     --api-group platform.example.com --api-version v1alpha1 --kind StorageBucket
 #   -> examples/storagebucket/example.yaml   (singular!) with spec: {}
 # Fill in the spec so it is the API you want users to write, then:
-# Now WRITE apis/storagebuckets/definition.yaml yourself (CHARTER.md section 5 has the
+# Now WRITE apis/storagebuckets/definition.yaml yourself (`control-plane-project-charter` §5 has the
 # skeleton). Note the directory is plural even though examples/ is singular.
 up composition generate apis/storagebuckets/definition.yaml
 #   -> apis/storagebuckets/composition.yaml (mode: Pipeline + auto-ready step)
@@ -140,7 +140,7 @@ NEW PROJECT:
   → Phase 1: Gather project info (name, group, org, provider)
   → Phase 2: Define resource (Kind, version)
   → Phase 3: Draft the example XR, then write the XRD to match
-            (CHARTER.md section 5 has the v2 skeleton; do not infer the schema)
+            (`control-plane-project-charter` §5 has the v2 skeleton; do not infer the schema)
   → Phase 4: Select dependencies (providers)
   → Phase 5: `up composition generate` + select language
   → Phase 6: FIRST BUILD (generates models)
@@ -212,7 +212,7 @@ equivalent.
 | Phase | Action | Key Command |
 |-------|--------|-------------|
 | 1-2 | Project/Resource info | Ask the user |
-| 3 | XRD schema wizard | Loop until user done, then `scripts/check_xrd_schema.py apis/*/definition.yaml` |
+| 3 | XRD schema wizard | Loop until user done, then `python3 <author-configuration-package>/scripts/check_xrd_schema.py apis/*/definition.yaml` |
 | 4 | Dependencies | `up dep update-cache` |
 | 5 | Composition + language | Create skeleton |
 | 6 | First build | `up project build` |

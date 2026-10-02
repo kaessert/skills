@@ -193,7 +193,8 @@ path `--e2e` builds and pushes the project package, then installs it onto a cont
 it gives no pull credential. If the repository is private, the install cannot pull what the
 push just wrote: the run stalls on `Waiting for package to be ready` and eventually exits
 `context deadline exceeded`, a message that names neither half of the problem. The real
-error is in `kubectl describe configuration.pkg.crossplane.io <project> --kubeconfig "$KCFG"`.
+error is in `kubectl describe configuration.pkg.crossplane.io <project> --kubeconfig <kubeconfig>`,
+with the path the run block below prints.
 
 `--public` is the flag that avoids it — `up test run --help`: *"Create new repositories
 with public visibility."* Note **new**: it governs repositories being created, so it is not
@@ -225,6 +226,7 @@ GROUP=$(up ctx . --short | cut -d/ -f3)
 KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
 up ctx . -f- > "$KCFG"
 grep -q '^apiVersion:' "$KCFG" || { echo "not a kubeconfig: $KCFG"; head -3 "$KCFG"; exit 1; }
+echo "kubeconfig: $KCFG"   # shell variables do not survive to your next command; reuse this path
 
 # Add --public ONLY if the caller has chosen it (see above). Never on your own.
 up test run tests/<test-name> --e2e \
@@ -397,7 +399,7 @@ produce all three, **the report is "UNVERIFIED — could not confirm", not a pas
 ```bash
 echo "exit code: ${PIPESTATUS[0]:-unknown}"     # or the exit status Bash reported
 tail -30 /tmp/e2e-<test-name>.log                # the run's own final output
-kubectl --kubeconfig "$KCFG" get managed -A   # if not yet torn down
+kubectl --kubeconfig <kubeconfig> get managed -A   # the path the run block printed; if not yet torn down
 ```
 
 Then:
@@ -444,7 +446,7 @@ See [knowledge.md](references/knowledge.md) for report templates.
 | Requirement | Details |
 |-------------|---------|
 | Control plane group | Pass `--control-plane-group` explicitly, derived from the current context (`up ctx . --short \| cut -d/ -f3`). Never hardcode a group |
-| Kubeconfig | Write the current context to `/tmp/kubeconfig-e2e` with `up ctx . -f-`, pass it with `--kubeconfig` |
+| Kubeconfig | Write the current context to a fresh `mktemp` file with `up ctx . -f-`, check it parses, pass it with `--kubeconfig` |
 | Pre-validation | Build + composition tests before E2E |
 | Monitoring | Every 3 minutes, don't passively wait |
 | Stuck threshold | `min(15 min, spec.timeoutSeconds / 3)` — read the test first; a fixed 15 min never fires on a 300s test |

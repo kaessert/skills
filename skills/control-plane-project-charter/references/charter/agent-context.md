@@ -1,6 +1,6 @@
 # Agent context: inline vs forked
 
-Which kind of agent you are, and what each kind may and may not do. [`../CHARTER.md` §1](../../SKILL.md#1-know-which-kind-of-agent-you-are) states the rule; this is the detail.
+Which kind of agent you are, and what each kind may and may not do. [`control-plane-project-charter` §1](../../SKILL.md#1-know-which-kind-of-agent-you-are) states the rule; this is the detail.
 
 ---
 

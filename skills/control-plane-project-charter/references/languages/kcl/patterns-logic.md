@@ -2,7 +2,7 @@
 
 Conditional resources, list comprehensions, selector-based references, type merging, optional fields, and multi-branch logic.
 
-Structure and the entry point are in [`patterns.md`](patterns.md); language-agnostic rules are in [`../../CHARTER.md`](../../../SKILL.md).
+Structure and the entry point are in [`patterns.md`](patterns.md); language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.md).
 
 ---
 

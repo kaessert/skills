@@ -2,7 +2,7 @@
 
 The mistakes that produce a green run and a broken platform, how to read the failures, and what changes when moving a Python function from v1 to v2.
 
-Language-agnostic rules are in [`../../CHARTER.md`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
+Language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
 
 ---
 

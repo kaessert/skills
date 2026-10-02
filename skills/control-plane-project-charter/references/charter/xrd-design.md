@@ -1,6 +1,6 @@
 # Designing the XRD schema
 
-Naming, validation, immutability and status for the API your users type against. [`../CHARTER.md` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) covers what a *composed resource* needs and why you write the XRD by hand; this covers what to put in it.
+Naming, validation, immutability and status for the API your users type against. [`control-plane-project-charter` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) covers what a *composed resource* needs and why you write the XRD by hand; this covers what to put in it.
 
 ---
 

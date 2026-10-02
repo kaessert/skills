@@ -29,12 +29,15 @@ The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" an
 ## Pre-Validation Commands
 
 ```bash
-# 1. Get kubeconfig for the CURRENT context (without changing it)
-up ctx . -f- > /tmp/kubeconfig-e2e
-GROUP=$(up ctx . --short | cut -d/ -f3)   # 3rd segment of <org>/<space>/<group>[/<ctp>]
+# 1. Get kubeconfig for the CURRENT context (without changing it), to a fresh file
+KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
+up ctx . -f- > "$KCFG"
+grep -q '^apiVersion:' "$KCFG" || { echo "not a kubeconfig: $KCFG"; exit 1; }
+echo "kubeconfig: $KCFG"   # reuse this literal path in later commands
+up ctx . --short | cut -d/ -f3   # the group: 3rd segment of <org>/<space>/<group>[/<ctp>]
 
 # 2. Verify connectivity
-up ctp list --kubeconfig /tmp/kubeconfig-e2e
+up ctp list --kubeconfig "$KCFG"
 
 # 3. Build project
 up project build
@@ -65,8 +68,9 @@ Store as `RESOURCE_KIND`, `RESOURCE_NAME`, `RESOURCE_NAMESPACE` for monitoring.
 
 ```bash
 # --public only if the caller chose it; it permanently publishes the package.
-up test run tests/<test-name> --e2e --control-plane-group="$GROUP" \
-  --kubeconfig /tmp/kubeconfig-e2e 2>&1 | tee /tmp/e2e-<test-name>.log
+# <group> and <kubeconfig> are the literal values pre-validation printed.
+up test run tests/<test-name> --e2e --control-plane-group=<group> \
+  --kubeconfig <kubeconfig> 2>&1 | tee /tmp/e2e-<test-name>.log
 echo "EXIT=${PIPESTATUS[0]}"
 ```
 

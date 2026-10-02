@@ -2,7 +2,7 @@
 
 Deriving the import path for any Kind, and the class names inside a generated model.
 
-Language-agnostic rules are in [`../../CHARTER.md`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
+Language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
 
 ---
 

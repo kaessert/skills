@@ -1,6 +1,6 @@
 # What the CLI generators emit
 
-The accepted `--language` slugs, what each generator actually produces, and the one file you should write yourself. [`../CHARTER.md` §10](../../SKILL.md#10-language-dispatch) states the dispatch rule.
+The accepted `--language` slugs, what each generator actually produces, and the one file you should write yourself. [`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch) states the dispatch rule.
 
 ---
 

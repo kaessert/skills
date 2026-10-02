@@ -2,7 +2,7 @@
 
 Reading observed resources, gating on readiness without deleting what you already made, and writing a connection secret by hand.
 
-Language-agnostic rules are in [`../../CHARTER.md`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
+Language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
 
 ---
 
@@ -190,7 +190,7 @@ spec:
 
 ## Verify what you actually rendered
 
-[`../CHARTER.md` §8](../../../SKILL.md#8-a-green-run-is-not-evidence) explains why a green suite
+[`control-plane-project-charter` §8](../../../SKILL.md#8-a-green-run-is-not-evidence) explains why a green suite
 is not evidence. These are the Python-specific artifacts that are.
 
 **1. Read the render.** This is the ground truth for what the function emits:

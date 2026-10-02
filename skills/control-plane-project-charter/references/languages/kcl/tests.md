@@ -2,7 +2,7 @@
 
 Composition and E2E test templates in KCL, and the test-structure patterns.
 
-Language-agnostic rules are in [`../../CHARTER.md`](../../../SKILL.md); the KCL index is [`../kcl.md`](../kcl.md).
+Language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.md); the KCL index is [`../kcl.md`](../kcl.md).
 
 ---
 

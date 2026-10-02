@@ -1,6 +1,6 @@
 # Crossplane v2 resources: the detail
 
-Authoring the XRD, what the CRD defaults do to a render, and choosing a ProviderConfig. [`../CHARTER.md` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) states the rules; this carries the tables, the skeleton and the evidence.
+Authoring the XRD, what the CRD defaults do to a render, and choosing a ProviderConfig. [`control-plane-project-charter` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) states the rules; this carries the tables, the skeleton and the evidence.
 
 ---
 

@@ -58,7 +58,7 @@ anywhere in the project, else ask — this is a decision, not a discoverable fac
 **Then detect the generation**, which governs more of the guidance than the language does:
 
 ```
-apis/*/definition.yaml: apiextensions.crossplane.io/v2  → v2: CHARTER §5 applies
+apis/*/definition.yaml: apiextensions.crossplane.io/v2  → v2: charter §5 applies
                                                   /v1  → v1: it does NOT
 ```
 

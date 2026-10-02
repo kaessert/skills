@@ -1,6 +1,6 @@
 # Reading a render, and making a suite exhaustive
 
-How to find what a function actually emitted, how `assertResources` matches, and the one assertion that catches a surplus resource. [`../CHARTER.md` §8](../../SKILL.md#8-a-green-run-is-not-evidence) states the rule.
+How to find what a function actually emitted, how `assertResources` matches, and the one assertion that catches a surplus resource. [`control-plane-project-charter` §8](../../SKILL.md#8-a-green-run-is-not-evidence) states the rule.
 
 ---
 
