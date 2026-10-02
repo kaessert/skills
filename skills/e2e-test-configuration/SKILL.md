@@ -12,14 +12,17 @@ Run end-to-end tests with active monitoring, stuck detection (15 min threshold),
 
 See [knowledge.md](references/knowledge.md) for detailed commands and troubleshooting prompts.
 
-## Phase 0: Act as a separate agent, and you are bound by the charter
+## Phase 0: Know how you were started, and you are bound by the charter
 
 This skill is written for a separate agent (a forked sub-agent) — one that does not see the
-caller's conversation, and for which **asking a question ends the turn**. Act as one even if
-you were loaded into a conversation. `control-plane-project-charter` §1 says what that means;
-act on the brief you were given, discover the rest from the project, and do the work.
+caller's conversation, and for which **asking a question ends the turn**. If you were handed
+a brief as a separate agent, that is you: act on the brief you were given, discover the rest
+from the project, and do the work. If you were loaded into the user's conversation instead —
+your harness has no sub-agents, or the user invoked you directly — you are inline and may ask
+when a decision is genuinely undetermined. `control-plane-project-charter` §1 says what each
+means.
 
-Your only output channel is prose: the caller cannot see your exit codes, your `render.log`,
+As a separate agent, your only output channel is prose: the caller cannot see your exit codes, your `render.log`,
 or your resource tree. That is why §4 (`control-plane-project-charter`) — report the
 effect, not the intent — is binding on every summary you write, and it is not repeated here.
 
@@ -255,6 +258,10 @@ minutes; a run that has to pull providers for the first time will not fit either
   user, not a result. The run is finished when the process exits and not before.
 - If you must stop early — a target mismatch, a stuck run — say the run was *terminated*,
   and report what you terminated it for. A killed run has no outcome to report.
+- **If your harness cannot run commands in the background**, run it in the foreground with
+  the longest timeout your shell allows (`control-plane-project-charter` §1) — do not detach
+  it yourself with `nohup` or `&`. If that
+  timeout ends the run, it was *cut off*: report what it reached, not an outcome.
 
 **Check the first progress line against the target you announced.** The run says which
 it chose in its first line, and the two are unmistakable:
@@ -300,7 +307,7 @@ reach `Ready` after the last poll you took. Report progress from polls; report o
 from the exit code and the completed log.
 
 **Every 3 minutes:**
-1. `read_output(job, block=False)` - Check progress
+1. Read the run's output so far, with your harness's own tools - Check progress
 2. Compare output - If changed, reset progress timer
 3. Show brief update: `[00:05:30] Phase: Waiting for resources`
 4. **If no progress for the stuck threshold** → Check `crossplane beta trace` for "Creating"
@@ -373,9 +380,9 @@ When stuck (15 min no progress, not actively creating):
    no pull credential on that Space (common when `up profile list` shows the active profile as
    `disconnected`). Fix `spec.repository` in `upbound.yaml` or the Space's pull secret; retrying
    the test will not help.
-3. **Launch troubleshooting sub-agent** - See [knowledge.md](references/knowledge.md) for full prompt
+3. **Launch troubleshooting sub-agent** (or, with no sub-agents, follow its brief yourself) - See [knowledge.md](references/knowledge.md) for full prompt
 4. **Receive concise analysis** (max 100 lines)
-5. **Cancel test**: `stop(job)`
+5. **Cancel test**: stop the background run, with your harness's own tools
 
 > `up: error: context deadline exceeded` is not a diagnosis — it is the absence of one. Always
 > report the underlying Configuration/Provider condition message instead.

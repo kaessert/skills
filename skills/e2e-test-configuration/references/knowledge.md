@@ -76,6 +76,9 @@ The result carries the complete output and the true exit code, which is the enti
 **Background only when the run cannot fit in ten minutes** — check the test's
 `spec.timeoutSeconds` (scaffold default 4500s) and expect a first run pulling providers to
 overrun. Then run it in the background, and **wait for the exit notification**; a poll of the background output is a progress view for the user, never the basis of a verdict.
+If your harness cannot run commands in the background, run it in the foreground with the
+longest timeout your shell allows — do not detach it yourself — and report a run that timeout cut off as *cut off*, not
+as an outcome (`control-plane-project-charter` §1).
 
 ---
 
@@ -96,7 +99,7 @@ if test_timeout_seconds <= stuck_threshold:
     stuck_threshold = None
 
 while test_running:
-    current_output = read_output(job, block=False)
+    current_output = background_output_so_far()  # your harness's own tool
 
     if current_output != last_output:
         last_progress_time = current_time
@@ -133,12 +136,12 @@ NOT stuck if STATUS shows `Creating` - cloud resources may take time (VPN Gatewa
 
 ## Stuck Investigation Subagent Prompt
 
-Launch a sub-agent when test is stuck 15+ minutes:
+Launch a sub-agent with this brief when test is stuck 15+ minutes — or, if your harness has
+no sub-agents, follow it yourself (`control-plane-project-charter` §1):
 
-```
-subagent(
-  description="Troubleshoot stuck E2E test",
-  prompt="""
+Brief — *Troubleshoot stuck E2E test*:
+
+```text
 You are troubleshooting a stuck Crossplane E2E test (15+ min no progress).
 
 **Context:**
@@ -216,11 +219,9 @@ kubectl logs -n crossplane-system -l pkg.crossplane.io/function=function-kcl --t
 - <error/condition 1>
 - <error/condition 2>
 ---
-"""
-)
 ```
 
-After sub-agent completes: Cancel test with `stop(job)`.
+After the investigation completes: stop the background run with your harness's own tools.
 
 ---
 

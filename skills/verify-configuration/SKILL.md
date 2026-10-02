@@ -10,14 +10,17 @@ references:
 
 Verify Crossplane configuration packages are ready for commit.
 
-## Phase 0: Act as a separate agent, and you are bound by the charter
+## Phase 0: Know how you were started, and you are bound by the charter
 
 This skill is written for a separate agent (a forked sub-agent) — one that does not see the
-caller's conversation, and for which **asking a question ends the turn**. Act as one even if
-you were loaded into a conversation. `control-plane-project-charter` §1 says what that means;
-act on the brief you were given, discover the rest from the project, and do the work.
+caller's conversation, and for which **asking a question ends the turn**. If you were handed
+a brief as a separate agent, that is you: act on the brief you were given, discover the rest
+from the project, and do the work. If you were loaded into the user's conversation instead —
+your harness has no sub-agents, or the user invoked you directly — you are inline and may ask
+when a decision is genuinely undetermined. `control-plane-project-charter` §1 says what each
+means.
 
-Your only output channel is prose: the caller cannot see your exit codes, your `render.log`,
+As a separate agent, your only output channel is prose: the caller cannot see your exit codes, your `render.log`,
 or your resource tree. That is why §4 (`control-plane-project-charter`) — report the
 effect, not the intent — is binding on every summary you write, and it is not repeated here.
 
@@ -119,10 +122,12 @@ Options:
 ### Phase 4: E2E Orchestration (if user confirms)
 
 1. **Discover:** `ls -1d tests/e2etest-* | sed 's|tests/||' | sort`
-2. **Execute sequentially:** For each test, launch sub-agent:
-   ```
-   subagent(prompt="Run E2E test: <name>. Load the `e2e-test-configuration` skill for <name>. Return PASSED with summary or FAILED with analysis.",
-        wait=True)
+2. **Execute sequentially:** For each test, hand this brief to a sub-agent and wait for its
+   result. Do not load `e2e-test-configuration` into your own context while you can start a
+   sub-agent; only if your harness has none, follow the brief yourself
+   (`control-plane-project-charter` §1):
+   ```text
+   Run E2E test: <name>. Load the `e2e-test-configuration` skill for <name>. Return PASSED with summary or FAILED with analysis.
    ```
 3. **Collect results:** Continue even if tests fail
 4. **Write report:** `e2e-test-report-YYYY-MM-DD.md`
@@ -134,6 +139,17 @@ See [knowledge.md](references/knowledge.md) for report templates and detailed pa
 
 Only when the user asked to run, deploy, or try the project — verification alone stops at
 Phase 3. **Never type `up project run` into Bash without working through this phase.**
+
+**Wait for the run inside your turn.** `up project run` takes several minutes. Run it in the
+background only if your harness tells you when it exits, and then wait for that; otherwise run
+it in the foreground (`control-plane-project-charter` §1). Never end your turn with the run
+still in flight: in many agents the jobs a session started die with it, leaving a half-created
+KIND cluster and no result. Observed in a headless session: the run was killed at
+"Building functions..." and the cluster `up-<project>` had to be deleted by hand.
+
+**Tear down with `up project stop`** from the project root. If you delete the KIND cluster
+directly instead, also remove its registry container: `kind delete cluster --name up-<project>`
+leaves `up-<project>-registry` running (`docker rm -f up-<project>-registry`).
 
 **1. Detect what your context points at.** The context, *not* a flag, decides which kind of
 dev control plane you get. One command settles it:
@@ -177,8 +193,7 @@ If it *can* pull, run it on the Space — that is the environment they chose.
 **4. If the pre-flight says it will wedge, hand the decision back. Do not decide it
 yourself.** In particular do **not** "helpfully" fall back to `--local`: they connected to
 that Space on purpose, and a local KIND cluster is a *different environment*, not a
-transparent substitute. You are a fork and cannot hold a conversation (see Phase 0), so
-put the choice to the user if you can ask, and otherwise **report
+transparent substitute. Put the choice to the user if you can ask (see Phase 0), and otherwise **report
 these three options and their consequences to your caller and stop** — do not pick one.
 
 | Option | Command | What it costs them |

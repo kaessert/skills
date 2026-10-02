@@ -325,12 +325,14 @@ If no → Proceed to final summary.
 
 ## Sub-agent Prompts
 
+Hand each brief to a sub-agent and wait for its result. If your harness has no sub-agents,
+follow the brief yourself (`control-plane-project-charter` §1).
+
 ### Function Migration Prompt
 
+Brief — *Migrate function {name} to v2*:
+
 ```text
-subagent(
-  description="Migrate function {name} to v2",
-  prompt="""
 Migrate Crossplane function to v2: functions/{function-name}/main.k
 
 Keep the exact function name — do NOT add a language suffix (`-python`/`-kcl`). The directory name is the published registry path and must stay in the publish allow-list.
@@ -364,16 +366,13 @@ Tell skill: "Migrate this function from v1 to v2"
 - Files modified: [list]
 - Key changes made: [bullet list]
 - Warnings/concerns: [if any]
-"""
-)
 ```
 
 ### Test Migration Prompt
 
+Brief — *Update test {name} for v2*:
+
 ```text
-subagent(
-  description="Update test {name} for v2",
-  prompt="""
 Update Crossplane test for v2: tests/{test-name}/main.k
 
 Load the `author-tests` skill
@@ -402,16 +401,13 @@ Tell skill: "Update this test for v2 migration"
 - Files modified: [list]
 - Key changes made: [bullet list]
 - Warnings/concerns: [if any]
-"""
-)
 ```
 
 ### Verification Prompt
 
+Brief — *Verify build and composition tests*:
+
 ```text
-subagent(
-  description="Verify build and composition tests",
-  prompt="""
 Load the `verify-configuration` skill
 
 When asked about E2E tests, select "No - I'll run them later"
@@ -424,19 +420,17 @@ When asked about E2E tests, select "No - I'll run them later"
 - Build status: SUCCESS | FAILURE
 - Composition tests: X/Y passed
 - Failure details: [if any failures, include test name and error]
-"""
-)
 ```
 
 ### E2E Test Prompt
 
-```text
-subagent(
-  description="Run E2E tests",
-  prompt="""
-Load the `e2e-test-configuration` skill
+Brief — *Run E2E tests*:
 
-Let skill complete all E2E tests with monitoring.
+```text
+Load the `e2e-test-configuration` skill for these tests: {names from
+`ls -1d tests/e2etest-* | sed 's|tests/||'`}
+
+Run each named test with monitoring.
 
 **SUCCESS CRITERIA:**
 1. All E2E tests complete (pass or fail with clear reason)
@@ -446,8 +440,6 @@ Let skill complete all E2E tests with monitoring.
 - Status: X/Y tests passed
 - Failed tests: [list with brief reason]
 - Resource issues: [if applicable]
-"""
-)
 ```
 
 ---

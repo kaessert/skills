@@ -44,3 +44,25 @@ proceeding with a stated assumption over stopping.
 
 **Your only output channel is prose.** The caller cannot see your exit codes, your
 `render.log`, or your resource tree. That is exactly why §4 exists.
+
+---
+
+### Delegation and long runs, whatever your harness supports
+
+Some skills hand work to a sub-agent (a brief for another skill) or run a long command in
+the background (an E2E test). Neither is a tool name; use whatever your harness provides.
+
+- **Handing work to a sub-agent.** If you can start a separate agent, do — loading the skill
+  into your own context instead is not the same thing: its long output lands in the user's
+  conversation. Give the agent the brief as written and wait for its result. If you cannot, follow the brief yourself, in this
+  conversation: load the skill it names and do the work. You are then inline, not forked,
+  and the inline rules above apply. Either way the brief must stand on its own — name the
+  tests, files and functions it is about rather than leaving the other skill to choose.
+- **Running a command in the background.** If your harness can run a command in the
+  background, tell you when it exits, and show its output so far, use that. If it cannot,
+  run the command in the foreground with the longest timeout your shell allows — do not
+  detach it yourself with `nohup` or `&` and poll for it. If that
+  timeout ends the run first, report the run as *cut off* and what it had reached — a run
+  that did not finish has no outcome to report.
+- **Checking on and stopping a background run** means reading its output so far and
+  stopping it with your harness's own tools. A foreground run has nothing to check on.

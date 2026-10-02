@@ -122,7 +122,8 @@ ls -1d tests/e2etest-* | sed 's|tests/||' | sort
 
 #### Step 2: Launch Sub-agents Sequentially
 
-**For each E2E test**, launch a sub-agent:
+**For each E2E test**, launch a sub-agent — or, if your harness has no sub-agents, follow
+the brief yourself (`control-plane-project-charter` §1):
 
 **Subagent prompt:**
 ```text
@@ -138,8 +139,7 @@ Return:
 **Execution pattern:**
 ```text
 For each test:
-  subagent(prompt="Run E2E test: <name>. Load the `e2e-test-configuration` skill for <name>...",
-       wait=True)
+  Hand the brief above, for <name>, to a sub-agent (or follow it yourself)
   → Wait for completion (30-40 min typical)
   → Extract result (PASSED with summary OR FAILED with analysis)
   → Continue to next test

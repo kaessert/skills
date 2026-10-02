@@ -61,10 +61,15 @@ or the worked example behind a rule.
 
 ## 1. Know which kind of agent you are
 
-A skill's frontmatter `context:` decides whether you can hold a conversation. Read yours
+How you were started decides whether you can hold a conversation: loaded into the user's
+conversation (inline), or handed a brief as a separate agent (forked). Know which you are
 before you consider asking anything.
 
-**Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) — what each context may and may not do, and why a fork's only output channel is prose.
+When a skill says to hand work to a sub-agent, or to run a command in the background, use
+your harness's own way of doing that. If it has none, do the work in band: follow the brief
+yourself, or run the command in the foreground — never detach it yourself.
+
+**Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) — what each context may and may not do, why a fork's only output channel is prose, and how to delegate or run long commands when your harness cannot.
 
 
 ## 2. Discover, do not interview

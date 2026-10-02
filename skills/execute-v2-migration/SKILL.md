@@ -14,14 +14,17 @@ See [knowledge.md](references/knowledge.md) for detailed phase instructions, sub
 
 ---
 
-## Phase 0: Act as a separate agent, and you are bound by the charter
+## Phase 0: Know how you were started, and you are bound by the charter
 
 This skill is written for a separate agent (a forked sub-agent) — one that does not see the
-caller's conversation, and for which **asking a question ends the turn**. Act as one even if
-you were loaded into a conversation. `control-plane-project-charter` §1 says what that means;
-act on the brief you were given, discover the rest from the project, and do the work.
+caller's conversation, and for which **asking a question ends the turn**. If you were handed
+a brief as a separate agent, that is you: act on the brief you were given, discover the rest
+from the project, and do the work. If you were loaded into the user's conversation instead —
+your harness has no sub-agents, or the user invoked you directly — you are inline and may ask
+when a decision is genuinely undetermined. `control-plane-project-charter` §1 says what each
+means.
 
-Your only output channel is prose: the caller cannot see your exit codes, your `render.log`,
+As a separate agent, your only output channel is prose: the caller cannot see your exit codes, your `render.log`,
 or your resource tree. That is why §4 (`control-plane-project-charter`) — report the
 effect, not the intent — is binding on every summary you write, and it is not repeated here.
 
@@ -101,7 +104,9 @@ context rather than spawning a separate agent, so you keep everything it discove
 keeps everything you have already established — the project root, the language, the
 provider family. Do not re-brief it on what is already in this conversation. The two
 verification skills run as sub-agents because their output is long and disposable: hand each
-to a sub-agent that loads it, and wait for its result rather than being notified later.
+to a sub-agent that loads it, and wait for its result rather than being notified later. If
+your harness has no sub-agents, follow each brief yourself instead
+(`control-plane-project-charter` §1).
 | 9 | Documentation | User-guided (Edit) |
 
 ---
@@ -141,7 +146,7 @@ For each phase, follow instructions in [knowledge.md](references/knowledge.md).
 - Validate after each file with `yq`
 
 **Sub-agent delegation (Phases 3, 6):**
-- Launch a sub-agent that loads the skill
+- Launch a sub-agent that loads the skill (or, with no sub-agents, follow the brief yourself)
 - Include success criteria in prompt
 - Wait for completion, validate syntax
 - On failure: report error, offer one retry
