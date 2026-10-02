@@ -1,9 +1,9 @@
 # Language references
 
-One file per language, shared by every skill in the control-plane-project suite. Each file covers **both**
+One file per language, shared by every skill in this plugin. Each file covers **both**
 composition functions and tests for that language.
 
-The rules that do not depend on language live in [the charter](../../SKILL.md) and are
+The rules that do not depend on language live in [`../CHARTER.md`](../../SKILL.md) and are
 deliberately absent from these files. Read the charter first.
 
 | Language | Composition functions | Tests | File |

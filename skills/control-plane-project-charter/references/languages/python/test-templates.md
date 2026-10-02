@@ -2,7 +2,7 @@
 
 The composition-test and E2E-test scaffolds, annotated. What the suite must *contain* is in [`tests.md`](tests.md).
 
-Language-agnostic rules are in [the charter](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
+Language-agnostic rules are in [`../../CHARTER.md`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
 
 ---
 
@@ -108,7 +108,7 @@ from models.io.upbound.m.azure.clusterproviderconfig import v1beta1 as pcv1beta1
 from models.io.example.platform.network import v1alpha1 as networkv1alpha1
 
 # UP_-prefixed: only these cross into the generation container. See
-# Charter section 7. Indexing, not .get, so a missing value fails here
+# CHARTER.md section 7. Indexing, not .get, so a missing value fails here
 # rather than at the provider twenty minutes later.
 azure_creds = os.environ["UP_AZURE_CREDENTIALS"]
 

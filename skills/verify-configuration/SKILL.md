@@ -1,6 +1,6 @@
 ---
 name: verify-configuration
-description: Verify a Crossplane configuration package before commit, and run, deploy, or try the project on a development control plane. Use when asked to verify, validate, or check a configuration package, "run the tests", "check if this is ready to commit", "run the project", "deploy it", "spin it up", "try it on a control plane", or for anything that would otherwise mean typing `up project run`. Builds the project, runs composition tests, reads the render for unasserted resources, and optionally runs every E2E test with a cumulated report. Use it instead of raw `up project run` because on a Space context that command pushes to a private repository the dev control plane cannot pull, then fails with an uninformative `context deadline exceeded`; this skill pre-flights the pull and asks whether to supply pull access, publish with `--public`, or run `--local`, and never silently falls back to a local KIND cluster. Does not modify code. Single live E2E runs belong to `e2e-test-configuration`.
+description: Use this skill when user requests to verify, validate, or check a Crossplane configuration package before committing, or to run, deploy, or try out the project on a control plane ("run the project", "deploy it", "spin it up", "try it on a control plane", "up project run", "dev control plane"). Executes build and composition tests, and owns running the project on a development control plane. Can optionally run E2E tests with cumulated reporting. Use this skill instead of running raw `up project run` directly. Raw `up project run` defaults to a cloud dev control plane whenever the current `up` context is a Space, which pushes to a private repository the control plane cannot pull, then hangs on `Waiting for package to be ready` and dies with `context deadline exceeded`. When the context is a Space this skill asks the user to choose between supplying pull access, `--public` (which permanently publishes their package), or `--local` — it does not silently fall back to a local KIND cluster.
 license: Apache-2.0
 references:
   - references/knowledge.md
@@ -10,20 +10,16 @@ references:
 
 Verify Crossplane configuration packages are ready for commit.
 
-## Phase 0: Load the charter, and know whether you can ask
+## Phase 0: Act as a separate agent, and you are bound by the charter
 
-**Load the `control-plane-project-charter` skill first and read its SKILL.md.** Nothing in it
-is repeated here; when this file and the charter disagree, the charter wins.
+This skill is written for a separate agent (a forked sub-agent) — one that does not see the
+caller's conversation, and for which **asking a question ends the turn**. Act as one even if
+you were loaded into a conversation. `control-plane-project-charter` §1 says what that means;
+act on the brief you were given, discover the rest from the project, and do the work.
 
-This skill runs either in the user's conversation or as a delegated agent started by another
-agent. `control-plane-project-charter` §1 says what each may do. In short: in the user's
-conversation you can ask; as a delegated agent you cannot reach the user, so act on the brief
-you were given, discover the rest from the project, and do the work.
-
-Either way, your summary is often all the reader gets: they may not see your exit codes,
-your `render.log`, or your resource tree. That is why §4 (`control-plane-project-charter`) —
-report the effect, not the intent — is binding on every summary you write, and it is not
-repeated here.
+Your only output channel is prose: the caller cannot see your exit codes, your `render.log`,
+or your resource tree. That is why §4 (`control-plane-project-charter`) — report the
+effect, not the intent — is binding on every summary you write, and it is not repeated here.
 
 **Read the whole charter before you start.** It also carries the TDD loop (§3), what a v2
 composed resource needs (§5), the container boundary (§7), what a green run does and does not
@@ -36,19 +32,19 @@ This skill **VERIFIES** that a configuration package is ready by:
 2. Running composition tests
 3. Reporting pass/fail status
 4. Offering E2E tests (requires user confirmation)
-5. Running every E2E test and writing a cumulated report (if confirmed)
+5. Orchestrating E2E tests via sub-agents (if confirmed)
 
 **NOT in scope:** Making code changes (verification only)
 
 ## When to Use
 
-**Use when** the user requests:
+**USE PROACTIVELY** when user requests:
 - "verify the configuration"
 - "check if this is ready to commit"
 - "run the tests"
 - "validate the project"
 - **"run the project"** / "deploy it" / "spin it up" / "try it on a control plane"
-- anything that would otherwise make you type `up project run` into a shell
+- anything that would otherwise make you type `up project run` into Bash
 
 ## Quick Reference
 
@@ -109,8 +105,7 @@ Two things composition tests structurally cannot cover, so don't report them as 
 
 ### Phase 3: Report & Ask
 
-**If passed:** Report success, then ask the user (as a delegated agent, put this question in
-your report instead of choosing):
+**If passed:** Report success, then ask the user:
 ```
 Verification passed! Would you like to run E2E tests now?
 Options:
@@ -124,10 +119,11 @@ Options:
 ### Phase 4: E2E Orchestration (if user confirms)
 
 1. **Discover:** `ls -1d tests/e2etest-* | sed 's|tests/||' | sort`
-2. **Execute sequentially, one test at a time, each with the `e2e-test-configuration` skill.**
-   If your agent can delegate work, give each test to a delegated agent that loads
-   `e2e-test-configuration` for that one test and returns PASSED with a summary or FAILED with
-   its analysis, and wait for it before starting the next; otherwise run each one yourself.
+2. **Execute sequentially:** For each test, launch sub-agent:
+   ```
+   subagent(prompt="Run E2E test: <name>. Load the `e2e-test-configuration` skill for <name>. Return PASSED with summary or FAILED with analysis.",
+        wait=True)
+   ```
 3. **Collect results:** Continue even if tests fail
 4. **Write report:** `e2e-test-report-YYYY-MM-DD.md`
 5. **Output summary:** Brief pass/fail count with durations
@@ -137,30 +133,7 @@ See [knowledge.md](references/knowledge.md) for report templates and detailed pa
 ### Phase 5: Run it on a dev control plane (when asked to run/deploy)
 
 Only when the user asked to run, deploy, or try the project — verification alone stops at
-Phase 3. **Never run `up project run` without working through this phase.**
-
-**Wait for the run inside your turn.** `up project run` takes several minutes. Run it in the
-foreground if your shell can hold one command that long. Otherwise start it detached with an
-exit-code file and poll until that file exists:
-
-```bash
-# <flags> is what step 4 below settled — never default to --local before then.
-rm -f /tmp/run.exit /tmp/run.log
-nohup bash -c 'up project run <flags> --timeout=20m > /tmp/run.log 2>&1; echo $? > /tmp/run.exit' >/dev/null 2>&1 &
-until [ -f /tmp/run.exit ]; do sleep 10; done; echo "exit $(cat /tmp/run.exit)"; tail -25 /tmp/run.log
-```
-
-Clear `/tmp/run.exit` first: a file left by an earlier run reports its exit code, not this
-one's.
-
-Never end your turn with the run still in flight, planning to check back later. In many agents
-the jobs a session started die with it, and what is left is a half-created KIND cluster and no
-result. Observed in a headless session: the run was killed at "Building functions..." and the
-cluster `up-<project>` had to be deleted by hand.
-
-**Tear down with `up project stop`** from the project root. If you delete the KIND cluster
-directly instead, also remove its registry container: `kind delete cluster --name up-<project>`
-leaves `up-<project>-registry` running (`docker rm -f up-<project>-registry`).
+Phase 3. **Never type `up project run` into Bash without working through this phase.**
 
 **1. Detect what your context points at.** The context, *not* a flag, decides which kind of
 dev control plane you get. One command settles it:
@@ -204,10 +177,9 @@ If it *can* pull, run it on the Space — that is the environment they chose.
 **4. If the pre-flight says it will wedge, hand the decision back. Do not decide it
 yourself.** In particular do **not** "helpfully" fall back to `--local`: they connected to
 that Space on purpose, and a local KIND cluster is a *different environment*, not a
-transparent substitute. In the user's conversation, put the three options below to them
-and wait. If you are running as a delegated agent you cannot ask the user — **stop and
-report that the decision is needed, with these three options and their consequences**,
-rather than choosing one.
+transparent substitute. You are a fork and cannot hold a conversation (see Phase 0), so
+put the choice to the user if you can ask, and otherwise **report
+these three options and their consequences to your caller and stop** — do not pick one.
 
 | Option | Command | What it costs them |
 |---|---|---|
@@ -241,7 +213,7 @@ there:
 | The provider pod is crashing or not yet running | `kubectl get pods -n crossplane-system`, then its logs |
 | The MR's CRD is not established, so nothing watches the kind | `kubectl get crd <plural>.<group>` |
 
-Only the first is peculiar to this suite's guidance, and it is the one composition tests
+Only the first is peculiar to this plugin's guidance, and it is the one composition tests
 cannot catch — which is why it is listed first, not why it is the answer.
 
 **8. Read the effect back from the provider, not from your own input.** `Ready=True` is
@@ -340,9 +312,8 @@ Report the underlying condition message to the user — not "the run timed out".
 
 1. **Sequential execution:** Build MUST succeed before tests
 2. **Exit on failure:** Stop if build or composition tests fail
-3. **User confirmation:** ALWAYS ask before E2E tests; as a delegated agent, report the
-   question rather than starting them
-4. **Sequential E2E:** run one test at a time, each through `e2e-test-configuration`
+3. **User confirmation:** ALWAYS ask before E2E tests
+4. **Sequential E2E:** Run one test at a time via sub-agents
 5. **Continue on E2E failure:** Run all E2E tests even if some fail
 6. **Concise reporting:** Summary only, not full logs
 
@@ -353,14 +324,14 @@ Report the underlying condition message to the user — not "the run timed out".
 **This skill:**
 - ✅ Builds project
 - ✅ Runs composition tests (local)
-- ✅ Runs every E2E test through `e2e-test-configuration` and cumulates the results
+- ✅ Orchestrates E2E via sub-agents
 - ✅ Reports pass/fail status
 
 **Other skills:**
 - ❌ Does NOT modify code
 - ❌ Does NOT fix errors → use authoring skills
-- ❌ Does NOT create tests → use `author-tests`
-- ❌ Does NOT run a single E2E test itself → that is `e2e-test-configuration`
+- ❌ Does NOT create tests → use author-tests
+- ❌ Does NOT run E2E directly → delegates to e2e-test-configuration
 
 ---
 

@@ -29,11 +29,10 @@ references:
   - references/languages/typescript.md
   - references/languages/yaml.md
 ---
-
 # Development Charter
 
-**Every skill in the control-plane-project suite follows this charter.** It holds the rules
-that do not depend on which language a project is written in or which skill you happen to be: how to behave as an
+**Every skill in this plugin follows this charter.** It holds the rules that do not depend on
+which language a project is written in or which skill you happen to be: how to behave as an
 agent, how to develop, what Crossplane v2 actually requires, and how to report what you did.
 
 Language-specific syntax lives in [`languages/`](references/languages/) — one file per language. Skill
@@ -49,7 +48,7 @@ or the worked example behind a rule.
 
 | Detail file | What is in it |
 |---|---|
-| [`charter/agent-context.md`](references/charter/agent-context.md) | what you may and may not do in the user's conversation and as a delegated agent (§1) |
+| [`charter/agent-context.md`](references/charter/agent-context.md) | what inline and forked (separate-agent) skills may and may not do (§1) |
 | [`charter/tdd.md`](references/charter/tdd.md) | the two-tier inner loop, and backfilling tests for existing code (§3) |
 | [`charter/v2-resources.md`](references/charter/v2-resources.md) | the v2 XRD skeleton, what CRD defaults do to a render, choosing a ProviderConfig (§5) |
 | [`charter/xrd-design.md`](references/charter/xrd-design.md) | naming, validation, immutability, status and printer columns for the XR API (§5) |
@@ -62,16 +61,15 @@ or the worked example behind a rule.
 
 ## 1. Know which kind of agent you are
 
-Whether you can hold a conversation depends on how you were started: in the user's own
-conversation, or as a delegated agent whose only caller is another agent. Know which before
-you consider asking anything.
+A skill's frontmatter `context:` decides whether you can hold a conversation. Read yours
+before you consider asking anything.
 
-**Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) — what each may and may not do, and why a delegated agent's only output channel is prose.
+**Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) — what each context may and may not do, and why a fork's only output channel is prose.
 
 
 ## 2. Discover, do not interview
 
-However you were started, the project answers most questions faster and more reliably than
+Whatever your `context:`, the project answers most questions faster and more reliably than
 the user does.
 
 | What you need | Where it is |
@@ -103,7 +101,7 @@ Two limits, and they are easy to trip over:
 
 ## 3. Develop test-first (RED → GREEN → REFACTOR)
 
-This is the suite's default flow for composition code, tests, and migrations alike.
+This is the plugin's default flow for composition code, tests, and migrations alike.
 `author-tests` owns the authoring detail; the loop itself is
 here because every skill is bound by it.
 
@@ -144,7 +142,7 @@ catch the absence of the implementation.
 
 ## 4. Report the effect, not the intent
 
-Every skill in this suite that reported success in a recent evaluation overstated what it
+Every skill in this plugin that reported success in a recent evaluation overstated what it
 had verified — a green composition suite reported as "production-ready", a local KIND run
 reported as a Space pass, "all resources Ready" pasted above a tree showing `Ready=False`,
 provider values "verified" that were read back off the input manifest. The pattern is always
@@ -219,14 +217,6 @@ breaks the resource.
 | `providerConfigRef` | **No** | The same struct, the same way: `+kubebuilder:default={"kind":"ClusterProviderConfig","name":"default"}`. |
 | `metadata.name` | Only for a stable external name | Otherwise Crossplane generates `<prefix>-<sha256(xr-uid + composition-resource-name)[:12]>`, where the prefix comes from the `crossplane.io/composite` label, truncated to 63 chars. Deterministic for one XR instance, **not** across re-creations — and it falls back to a random 5-char suffix when the composition-resource-name annotation or the controller ownerRef is missing. Inside a *render* it is fully deterministic and safe to assert — see §8. |
 | `crossplane.io/composition-resource-name` | Never by hand | It comes from the key you store the resource under. |
-
-**The table is about the composed resource's own metadata, not about objects inside
-`forProvider`.** A Kubernetes object embedded in a managed resource — the `manifest` of a
-provider-kubernetes `Object`, for instance — is input to the provider, and nothing fills in its
-namespace. Set it explicitly, normally to the XR's namespace. Observed with provider-kubernetes
-v1.3.3 on a local control plane: a manifest without `metadata.namespace` leaves the `Object`
-`Synced=False` with `an empty namespace may not be set when a resource name is provided`, while
-the composition tests passed, because they asserted the same omission.
 
 **Detail:** [`charter/v2-resources.md`](references/charter/v2-resources.md) — what these CRD defaults do to a render (it differs by language), when a `providerConfigRef` is genuinely warranted, and the two greps that catch a hardcoded one.
 

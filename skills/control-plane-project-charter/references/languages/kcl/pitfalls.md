@@ -2,7 +2,7 @@
 
 The KCL mistakes that render green and break later, plus a worked interaction.
 
-Language-agnostic rules are in [the charter](../../../SKILL.md); the KCL index is [`../kcl.md`](../kcl.md).
+Language-agnostic rules are in [`../../CHARTER.md`](../../../SKILL.md); the KCL index is [`../kcl.md`](../kcl.md).
 
 ---
 
@@ -56,7 +56,7 @@ parentIdSelector = { matchControllerRef = True }
 
 **Cause**: an explicit `providerConfigRef = { kind = "ProviderConfig", name = "default" }` —
 a reference to a namespaced ProviderConfig nothing creates. See
-[the charter §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
+[`../CHARTER.md` §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
 
 **Solution**: delete it, along with `managementPolicies = ["*"]` and any `metadata.namespace`
 on managed resources.

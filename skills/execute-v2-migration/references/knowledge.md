@@ -1,17 +1,13 @@
 # Crossplane v2 Migration Executor - Knowledge Base
 
-Detailed instructions, briefs, and examples for executing Crossplane v1 to v2 migrations.
-
-Edits below are written as `replace A with B in <file>`. Apply each as an exact string
-replacement: read the file first, match its whitespace exactly, and skip an edit whose
-v2 form is already present.
+Detailed instructions, templates, and examples for executing Crossplane v1 to v2 migrations.
 
 ---
 
 ## Table of Contents
 
 - [Phase Details](#phase-details)
-- [Delegation Briefs](#delegation-briefs)
+- [Sub-agent Prompts](#sub-agent-prompts)
 - [Worked Examples](#worked-examples)
 - [Error Handling](#error-handling)
 - [Troubleshooting](#troubleshooting)
@@ -26,9 +22,12 @@ v2 form is already present.
 ```bash
 test -f .agents/plans/CROSSPLANE_V2_MIGRATION.md
 ```
-If missing → Exit with error: "Run the `plan-v2-migration` skill first"
+If missing → Exit with error: "Run plan-v2-migration skill first"
 
-**Read and parse plan:** read `.agents/plans/CROSSPLANE_V2_MIGRATION.md` in full.
+**Read and parse plan:**
+```bash
+read(".agents/plans/CROSSPLANE_V2_MIGRATION.md")
+```
 
 Extract: project name, XRD count, function count, test count, dependency updates
 
@@ -42,14 +41,11 @@ find apis -name "definition.yaml" -exec grep -l "apiextensions.crossplane.io/v1"
 ```bash
 git status --porcelain
 ```
-If uncommitted changes: in the user's conversation, ask once to commit or continue. As a
-delegated agent, continue, and put the uncommitted paths at the top of your summary.
+If uncommitted changes, ask user once to commit or continue.
 
-**Confirm execution (single question, user's conversation only):**
+**Confirm execution with user (single question):**
 Show: Project name, scope (XRD/function/test counts), phases to execute
 Ask: "Execute migration? (yes/no)"
-
-As a delegated agent you cannot ask: the brief that started you is the confirmation.
 
 ---
 
@@ -64,25 +60,19 @@ git checkout -b migrate-to-v2
 
 Read dependency updates from migration plan Phase 1.2.
 
-For each provider and configuration dependency update, in `upbound.yaml`:
-replace `version: {old}` with `version: {new}`.
-
-If connection secrets detected in plan, in `upbound.yaml` replace
-
-```yaml
-spec:
-  dependsOn:
+For each provider dependency update:
+```bash
+replace(file="upbound.yaml", old="version: {old}", new="version: {new}")
 ```
 
-with
+For each configuration dependency update:
+```bash
+replace(file="upbound.yaml", old="version: {old}", new="version: {new}")
+```
 
-```yaml
-spec:
-  apiDependencies:
-  - k8s:
-      version: v1.33.0
-    type: k8s
-  dependsOn:
+If connection secrets detected in plan:
+```bash
+replace(file="upbound.yaml", old="spec:\n  dependsOn:", new="spec:\n  apiDependencies:\n  - k8s:\n      version: v1.33.0\n    type: k8s\n  dependsOn:")
 ```
 
 **Update cache and build:**
@@ -98,23 +88,65 @@ If build fails → Report error and exit.
 
 ### Phase 2: XRD Migration
 
-For each XRD section in migration plan (Phase 2.X), read
-`apis/{resource}/definition.yaml`, then apply in sequence:
+For each XRD section in migration plan (Phase 2.X):
 
-| # | Change | Replace | With |
-|---|---|---|---|
-| 1 | API version v1 → v2 | `apiVersion: apiextensions.crossplane.io/v1` | `apiVersion: apiextensions.crossplane.io/v2` |
-| 2 | Add scope (if missing) | `spec:` + `  group:` | `spec:` + `  scope: Namespaced` + `  group:` |
-| 3 | Kind (remove X-prefix) | `kind: X{Kind}` | `kind: {Kind}` |
-| 4 | metadata.name (remove x-prefix) | `name: x{plural}` | `name: {plural}` |
-| 5 | spec.names.kind | `kind: X{Kind}` | `kind: {Kind}` |
-| 6 | spec.names.plural (if x-prefixed) | `plural: x{plural}` | `plural: {plural}` |
+**Read XRD:**
+```bash
+read("apis/{resource}/definition.yaml")
+```
+
+**Apply updates in sequence:**
+
+```bash
+# 1. API version v1 → v2
+replace(file="apis/{resource}/definition.yaml",
+        old="apiVersion: apiextensions.crossplane.io/v1",
+        new="apiVersion: apiextensions.crossplane.io/v2")
+
+# 2. Add scope (if missing)
+replace(file="apis/{resource}/definition.yaml",
+        old="spec:\n  group:",
+        new="spec:\n  scope: Namespaced\n  group:")
+
+# 3. Update kind (remove X-prefix)
+replace(file="apis/{resource}/definition.yaml",
+        old="kind: X{Kind}",
+        new="kind: {Kind}")
+
+# 4. Update metadata.name (remove x-prefix)
+replace(file="apis/{resource}/definition.yaml",
+        old="name: x{plural}",
+        new="name: {plural}")
+
+# 5. Update spec.names.kind
+replace(file="apis/{resource}/definition.yaml",
+        old="kind: X{Kind}",
+        new="kind: {Kind}")
+
+# 6. Update spec.names.plural (if has x-prefix)
+replace(file="apis/{resource}/definition.yaml",
+        old="plural: x{plural}",
+        new="plural: {plural}")
+```
 
 **Handle special cases:**
 
-- claimNames detected in plan → remove the whole `claimNames:` block (a multi-line replacement with the empty string).
-- deletionPolicy parameter detected → replace it with `managementPolicies`: `type: string` becomes `type: array` with string items, and the enum values change (Example 1 shows the exact block).
-- connectionSecretKeys detected → remove the `connectionSecretKeys:` block.
+If claimNames detected in plan:
+```bash
+# Remove claimNames section with a multi-line replace
+```
+
+If deletionPolicy parameter detected:
+```bash
+# Replace with managementPolicies using Edit
+# Change type: string → type: array
+# Change enum values
+```
+
+If connectionSecretKeys detected:
+```bash
+# Remove connectionSecretKeys section
+```
 
 **Validate:**
 ```bash
@@ -125,16 +157,13 @@ yq '.' apis/{resource}/definition.yaml > /dev/null
 
 ### Phase 3: Function Code Migration
 
-**CRITICAL:** Migrate each function with the `author-composition` skill.
+**CRITICAL:** Use author-composition skill via sub-agent for each function.
 
 For each function section in migration plan (Phase 3.X):
 
 1. Extract migration requirements from plan for this function
-2. Load the `author-composition` skill and follow it with the
-   [function migration brief](#function-migration-brief). If your agent can delegate work,
-   you may instead hand the function to a delegated agent with that brief; otherwise do it
-   inline.
-3. If it fails → Report error, offer retry once (as a delegated agent: retry once with an adjusted approach, and report it)
+2. Launch sub-agent (see [Sub-agent Prompts](#function-migration-prompt))
+3. Wait for completion. If fails → Report error, offer retry once
 4. Validate syntax:
 ```bash
 kcl functions/{function-name}/main.k >/dev/null 2>&1
@@ -148,8 +177,12 @@ Repeat for all functions.
 
 For each composition section in migration plan (Phase 4.X):
 
-**Update compositeTypeRef kind:** in `apis/{resource}/composition.yaml` replace
-`kind: X{Kind}` with `kind: {Kind}`.
+**Update compositeTypeRef kind:**
+```bash
+replace(file="apis/{resource}/composition.yaml",
+        old="kind: X{Kind}",
+        new="kind: {Kind}")
+```
 
 **Validate:**
 ```bash
@@ -160,26 +193,37 @@ yq '.' apis/{resource}/composition.yaml > /dev/null
 
 ### Phase 5: Example Updates
 
-For each example section in migration plan (Phase 5.X), in `examples/{file}.yaml`:
+For each example section in migration plan (Phase 5.X):
 
-**Update kind:** replace `kind: X{Kind}` with `kind: {Kind}`.
+**Update kind:**
+```bash
+replace(file="examples/{file}.yaml",
+        old="kind: X{Kind}",
+        new="kind: {Kind}")
+```
 
 **Add namespace (if missing):**
 ```bash
-grep -q "namespace:" examples/{file}.yaml || echo "needs namespace"
+if ! grep -q "namespace:" examples/{file}.yaml; then
+  replace(file="examples/{file}.yaml",
+          old="metadata:\n  name: {name}",
+          new="metadata:\n  name: {name}\n  namespace: default")
+fi
 ```
-If it needs one, replace `metadata:` + `  name: {name}` with `metadata:` + `  name: {name}` +
-`  namespace: default`.
 
 **Move compositionSelector (if at wrong level):**
 ```bash
 # Check if compositionSelector exists at spec level
-grep -A1 "^spec:" examples/{file}.yaml | grep -q "compositionSelector:" && echo "move it"
+if grep -A1 "^spec:" examples/{file}.yaml | grep -q "compositionSelector:"; then
+  # Extract compositionSelector content
+  # Move to spec.crossplane.compositionSelector using Edit
+fi
 ```
-If so, move the block under `spec.crossplane.compositionSelector`.
 
-**Remove writeConnectionSecretToRef (if present):** search the file for it and remove the
-block.
+**Remove writeConnectionSecretToRef (if present):**
+```bash
+# Use Grep to detect, Edit to remove section
+```
 
 **Validate:**
 ```bash
@@ -190,16 +234,14 @@ yq '.' examples/{file}.yaml > /dev/null
 
 ### Phase 6: Test Updates
 
-**CRITICAL:** Migrate each test with the `author-tests` skill.
+**CRITICAL:** Use author-tests skill via sub-agent for each test.
 
 For each test section in migration plan (Phase 6.X):
 
 1. Determine test type: composition (test-*) or E2E (e2etest-*)
 2. Extract migration requirements from plan for this test
-3. Load the `author-tests` skill and follow it with the
-   [test migration brief](#test-migration-brief) — or, if your agent can delegate work, hand
-   the test to a delegated agent with that brief; otherwise do it inline.
-4. If it fails → Report error, offer retry once (as a delegated agent: retry once with an adjusted approach, and report it)
+3. Launch sub-agent (see [Sub-agent Prompts](#test-migration-prompt))
+4. Wait for completion. If fails → Report error, offer retry once
 5. Validate syntax:
 ```bash
 kcl tests/{test-name}/main.k >/dev/null 2>&1
@@ -229,10 +271,7 @@ If not needed → Skip phase.
 
 **8.1-8.2: Build and composition tests**
 
-Load the `verify-configuration` skill and follow it with the
-[verification brief](#verification-brief). Its output is long and disposable, so if your
-agent can delegate work, hand it to a delegated agent and keep only the result; otherwise
-run it inline.
+Use verify-configuration skill via a sub-agent (see [Sub-agent Prompts](#verification-prompt)).
 
 If composition tests fail → Report failures, exit (user must fix).
 
@@ -250,13 +289,9 @@ Verify output contains:
 
 **8.4: E2E tests (with single user confirmation)**
 
-E2E tests take 30-60 minutes and create real cloud resources, so never start them
-without consent. In the user's conversation, ask once: "Run E2E tests? (30-60 min, uses
-cloud resources) [yes/no/skip]". As a delegated agent, run them only if the brief that
-started you explicitly asked for E2E; otherwise skip.
+Ask user once: "Run E2E tests? (30-60 min, uses cloud resources) [yes/no/skip]"
 
-If yes: load the `e2e-test-configuration` skill and follow it with the
-[E2E test brief](#e2e-test-brief), delegating it if your agent can.
+If yes: Launch sub-agent (see [Sub-agent Prompts](#e2e-test-prompt)).
 
 If no/skip → Note in summary that E2E tests were skipped.
 
@@ -283,25 +318,25 @@ Migration is functionally complete. Please update:
 Ask: "Would you like help updating README.md? [yes/no]"
 ```
 
-If yes → Update README.md based on user guidance.
-If no, or running as a delegated agent → Include the checklist in the final summary.
+If yes → Use Edit to update README.md based on user guidance.
+If no → Proceed to final summary.
 
 ---
 
-## Delegation Briefs
+## Sub-agent Prompts
 
-Each brief is what to work from when you follow the named skill — inline, or handed to a
-delegated agent if yours can delegate. A delegated agent does not see this conversation,
-so give it the brief in full, with the plan's requirements filled in.
-
-### Function Migration Brief
+### Function Migration Prompt
 
 ```text
-Skill: author-composition
-
+subagent(
+  description="Migrate function {name} to v2",
+  prompt="""
 Migrate Crossplane function to v2: functions/{function-name}/main.k
 
 Keep the exact function name — do NOT add a language suffix (`-python`/`-kcl`). The directory name is the published registry path and must stay in the publish allow-list.
+
+Load the `author-composition` skill
+Tell skill: "Migrate this function from v1 to v2"
 
 **Required changes:**
 {extract from plan:
@@ -329,14 +364,20 @@ Keep the exact function name — do NOT add a language suffix (`-python`/`-kcl`)
 - Files modified: [list]
 - Key changes made: [bullet list]
 - Warnings/concerns: [if any]
+"""
+)
 ```
 
-### Test Migration Brief
+### Test Migration Prompt
 
 ```text
-Skill: author-tests
-
+subagent(
+  description="Update test {name} for v2",
+  prompt="""
 Update Crossplane test for v2: tests/{test-name}/main.k
+
+Load the `author-tests` skill
+Tell skill: "Update this test for v2 migration"
 
 **Required changes:**
 {extract from plan:
@@ -361,15 +402,19 @@ Update Crossplane test for v2: tests/{test-name}/main.k
 - Files modified: [list]
 - Key changes made: [bullet list]
 - Warnings/concerns: [if any]
+"""
+)
 ```
 
-### Verification Brief
+### Verification Prompt
 
 ```text
-Skill: verify-configuration
+subagent(
+  description="Verify build and composition tests",
+  prompt="""
+Load the `verify-configuration` skill
 
-Build the project and run the composition tests only. Do not run E2E tests and do not
-deploy to a control plane.
+When asked about E2E tests, select "No - I'll run them later"
 
 **SUCCESS CRITERIA:**
 1. `up project build` completes without errors
@@ -379,18 +424,19 @@ deploy to a control plane.
 - Build status: SUCCESS | FAILURE
 - Composition tests: X/Y passed
 - Failure details: [if any failures, include test name and error]
+"""
+)
 ```
 
-### E2E Test Brief
+### E2E Test Prompt
 
 ```text
-Skill: e2e-test-configuration
+subagent(
+  description="Run E2E tests",
+  prompt="""
+Load the `e2e-test-configuration` skill
 
-Run these E2E tests to completion, one at a time, with monitoring:
-<list every test name: ls -1d tests/e2etest-* | sed 's|tests/||'>
-
-Name every test. A delegated run with no test named lists the tests and stops,
-because each run creates real resources.
+Let skill complete all E2E tests with monitoring.
 
 **SUCCESS CRITERIA:**
 1. All E2E tests complete (pass or fail with clear reason)
@@ -400,9 +446,12 @@ because each run creates real resources.
 - Status: X/Y tests passed
 - Failed tests: [list with brief reason]
 - Resource issues: [if applicable]
+"""
+)
 ```
 
 ---
+
 ## Worked Examples
 
 ### Example 1: XRD Migration
@@ -485,39 +534,39 @@ spec:
                       default: ["*"]
 ```
 
-**Replacements applied, in order** (`old` → `new`):
-```text
+**Edit commands used:**
+```bash
 # 1. API version
-"apiVersion: apiextensions.crossplane.io/v1"
-  → "apiVersion: apiextensions.crossplane.io/v2"
+replace(old="apiVersion: apiextensions.crossplane.io/v1",
+        new="apiVersion: apiextensions.crossplane.io/v2")
 
 # 2. Add scope
-"spec:\n  group:"
-  → "spec:\n  scope: Namespaced\n  group:"
+replace(old="spec:\n  group:",
+        new="spec:\n  scope: Namespaced\n  group:")
 
 # 3. Update metadata.name
-"name: xnetworks.aws.example.org"
-  → "name: networks.aws.example.org"
+replace(old="name: xnetworks.aws.example.org",
+        new="name: networks.aws.example.org")
 
 # 4. Update kind
-"kind: XNetwork"
-  → "kind: Network"
+replace(old="kind: XNetwork",
+        new="kind: Network")
 
 # 5. Update plural
-"plural: xnetworks"
-  → "plural: networks"
+replace(old="plural: xnetworks",
+        new="plural: networks")
 
 # 6. Remove claimNames (multi-line edit)
-"  claimNames:\n    kind: Network\n    plural: networks\n"
-  → ""
+replace(old="  claimNames:\n    kind: Network\n    plural: networks\n",
+        new="")
 
 # 7. Remove connectionSecretKeys
-"  connectionSecretKeys:\n    - vpcId\n    - subnetIds\n"
-  → ""
+replace(old="  connectionSecretKeys:\n    - vpcId\n    - subnetIds\n",
+        new="")
 
 # 8. Replace deletionPolicy with managementPolicies
-"                    deletionPolicy:\n                      type: string\n                      enum: [Delete, Orphan]\n                      default: Delete"
-  → "                    managementPolicies:\n                      type: array\n                      items:\n                        type: string\n                        enum: [\"*\", \"Create\", \"Update\", \"Delete\", \"LateInitialize\", \"Observe\"]\n                      default: [\"*\"]"
+replace(old="                    deletionPolicy:\n                      type: string\n                      enum: [Delete, Orphan]\n                      default: Delete",
+        new="                    managementPolicies:\n                      type: array\n                      items:\n                        type: string\n                        enum: [\"*\", \"Create\", \"Update\", \"Delete\", \"LateInitialize\", \"Observe\"]\n                      default: [\"*\"]")
 ```
 </example>
 
@@ -655,7 +704,7 @@ If still failing → Report error, check dependency versions, exit.
 
 ### XRD Edit Failures
 
-**Symptom:** an exact replacement finds no match
+**Symptom:** the replacement fails with "old text not found"
 
 **Common causes:**
 1. Whitespace differences (tabs vs spaces)
@@ -664,16 +713,16 @@ If still failing → Report error, check dependency versions, exit.
 
 **Resolution:**
 1. Read the file to see exact content
-2. Adjust the text being replaced to match the exact whitespace
+2. Adjust the old text to match exact whitespace
 3. If already migrated, skip this edit
 
 ### Function Migration Failures
 
-**Symptom:** `author-composition` (or the delegated agent following it) reports FAILURE
+**Symptom:** sub-agent reports FAILURE
 
 **Resolution:**
 1. Check the error message for specifics
-2. Offer the user one retry with an adjusted brief (as a delegated agent: retry once yourself, and report it)
+2. Offer user one retry with adjusted prompt
 3. If retry fails → Report error, suggest manual intervention
 
 ```markdown
@@ -714,7 +763,7 @@ Failed tests:
 - {test-name}: {brief error}
 
 Migration paused. Please fix composition test failures before continuing.
-After fixing, ask to continue the v2 migration (argument `continue`).
+After fixing, ask to continue the migration (execute-v2-migration resumes from the plan)
 ```
 
 ---
@@ -723,9 +772,13 @@ After fixing, ask to continue the v2 migration (argument `continue`).
 
 ### Q: Migration plan not found
 
-**Error:** "Run the `plan-v2-migration` skill first"
+**Error:** "Run plan-v2-migration skill first"
 
-**Solution:** Generate the migration plan first with the `plan-v2-migration` skill.
+**Solution:**
+```bash
+# Generate migration plan first
+Plan the migration again (plan-v2-migration)
+```
 
 ### Q: Git branch already exists
 
@@ -746,7 +799,7 @@ git branch -D migrate-to-v2
 
 ### Q: Some changes were already made
 
-**Symptom:** a replacement finds no match because the v2 pattern is already present
+**Symptom:** Edit fails because v2 patterns already present
 
 **Solution:** The skill should detect partially migrated files and skip completed edits. If this happens:
 1. Read the file to verify current state
@@ -757,7 +810,7 @@ git branch -D migrate-to-v2
 
 **Symptom:** E2E tests run for >60 minutes without completion
 
-**Solution:** The `e2e-test-configuration` skill has built-in stuck detection. If it triggers:
+**Solution:** The e2e-test-configuration skill has built-in stuck detection. If it triggers:
 1. Check for resource provisioning issues
 2. Check cloud provider quotas
 3. Consider running tests individually

@@ -2,7 +2,7 @@
 
 Writing composition and E2E tests in Python: what the suite must contain, how assertions behave, the templates, and the two dump modes.
 
-Language-agnostic rules are in [the charter](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
+Language-agnostic rules are in [`../../CHARTER.md`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
 
 ---
 
@@ -107,7 +107,7 @@ Writing *observed but not ready* and *observed and ready* as two cases is what s
 function that never checks readiness passes.
 
 **3. Assert every `status` field the function writes, on the composite.**
-`assertResources` matches the composite (see [the charter §8](../../../SKILL.md#8-a-green-run-is-not-evidence)). Without this, a
+`assertResources` matches the composite (see [`../CHARTER.md` §8](../../../SKILL.md#8-a-green-run-is-not-evidence)). Without this, a
 `resource.update()` that clobbers nested keys — writing `{"status": {...}}` more than once
 drops all but the last — passes silently, and you blame the provider.
 
@@ -141,7 +141,7 @@ Two things that example is showing you, both from a real render:
 
 - **Hardcoding a generated name here is safe.** A render synthesizes a deterministic uid, so
   those hashes are identical on every run — verified across repeated runs and a mutation run
-  ([the charter §8](../../../SKILL.md#8-a-green-run-is-not-evidence)). §5's warning that
+  ([`../CHARTER.md` §8](../../../SKILL.md#8-a-green-run-is-not-evidence)). §5's warning that
   generated names are unstable is about a live control plane, not a render.
 - **The order is the renderer's**, and it is neither alphabetical nor creation order — the
   `Bucket` everything else depends on comes *last*. Copy the list out of `render.log` rather

@@ -164,7 +164,7 @@ test -f upbound.yaml && echo "Existing project" || echo "New project"
 find apis -name "definition.yaml" 2>/dev/null | sed 's|apis/||;s|/definition.yaml||'
 ```
 
-**Ask the user which applies:**
+**Options to ask the user:**
 - New project
 - Modify existing → Add new resource
 - Modify existing → Change existing resource

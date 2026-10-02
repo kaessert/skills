@@ -1,6 +1,6 @@
 # The container boundary
 
-Where manifest generation and function rendering actually run, and what crosses into them. [the charter §7](../../SKILL.md#7-the-container-boundary) states the rule.
+Where manifest generation and function rendering actually run, and what crosses into them. [`../CHARTER.md` §7](../../SKILL.md#7-the-container-boundary) states the rule.
 
 ---
 

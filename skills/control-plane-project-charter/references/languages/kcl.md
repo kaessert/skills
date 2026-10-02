@@ -4,7 +4,7 @@ Everything KCL-specific for a control-plane project: composition functions **and
 
 The language-agnostic rules — the TDD loop, what a v2 managed resource needs, the container
 boundary, what a green run proves, reporting discipline — are in
-[the charter](../../SKILL.md) and are **not** repeated here. Read the charter first; this
+[`../CHARTER.md`](../../SKILL.md) and are **not** repeated here. Read the charter first; this
 file only tells you how KCL expresses it.
 
 | | |
@@ -18,7 +18,7 @@ file only tells you how KCL expresses it.
 # Part 1 — Imports and models
 
 **Namespaced models use the `m`-suffixed import path.** This is the KCL expression of the
-`.m.` namespaced-API rule in [the charter §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs);
+`.m.` namespaced-API rule in [`../CHARTER.md` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs);
 note that KCL puts the `m` on the *cloud* segment (`awsm`), where Python puts it before
 (`m.aws`).
 

@@ -1,6 +1,6 @@
 ---
 name: author-tests
-description: Write, modify, refactor, or plan the refactoring of Crossplane configuration tests in an Upbound control-plane project, both composition tests and E2E tests, in KCL, Python, YAML, Go, or go-templating. Use when asked to add a test for a composition, cover a new resource or field, write an E2E test with cloud credentials, fix a test that passes but asserts nothing, consolidate duplicated tests, or plan a test refactor. Detects the test language from tests/ (which may differ from the function language), scaffolds with `up test generate`, and writes the failing assertion first. Part of the control-plane-project suite and bound by `control-plane-project-charter`. Not for running the suite or deploying, which is `verify-configuration`, not for executing E2E tests, which is `e2e-test-configuration`, and not for composition function code, which is `author-composition`.
+description: Use this skill when user requests to implement a feature, write, create, author, modify, refactor or plan refactoring of Crossplane configuration tests (composition tests or E2E tests) in a control-plane project - in any language (KCL, Python, YAML, Go, go-templating). Use this rather than a generic planning mode when the user asks for a plan to refactor composition tests or e2e tests in a crossplane configuration package. Specialized skill focused only on test authoring and modification (not running tests). Detects the test language and applies the right templates and patterns. Use this skill instead of writing test files directly.
 license: Apache-2.0
 references:
   - references/knowledge.md
@@ -10,13 +10,6 @@ references:
 
 Author and modify Crossplane configuration tests, in any language `up test generate` supports.
 
-**Load the `control-plane-project-charter` skill first and read its SKILL.md end to end.** It
-holds the rules every skill in this suite follows — the TDD loop, what a v2 composed resource
-needs, the container boundary, reporting discipline — and they are not repeated here. For test
-syntax, read its `languages/<lang>.md` reference and that language's test files (for Python,
-`languages/python/tests.md` and `languages/python/test-templates.md`; for KCL,
-`languages/kcl/tests.md`).
-
 ## Core Principle
 
 **A test's *meaning* is language-agnostic; only its *syntax* differs.**
@@ -25,7 +18,7 @@ Every composition and E2E test - whether written in KCL, Python, YAML, Go, or go
 
 So this skill has two layers:
 - **Language-agnostic core** (this file + [knowledge.md](references/knowledge.md)): the object model, rules, patterns, and mistakes. Read these regardless of language.
-- **Per-language reference** (`languages/kcl.md`, `languages/python.md`, `languages/yaml.md` in `control-plane-project-charter`): syntax, scaffolding, templates, and language-specific mistakes.
+- **Per-language reference** (kcl.md (`control-plane-project-charter` `languages/kcl.md`), python.md (`control-plane-project-charter` `languages/python.md`), yaml.md (`control-plane-project-charter` `languages/yaml.md`)): syntax, scaffolding, templates, and language-specific mistakes.
 
 ## Scope
 
@@ -43,7 +36,8 @@ So this skill has two layers:
 
 ## The TDD loop — this skill owns the RED step
 
-The canonical loop lives in charter §3 (`control-plane-project-charter`): write the
+The canonical loop lives in
+`control-plane-project-charter` §3: write the
 test, run it, read the failure, then implement. It is not repeated here — read it, including
 the table of which failures count as RED and the deliberate-mutation technique for backfill.
 
@@ -64,11 +58,11 @@ and deploys and is not an inner loop.
 **The test language is NOT necessarily the composition language.** A Python composition project can (and often does) use raw YAML tests - `configuration-aws-ctp` is exactly this: Python functions, YAML tests. Detect the *test* language from the `tests/` directory, then fall back to project language, then ask.
 
 ```
-Inspect tests/ (skip empty projects); the files are in control-plane-project-charter:
-  tests/*/**.k                         → KCL      → languages/kcl.md
-  tests/*/test/__main__.py, main.py    → Python   → languages/python.md
-  tests/*/*.yaml, no other test source → YAML     → languages/yaml.md
-  tests/*/*.go, *.gotmpl               → Go       → languages/go.md
+Inspect tests/ (skip empty projects):
+  tests/*/**.k                         → KCL      → ../../languages/kcl.md
+  tests/*/test/__main__.py, main.py    → Python   → ../../languages/python.md
+  tests/*/*.yaml, no other test source → YAML     → ../../languages/yaml.md
+  tests/*/*.go, *.gotmpl               → Go       → ../../languages/go.md
 
 No tests yet? Pick the language:
   1. Match existing test style if any test exists anywhere
@@ -95,11 +89,9 @@ Scaffold in the chosen language:
 > python3 <author-composition>/scripts/setup_venv.py --project <root>
 > ```
 >
-> The script ships with the `author-composition` skill in this suite.
->
 > It installs every function *and* test directory from the project's own pins, so run it again
 > after generating a new test directory. Details in
-> `languages/python.md` in `control-plane-project-charter`.
+> `languages/python.md` (`control-plane-project-charter` `languages/python.md`).
 
 > **New projects:** `up project init` takes `--test-language` **separately** from `--language` (functions), confirming the two are independent axes (e.g. Go functions + Python tests). If you initialize a project, set the test language deliberately.
 
@@ -147,12 +139,13 @@ EXECUTE REFACTORING:
 | Azure | `azure.m.upbound.io/v1beta1` | `webIdentity.clientID` |
 | GCP | `gcp.m.upbound.io/v1beta1` | `federation.providerID` + `serviceAccount` |
 
-**CRITICAL**: always use the `.m.` API groups in tests. The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See charter §5 (`control-plane-project-charter`).
+**CRITICAL**: always use the `.m.` API groups in tests. The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See `control-plane-project-charter` §5.
 
 **A composed managed resource should carry no `providerConfigRef` at all** — the API server
 defaults it to `{kind: ClusterProviderConfig, name: default}`, which is the object the templates
-and generated E2E tests create. See charter §5
-(`control-plane-project-charter`) for the live-control-plane evidence that overriding it leaves the resource inert.
+and generated E2E tests create. See
+`control-plane-project-charter` §5
+for the live-control-plane evidence that overriding it leaves the resource inert.
 
 So in a test's `extraResources`, create a **`ClusterProviderConfig`** (cluster-scoped, no
 namespace) unless the project genuinely uses per-namespace credentials — in which case it
@@ -188,8 +181,8 @@ Do NOT hard-code a stale pinned version copied from an example - if you pin, use
 ### Namespaced APIs (`.m.`) - expressed differently per language
 
 Everything in tests uses the **namespaced** API surface (`aws.m.upbound.io`, `kubernetes.m.crossplane.io`, `helm.m.crossplane.io`, ...). How you write that depends on the language:
-- **KCL / Python**: via the imported model path (the `m` in the import). See `languages/kcl.md` / `languages/python.md` in `control-plane-project-charter`.
-- **YAML**: directly in the `apiVersion` string (e.g. `s3.aws.m.upbound.io/v1beta1`). No imports. See `languages/yaml.md` in `control-plane-project-charter`.
+- **KCL / Python**: via the imported model path (the `m` in the import). See kcl.md (`control-plane-project-charter` `languages/kcl.md`) / python.md (`control-plane-project-charter` `languages/python.md`).
+- **YAML**: directly in the `apiVersion` string (e.g. `s3.aws.m.upbound.io/v1beta1`). No imports. See yaml.md (`control-plane-project-charter` `languages/yaml.md`).
 
 ## Test Organization
 
@@ -203,11 +196,12 @@ Everything in tests uses the **namespaced** API surface (`aws.m.upbound.io`, `ku
 - E2E tests (always separate, `e2etest-` prefix)
 - Complex sequential dependencies
 
-## Phase 0: You run in the user's conversation, and you are bound by the charter
+## Phase 0: You run inline, and you are bound by the charter
 
-This skill runs in the user's conversation: you share their working directory, and you can
-ask. Charter §1 (`control-plane-project-charter`) says what that means for asking questions,
-and §4 what it means for your summary. Both apply in full, and are not repeated here.
+This skill runs inline — you expand into the caller's conversation, share their
+working directory, and can ask. `control-plane-project-charter` §1 says what
+that means for asking questions, and §4 (`control-plane-project-charter`) what it
+means for your summary. Both apply in full, and are not repeated here.
 
 **Read the whole charter before you start.** It also carries the TDD loop (§3), what a v2
 composed resource needs (§5), the container boundary (§7), and what a green run does and does
@@ -250,9 +244,9 @@ not prove (§8).
 ## References
 
 - [knowledge.md](references/knowledge.md) - language-agnostic object model, patterns, common mistakes, refactoring template
-- `languages/kcl.md` in `control-plane-project-charter` - KCL syntax, imports, templates (composition + E2E for AWS/Azure/GCP)
-- `languages/python.md` in `control-plane-project-charter` - Python SDK test layout, Pydantic dump modes, templates
-- `languages/yaml.md` in `control-plane-project-charter` - raw YAML tests, real-world examples
+- kcl.md (`control-plane-project-charter` `languages/kcl.md`) - KCL syntax, imports, templates (composition + E2E for AWS/Azure/GCP)
+- python.md (`control-plane-project-charter` `languages/python.md`) - Python SDK test layout, Pydantic dump modes, templates
+- yaml.md (`control-plane-project-charter` `languages/yaml.md`) - raw YAML tests, real-world examples
 
 ## Success Criteria
 

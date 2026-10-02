@@ -2,7 +2,7 @@
 
 Module layout, the entry point, and the KCL syntax for each composition pattern.
 
-Language-agnostic rules are in [the charter](../../../SKILL.md); the KCL index is [`../kcl.md`](../kcl.md).
+Language-agnostic rules are in [`../../CHARTER.md`](../../../SKILL.md); the KCL index is [`../kcl.md`](../kcl.md).
 
 ---
 
@@ -306,7 +306,7 @@ labels = config.sanitizeLabels(config.tags)
 
 ## Pattern 5.3: what a v2 managed resource needs
 
-See [the charter §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
+See [`../CHARTER.md` §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
 In KCL that reduces to: write `spec.forProvider` and stop.
 
 ```kcl

@@ -1,6 +1,6 @@
 # Test Authoring Knowledge Base (language-agnostic)
 
-The object model, patterns, and mistakes that apply to Crossplane configuration tests **regardless of language**. For syntax, see the per-language references: `languages/kcl.md` in `control-plane-project-charter`, `languages/python.md` in `control-plane-project-charter`, `languages/yaml.md` in `control-plane-project-charter`.
+The object model, patterns, and mistakes that apply to Crossplane configuration tests **regardless of language**. For syntax, see the per-language references: kcl.md (`control-plane-project-charter` `languages/kcl.md`), python.md (`control-plane-project-charter` `languages/python.md`), yaml.md (`control-plane-project-charter` `languages/yaml.md`).
 
 ## Table of Contents
 
@@ -93,7 +93,7 @@ credentials:
       serviceAccount: SA@PROJECT.iam.gserviceaccount.com
 ```
 
-If a project genuinely requires a static-Secret ProviderConfig, use `source: Secret` with a `Secret` in `extraResources` (Python E2E example in `languages/python.md` in `control-plane-project-charter` shows the pattern; source the value from an env var into `stringData`, as the training labs do). The env var **must be named `UP_*`**: manifest generation runs in a container that receives only `UP_`-prefixed variables and has no `~/.aws`, so `AWS_ACCESS_KEY_ID` and friends arrive empty — see the container boundary (charter §7 in `control-plane-project-charter`). Never inline real long-lived credentials.
+If a project genuinely requires a static-Secret ProviderConfig, use `source: Secret` with a `Secret` in `extraResources` (Python E2E example in python.md (`control-plane-project-charter` `languages/python.md`) shows the pattern; source the value from an env var into `stringData`, as the training labs do). The env var **must be named `UP_*`**: manifest generation runs in a container that receives only `UP_`-prefixed variables and has no `~/.aws`, so `AWS_ACCESS_KEY_ID` and friends arrive empty — see the container boundary (`control-plane-project-charter`). Never inline real long-lived credentials.
 
 ### Two ProviderConfig kinds (v2)
 
@@ -133,7 +133,7 @@ Test resource **dependencies** and **status-driven branches** without real cloud
 - Set `validate: false` for these - you are deliberately mocking status the schema would not populate.
 - Mock only the status fields the composition actually reads (e.g. `status.atProvider.state: deployed`, a condition `type: Ready, status: "True"`, or a provider-specific status contract like `status.eks.clusterArn`).
 
-This is how you verify "resource B only renders once resource A is Ready" and "the XR surfaces field X once the observed endpoint is known". See the real multi-step examples in `languages/yaml.md` in `control-plane-project-charter`.
+This is how you verify "resource B only renders once resource A is Ready" and "the XR surfaces field X once the observed endpoint is known". See the real multi-step examples in yaml.md (`control-plane-project-charter` `languages/yaml.md`).
 
 ---
 

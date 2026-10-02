@@ -1,6 +1,6 @@
 ---
 name: author-composition
-description: Write, extend, and debug Crossplane composition functions in an Upbound control-plane project, in KCL, Python, TypeScript, or Go. Use when asked to create or modify a composition or composition function, add a managed resource to an XR, fix model or type import paths, move a function to the namespaced `.m.` v2 APIs, or work out why a composition renders green but the resource never reconciles. Detects the function language and Crossplane generation from the project, enforces the v2 rules composition tests cannot catch (`forProvider`-only resources, no dangling `providerConfigRef`, resolved import paths), and runs a test-first loop with `up test run`. Part of the control-plane project suite and bound by `control-plane-project-charter`. For writing the tests themselves use `author-tests`; for XRD design and project scaffolding use `author-configuration-package`.
+description: Use this skill when the user asks to create, extend, modify, or debug a Crossplane composition function in a control-plane project — in any language (KCL, Python, TypeScript, Go). Detects the function language and applies the matching reference. Also use when asked about Crossplane v2 composition patterns, model/type import paths, namespaced `.m.` APIs, or why a composition renders green but the resource never reconciles. For authoring the tests themselves use author-tests; for XRD design use author-configuration-package. Use this skill instead of writing composition code directly. It enforces the v2 rules that composition tests cannot catch — `forProvider`-only resources, no dangling `providerConfigRef`, resolved import paths — and the test-first loop that makes a coverage claim checkable.
 license: Apache-2.0
 references:
   - references/knowledge.md
@@ -25,33 +25,31 @@ So this skill has three layers, and you read all three:
 
 | Layer | File | What it holds |
 |---|---|---|
-| Charter | the `control-plane-project-charter` skill's `SKILL.md` | agent behaviour, the TDD loop, what v2 requires, the container boundary, reporting discipline. **Binding on every skill in the suite.** |
+| Charter | `control-plane-project-charter` | agent behaviour, the TDD loop, what v2 requires, the container boundary, reporting discipline. **Binding on every skill.** |
 | Agnostic patterns | [knowledge.md](references/knowledge.md) | what each composition pattern *means*, the design questions, the failure modes |
-| Language syntax | `languages/<lang>.md` in `control-plane-project-charter` (under its references) | imports, layout, bootstrap, templates, per-language mistakes |
+| Language syntax | `languages/` (`control-plane-project-charter` `languages`) | imports, layout, bootstrap, templates, per-language mistakes |
 
-**Load the `control-plane-project-charter` skill first and read its `SKILL.md` end to end;
-for language syntax read its `languages/<lang>.md` reference.** Nothing in it is repeated
-here; when this file and the charter disagree, the charter wins. "Charter §N" below means
-section N of that skill's `SKILL.md`.
+**Read the charter first.** Nothing in it is repeated here; when this file and the charter
+disagree, the charter wins.
 
-## Phase 0: You run in the user's conversation, and you are bound by the charter
+## Phase 0: You run inline, and you are bound by the charter
 
-This skill runs where the user can see your work and answer you: you share their working
-directory, and you can ask. Charter §1 says what that means for asking questions; charter §4
-says what it means for your summary. Both apply in full.
+This skill runs inline — you expand into the caller's conversation, share their
+working directory, and can ask. `control-plane-project-charter` §1
+says what that means for asking questions;
+§4 (`control-plane-project-charter`) says what it means for your
+summary. Both apply in full.
 
 ## Phase 1: Detect the language *and the Crossplane generation* — do not ask
 
 **The function language is not necessarily the test language.** Detect the *function*
 language from `functions/`:
 
-Language files below are in `control-plane-project-charter`, under `references/`.
-
 ```
-functions/*/*.k                            → KCL         → languages/kcl.md
-functions/*/main.py | */function/fn.py     → Python      → languages/python.md
-functions/*/*.ts                           → TypeScript  → languages/typescript.md
-functions/*/*.go                           → Go          → languages/go.md
+functions/*/*.k                            → KCL         → ../../languages/kcl.md
+functions/*/main.py | */function/fn.py     → Python      → ../../languages/python.md
+functions/*/*.ts                           → TypeScript  → ../../languages/typescript.md
+functions/*/*.go                           → Go          → ../../languages/go.md
 ```
 
 No functions yet? Take the language from `upbound.yaml`, else from an existing function
@@ -76,34 +74,32 @@ import formula, and the bootstrap, all of which are wrong by default if you gues
 
 ## Phase 2: Discover — do not ask
 
-charter §2 has the general table.
+`control-plane-project-charter` §2 has the general table.
 These are the composition-specific additions:
 
 | What you need | How to get it — no question required |
 |---|---|
 | **Models missing entirely** (fresh clone) | `.up/` is gitignored and starts **empty**. Run `up dep update-cache`, then `up project build`. Nothing prompts for this and every model import fails until you do |
-| Function layout + import prefix | the language file's detection recipe — for Python, `python3 "<author-composition>/scripts/probe_project.py" --project <root>` |
+| Function layout + import prefix | the language file's detection recipe — for Python, `python3 "$SCRIPTS/probe_project.py" --project <root>` |
 | Exact import line and class names per Kind | same probe, with the Kinds named |
-| Field names and types on a managed resource | `python3 "<author-composition>/scripts/probe_project.py" --project <root> --fields <Kind>` — prints every `forProvider` field, flags list fields whose Upjet names are misleadingly **singular** (`attribute`, `globalSecondaryIndex`), and lists cross-resource `*Ref`/`*Selector` fields. For other languages, read the generated schema directly |
+| Field names and types on a managed resource | `python3 "$SCRIPTS/probe_project.py" --project <root> --fields <Kind>` — prints every `forProvider` field, flags list fields whose Upjet names are misleadingly **singular** (`attribute`, `globalSecondaryIndex`), and lists cross-resource `*Ref`/`*Selector` fields. For other languages, read the generated schema directly |
 
-The scripts are in this skill's [`scripts/`](scripts/) directory, next to this file. Commands
-here write them as `<author-composition>/scripts/<file>`: replace `<author-composition>` with
-this skill directory's absolute path **in every command**. Do not keep it in a shell variable —
-most agents start each command in a fresh shell, so a variable set in one call is gone in the
-next and the path collapses to a bare "No such file".
+`$SCRIPTS` is this skill's [`scripts/`](scripts/) directory (`scripts/probe_project.py`,
+`scripts/setup_venv.py`, `scripts/run_function.py`), `<author-composition>/scripts`,
+where `<author-composition>` is this skill's absolute path. A wrong path makes every call die
+with a bare "No such file". Resolve it once, and check it:
 
-| Script | Needs | What it does |
-|---|---|---|
-| `scripts/probe_project.py` | standard library | prints the function layout, Crossplane generation, exact import lines, and `forProvider` fields per Kind |
-| `scripts/setup_venv.py` | standard library | builds a project-local `.venv` from the project's own pins so imports resolve in the editor |
-| `scripts/run_function.py` | the project venv that `setup_venv.py` builds (function SDK, pydantic, PyYAML) | runs the function locally against example XRs — the sub-second fast tier |
+```bash
+SCRIPTS=<author-composition>/scripts
+[ -f "$SCRIPTS/probe_project.py" ] || echo "probe_project.py not found — pass its path explicitly"
+```
 
 The scripts are Python-specific; the other languages read their generated types directly.
 
 **Python: set up the venv now, before Phase 3.**
 
 ```bash
-python3 "<author-composition>/scripts/setup_venv.py" --project <root>     # ~11s, once
+python3 "$SCRIPTS/setup_venv.py" --project <root>     # ~11s, once
 ```
 
 Do this as part of discovery, not when something breaks. It builds `.venv` from the project's
@@ -140,7 +136,7 @@ See [knowledge.md](references/knowledge.md) for each design question in full. In
    never reads A's status. Plumbing the value yourself forces a second reconcile and a
    readiness branch you then have to test.
 4. **List fields.** *One element → one resource* is a decision you justify, not a default —
-   charter §6.
+   `control-plane-project-charter` §6.
 5. **Conditional resources** — which use `ready OR exists`, and where each conditional
    belongs relative to the existing guard clauses (knowledge.md: the guard-clause chain).
 6. **Flexible maps** — does the XRD use `additionalProperties` for tags and labels? Fixed
@@ -150,7 +146,7 @@ See [knowledge.md](references/knowledge.md) for each design question in full. In
 ## Phase 4: RED — write the failing test before the implementation
 
 **Not optional, and it comes before any function code.**
-charter §3 owns the
+`control-plane-project-charter` §3 owns the
 loop; this is the composition author's half of it.
 
 The design you just settled already fixes what the function must emit — the keys, the Kinds,
@@ -158,11 +154,11 @@ the fields. Write that as an assertion **now**, while it states intent, rather t
 afterwards when it can only describe whatever the code produced.
 
 1. Make sure the XRD and a composition exist so the test has something to point at. Write
-   the XRD directly — charter §5
+   the XRD directly — `control-plane-project-charter` §5
    has the v2 skeleton — and scaffold the composition with `up composition generate`, which
    emits only an auto-ready step, so wire your function in with
    `up function generate <n> <composition-path>`. The function body stays empty or unchanged.
-2. Author the test via the `author-tests` skill, which reads the same
+2. Author the test via **author-tests**, which reads the same
    `languages/` file you did.
 3. **Run it and read the failure:**
 
@@ -188,7 +184,7 @@ The language file has the bootstrap and the syntax. Language-independent, in ord
    `struct_to_dict`; skipping it fails *silently* on current Up CLI versions).
 2. Create managed resources with **`forProvider` only** — no `providerConfigRef`, no
    `managementPolicies`, no `metadata.namespace`
-   (charter §5).
+   (`control-plane-project-charter` §5).
 3. Convert flexible maps to the language's plain map type before assigning them.
 4. Extract connection details by **composition key**, not by resource name.
 5. Mark any ProviderConfig ready **after** writing the resource, never before.
@@ -204,14 +200,14 @@ exact recipe). It asserts nothing, so it supplements the loop and never replaces
 
 With the suite green, tidy the implementation, then add the next failing assertion and go
 round again. Everything below is what "covered" has to mean before you write it down.
-charter §8 explains why each
+`control-plane-project-charter` §8 explains why each
 green thing is not evidence; this is the checklist.
 
 **1. Check provider validity, not just v2 conformance.** Namespaced APIs and
 `forProvider`-only are *Crossplane* correctness — they say nothing about whether the
 provider will accept the resource. Read the generated model's own constraints, then ask the
 structural question the models cannot answer
-(charter §6).
+(`control-plane-project-charter` §6).
 Write the result in your summary: which Kinds you checked, what the schema required, and
 which API-level rule you could not confirm.
 
@@ -224,7 +220,7 @@ lifecycle task, both with a fully green composition suite:
 | a rule with neither `filter` nor `prefix` | S3 rejects it with `MalformedXML`; nothing emitted a fallback filter |
 
 **2. Grep your own function** with the two checks in
-charter §5, and judge
+`control-plane-project-charter` §5, and judge
 each hit rather than counting them. Legitimate hits: a `namespace` on a Secret or ConfigMap you
 compose yourself, and a `providerConfigRef` on a platform that genuinely has more than one
 credential — in which case `kind` must name an object the project actually creates.

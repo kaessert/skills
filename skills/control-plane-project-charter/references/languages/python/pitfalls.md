@@ -2,7 +2,7 @@
 
 The mistakes that produce a green run and a broken platform, how to read the failures, and what changes when moving a Python function from v1 to v2.
 
-Language-agnostic rules are in [the charter](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
+Language-agnostic rules are in [`../../CHARTER.md`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
 
 ---
 
@@ -10,7 +10,7 @@ Language-agnostic rules are in [the charter](../../../SKILL.md); the Python inde
 
 | Pitfall | Symptom | Fix |
 |---------|---------|-----|
-| Wrong import path | `ModuleNotFoundError` | Run `python3 "<author-composition>/scripts/probe_project.py" --project <project-root> <Kind>` — never derive it by hand. Reversed group + lowercased Kind, de-duplicated when the group's **leftmost** segment already equals the Kind |
+| Wrong import path | `ModuleNotFoundError` | Run `python3 "$SCRIPTS/probe_project.py" --project <project-root> <Kind>` — never derive it by hand. Reversed group + lowercased Kind, de-duplicated when the group's **leftmost** segment already equals the Kind |
 | No `struct_to_dict` | `AttributeError: get` at model construction — an unhelpful message, not a silent failure, and not version-dependent | Wrap in `resource.struct_to_dict()` |
 | Several `resource.update(..., {"status": {...}})` calls | XR reports only the last field; `status.conditions` may vanish. Renders fine, tests green | `resource.update` clobbers nested keys (protobuf `Struct.update`). Write **one** call with all keys — Pattern 4b above |
 | `xr.spec.<obj>.get(...)` or `.attr` on an optional XRD object | `AttributeError` on half your inputs: `'Kms' object has no attribute 'get'`, or `'dict' object has no attribute 'enableKeyRotation'` | `default: {}` in the XRD generates `Optional[Kms] = {}` and Pydantic does not coerce defaults, so it is a `dict` when absent and a model when set. Normalise first; drop `default: {}` — Pattern 4c |
@@ -70,7 +70,7 @@ from models.io.example.platform.network import v1alpha1
 ```
 A sibling Kind in that same group is **not** de-duplicated
 (`from models.io.example.platform.network.subnet import v1alpha1`). Don't infer the rule from one
-resource — run `python3 "<author-composition>/scripts/probe_project.py" --project <project-root> <Kind>`.
+resource — run `python3 "$SCRIPTS/probe_project.py" --project <project-root> <Kind>`.
 
 ```
 ModuleNotFoundError: No module named 'models'

@@ -2,7 +2,7 @@
 
 The function bootstrap, what a v2 managed resource needs, and the data-shape patterns that bite in Python: tag maps, `resource.update()` semantics, optional XRD objects, namespace propagation, and designing an XRD that generates clean models.
 
-Language-agnostic rules are in [the charter](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
+Language-agnostic rules are in [`../../CHARTER.md`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
 
 ---
 
@@ -72,7 +72,7 @@ That message names nothing useful, which is why it is worth recognising. (The ot
 
 ## Pattern 3: What a v2 managed resource needs
 
-See [the charter §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
+See [`../CHARTER.md` §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
 In Python that reduces to: construct the resource with `spec=SomeSpec(forProvider=ForProvider(...))`
 and set nothing else.
 
@@ -253,7 +253,7 @@ Fix it in two places:
    ```
 2. **In the XRD** — drop `default: {}` from object-typed properties. It buys nothing: the
    API server applies nested defaults once the object exists, and so does `up test run`
-   ([the charter §2](../../../SKILL.md#2-discover-do-not-interview)).
+   ([`../CHARTER.md` §2](../../../SKILL.md#2-discover-do-not-interview)).
 
 **Where this actually bites — and where it does not.** `up test run` applies the XRD's
 structural defaults whenever the test sets `xrdPath`, so `encryption: {}` is materialised into

@@ -1,11 +1,11 @@
 # Go
 
-Go is supported by the CLI for both composition functions and tests, but this suite ships
+Go is supported by the CLI for both composition functions and tests, but this plugin ships
 **no Go templates**. That is a gap, not a prohibition: scaffold with the CLI, then apply the
 charter.
 
 The language-agnostic rules — the TDD loop, what a v2 managed resource needs, what a green
-run proves, reporting discipline — are in [the charter](../../SKILL.md) and apply
+run proves, reporting discipline — are in [`../CHARTER.md`](../../SKILL.md) and apply
 unchanged.
 
 | | |
@@ -19,7 +19,7 @@ unchanged.
 **Go test manifests are generated on your machine.** `up test run` runs `go mod tidy` and
 then `go run .` locally rather than starting a build container, so the `UP_` prefix filter and
 the unmounted `~/.aws` in
-[the charter §7](../../SKILL.md#7-the-container-boundary) **do not apply to a Go test
+[`../CHARTER.md` §7](../../SKILL.md#7-the-container-boundary) **do not apply to a Go test
 module**. It sees your real environment and your real credential files.
 
 Go is not unique in this — go-templating and YAML tests also run locally (in-process, without
@@ -44,7 +44,7 @@ mounts. A Go function never sees your shell environment or your credential files
 The Go builder runs `go mod tidy` and a real `ko` compile, so a Go function that does not
 compile **fails the build** — unlike KCL and single-file Python, where the build only tars
 source into an image. That makes a green `up project build` worth slightly more here than
-[the charter §8](../../SKILL.md#8-a-green-run-is-not-evidence) allows in general. It still
+[`../CHARTER.md` §8](../../SKILL.md#8-a-green-run-is-not-evidence) allows in general. It still
 does not mean the function *runs*.
 
 ## Everything else is the same

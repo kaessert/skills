@@ -29,14 +29,12 @@ The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" an
 ## Pre-Validation Commands
 
 ```bash
-# 1. Get kubeconfig for the CURRENT context (without changing it), written fresh
-rm -f /tmp/e2e-<test-name>.kubeconfig
-up ctx . -f- > /tmp/e2e-<test-name>.kubeconfig
-grep -q '^apiVersion:' /tmp/e2e-<test-name>.kubeconfig || echo "not a kubeconfig"
-up ctx . --short | cut -d/ -f3   # → <group>: 3rd segment of <org>/<space>/<group>[/<ctp>]
+# 1. Get kubeconfig for the CURRENT context (without changing it)
+up ctx . -f- > /tmp/kubeconfig-e2e
+GROUP=$(up ctx . --short | cut -d/ -f3)   # 3rd segment of <org>/<space>/<group>[/<ctp>]
 
 # 2. Verify connectivity
-up ctp list --kubeconfig /tmp/e2e-<test-name>.kubeconfig
+up ctp list --kubeconfig /tmp/kubeconfig-e2e
 
 # 3. Build project
 up project build
@@ -67,19 +65,17 @@ Store as `RESOURCE_KIND`, `RESOURCE_NAME`, `RESOURCE_NAMESPACE` for monitoring.
 
 ```bash
 # --public only if the caller chose it; it permanently publishes the package.
-up test run tests/<test-name> --e2e --control-plane-group=<group> \
-  --kubeconfig /tmp/e2e-<test-name>.kubeconfig 2>&1 | tee /tmp/e2e-<test-name>.log
+up test run tests/<test-name> --e2e --control-plane-group="$GROUP" \
+  --kubeconfig /tmp/kubeconfig-e2e 2>&1 | tee /tmp/e2e-<test-name>.log
 echo "EXIT=${PIPESTATUS[0]}"
 ```
 
-**Foreground by default**, when your shell can hold one command open for the whole run.
+**Foreground by default:** one Bash call, `timeout: 600000` (10 min, the tool's maximum).
 The result carries the complete output and the true exit code, which is the entire record.
 
-**Background only when the run cannot fit** — check the test's `spec.timeoutSeconds`
-(scaffold default 4500s) and expect a first run pulling providers to overrun. Use the agent's
-own background execution, or the `nohup` wrapper in SKILL.md Phase 3, which writes `EXIT=<n>`
-into the log and the wrapper's PID into `<log>.pid`. **Wait for the exit**; a poll is a
-progress view for the user, never the basis of a verdict.
+**Background only when the run cannot fit in ten minutes** — check the test's
+`spec.timeoutSeconds` (scaffold default 4500s) and expect a first run pulling providers to
+overrun. Then run it in the background, and **wait for the exit notification**; a poll of the background output is a progress view for the user, never the basis of a verdict.
 
 ---
 
@@ -87,25 +83,36 @@ progress view for the user, never the basis of a verdict.
 
 Progress reporting, not verdicts — the run is finished when the process exits.
 
-One poll, every 3 minutes, from any shell:
+```python
+last_output = ""
+last_progress_time = current_time
+check_interval = 180  # 3 minutes
+# Derive from the test's own spec.timeoutSeconds. A fixed 900 can never fire on a test
+# whose timeoutSeconds is 300 — the run dies at 5 min and this branch is unreachable.
+stuck_threshold = min(900, test_timeout_seconds // 3)
+if test_timeout_seconds <= stuck_threshold:
+    # The test times out before "stuck" could ever be declared; treat the timeout itself
+    # as the investigation trigger and say so in the report.
+    stuck_threshold = None
 
-```bash
-grep '^EXIT=' /tmp/e2e-<test-name>.log && echo "finished"   # the only signal that the run is over
-wc -c < /tmp/e2e-<test-name>.log                             # compare with the last poll: grew = progress
-tail -n 20 /tmp/e2e-<test-name>.log                          # what to show the user
+while test_running:
+    current_output = read_output(job, block=False)
+
+    if current_output != last_output:
+        last_progress_time = current_time
+        last_output = current_output
+        display_progress_update(current_output)
+
+    time_since_progress = current_time - last_progress_time
+    if time_since_progress >= stuck_threshold:
+        if not resources_still_creating():
+            trigger_stuck_investigation()
+            break
+        else:
+            last_progress_time = current_time  # Reset timer
+
+    wait(check_interval)
 ```
-
-The decision around it:
-
-- **Stuck threshold** = `min(900, timeoutSeconds / 3)` seconds, from the test's own
-  `spec.timeoutSeconds`. A fixed 900 can never fire on a test whose `timeoutSeconds` is
-  300 — the run dies at 5 minutes and stuck detection is unreachable. If `timeoutSeconds` is
-  at or below the threshold, treat the timeout itself as the investigation trigger and say so
-  in the report.
-- **Log grew** since the last poll → reset the progress timer and show a one-line update.
-- **No growth for the threshold** → check `crossplane beta trace` (below). Still `Creating`
-  → reset the timer and continue. Not creating → run the stuck investigation, then stop the
-  run by PID.
 
 **Progress Indicators:**
 - New log output
@@ -124,13 +131,17 @@ NOT stuck if STATUS shows `Creating` - cloud resources may take time (VPN Gatewa
 
 ---
 
-## Stuck Investigation Checklist
+## Stuck Investigation Subagent Prompt
 
-Run this when a test is stuck (no progress for the threshold, not creating). Run it yourself,
-or hand it to a separate agent if yours can delegate — either way, only the final analysis
-goes back to the caller.
+Launch a sub-agent when test is stuck 15+ minutes:
 
-**Context to carry:**
+```
+subagent(
+  description="Troubleshoot stuck E2E test",
+  prompt="""
+You are troubleshooting a stuck Crossplane E2E test (15+ min no progress).
+
+**Context:**
 - Test: <test-name>
 - Control plane: <cp-name>
 - Resource: <RESOURCE_KIND>/<RESOURCE_NAME> in <RESOURCE_NAMESPACE>
@@ -172,7 +183,7 @@ kubectl get events -n $RESOURCE_NAMESPACE --sort-by='.lastTimestamp' --kubeconfi
 
 **Provider/Function logs:**
 ```bash
-kubectl logs -n upbound-system -l pkg.crossplane.io/provider --tail=200 --kubeconfig /tmp/kubeconfig-<cp-name> | grep -iE "error|denied|auth"
+kubectl logs -n upbound-system -l pkg.crossplane.io/provider --tail=200 --kubeconfig /tmp/kubeconfig-<cp-name> | grep -i "error|denied|auth"
 kubectl logs -n crossplane-system -l pkg.crossplane.io/function=function-kcl --tail=200 --kubeconfig /tmp/kubeconfig-<cp-name> | grep -i "error"
 ```
 
@@ -187,9 +198,9 @@ kubectl logs -n crossplane-system -l pkg.crossplane.io/function=function-kcl --t
 | Function errors | KCL syntax error |
 | "AccessDenied" | IAM role issue |
 
-4. Produce ONLY this (max 100 lines):
+4. Return ONLY this (max 100 lines):
 
-```markdown
+---
 ## Root Cause Analysis
 **Primary Issue:** <1-2 sentences>
 **Cause:** <2-3 sentences>
@@ -204,19 +215,16 @@ kubectl logs -n crossplane-system -l pkg.crossplane.io/function=function-kcl --t
 ## Key Evidence
 - <error/condition 1>
 - <error/condition 2>
+---
+"""
+)
 ```
 
-Then stop the run by PID (`pkill -P "$(cat /tmp/e2e-<test-name>.pid)"; kill "$(cat /tmp/e2e-<test-name>.pid)"`) and
-report any control plane the terminated run left behind.
+After sub-agent completes: Cancel test with `stop(job)`.
 
 ---
 
 ## Report Formats
-
-- **Success** (5-10 lines): test name, exit code, duration *quoted from the log*, resources
-  created, timeline.
-- **Stuck/Failure** (50-100 lines): test name, stuck duration, phase, last output,
-  troubleshooting analysis, proposed fixes.
 
 ### Success Report
 ```markdown
@@ -238,7 +246,7 @@ report any control plane the terminated run left behind.
 
 ### Stuck/Failure Report
 ```markdown
-## E2E Test: STUCK (Terminated)
+## E2E Test: STUCK (Canceled)
 
 **Test:** <test-name>
 **Stuck Duration:** 15m (no progress)
@@ -254,7 +262,7 @@ report any control plane the terminated run left behind.
 
 ---
 ### Troubleshooting Analysis
-<INSERT TROUBLESHOOTING ANALYSIS>
+<INSERT SUBAGENT OUTPUT>
 
 ---
 ### References
@@ -279,7 +287,7 @@ report any control plane the terminated run left behind.
 When running multiple tests:
 1. Run **sequentially** (not parallel)
 2. Wait for completion before next
-3. Stop on first failure (ask the user whether to continue; as a delegated agent, stop and report)
+3. Stop on first failure (ask user to continue)
 4. Aggregate results in final summary
 
 ```

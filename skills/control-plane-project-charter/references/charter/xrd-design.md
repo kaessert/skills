@@ -1,6 +1,6 @@
 # Designing the XRD schema
 
-Naming, validation, immutability and status for the API your users type against. [the charter §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) covers what a *composed resource* needs and why you write the XRD by hand; this covers what to put in it.
+Naming, validation, immutability and status for the API your users type against. [`../CHARTER.md` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) covers what a *composed resource* needs and why you write the XRD by hand; this covers what to put in it.
 
 ---
 
@@ -201,11 +201,6 @@ This is a real design decision rather than a rule: a team may keep the field del
 ---
 
 ## Check the names mechanically, and assert the corpus
-
-`check_xrd_schema.py` ships with the `author-configuration-package` skill, in its `scripts/`
-directory, and needs PyYAML (the project venv that `author-composition`'s `setup_venv.py`
-builds has it). Replace `<author-configuration-package>` below with that skill directory's
-absolute path, and check the script exists before relying on its verdict.
 
 ```bash
 python3 <author-configuration-package>/scripts/check_xrd_schema.py \

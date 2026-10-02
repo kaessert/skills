@@ -1,6 +1,6 @@
 # The inner loop, and backfilling tests
 
-How to iterate without paying a full build every time, and how to add tests to code that already works. [the charter §3](../../SKILL.md#3-develop-test-first-red--green--refactor) states the discipline.
+How to iterate without paying a full build every time, and how to add tests to code that already works. [`../CHARTER.md` §3](../../SKILL.md#3-develop-test-first-red--green--refactor) states the discipline.
 
 ---
 

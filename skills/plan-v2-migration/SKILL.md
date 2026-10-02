@@ -1,6 +1,6 @@
 ---
 name: plan-v2-migration
-description: Plan the migration of an existing Crossplane v1 configuration package to Crossplane v2, without changing any files. Use when asked to migrate, upgrade, or plan a migration to Crossplane v2, or on phrases like "migrate to v2", "upgrade to crossplane v2", "plan v2 migration", or "crossplane 2 migration". Analyzes the XRDs, composition functions, tests, examples, and provider dependencies, and writes a phase-based checklist of every breaking change to .agents/plans/CROSSPLANE_V2_MIGRATION.md. Read-only. Carrying the plan out is `execute-v2-migration`.
+description: Use this skill when user requests to migrate, upgrade, or plan migration to Crossplane v2. Analyzes existing v1 configuration packages and generates comprehensive migration checklists covering XRD updates, function code changes, test updates, and file reorganization. Use immediately when user mentions "migrate to v2", "upgrade to crossplane v2", "plan v2 migration", or "crossplane 2 migration". Use this skill instead of manually analyzing migration requirements. This skill ensures comprehensive coverage of all breaking changes and prevents common migration mistakes that manual analysis lacks.
 license: Apache-2.0
 references:
   - references/knowledge.md
@@ -16,13 +16,10 @@ Analyze Crossplane v1 configuration packages and generate comprehensive migratio
 
 ---
 
-## Phase 0: Load the charter
+## Phase 0: You run inline, and you are bound by the charter
 
-Load the `control-plane-project-charter` skill first and read its SKILL.md. This skill is
-one of a suite, and the charter holds the rules the whole suite shares.
-
-This skill runs in the user's conversation: you share their working directory, and you can
-ask. `control-plane-project-charter` §1 says what
+This skill runs inline — you expand into the caller's conversation, share their
+working directory, and can ask. `control-plane-project-charter` §1 says what
 that means for asking questions, and §4 (`control-plane-project-charter`) what it
 means for your summary. Both apply in full, and are not repeated here.
 
@@ -108,13 +105,13 @@ ls -1d tests/test-*/ tests/e2etest-*/ 2>/dev/null
 ls -1d functions/x* tests/test-x* tests/e2etest-x* 2>/dev/null
 ```
 
-### Phase 1: Verify Dependencies (delegate if you can)
+### Phase 1: Verify Dependencies (Use a Sub-agent)
 
 **Goal**: Verify all provider and configuration dependencies support v2.
 
-**IMPORTANT**: Marketplace responses are large. If your agent can delegate work to a separate agent, hand it the prompt below so those responses stay out of the main context; otherwise do it inline and keep only the structured report.
+**IMPORTANT**: Use a sub-agent to avoid loading large marketplace responses into main context.
 
-**Delegation prompt** (or your own checklist, when working inline):
+**Subagent prompt**:
 ```
 Read upbound.yaml and extract all dependencies from spec.dependsOn.
 
@@ -131,7 +128,7 @@ For each CONFIGURATION:
 Return structured report with verification URLs.
 ```
 
-Keep the report for Phase 1.2 of the checklist.
+Store sub-agent report for Phase 1.2 of the checklist.
 
 ### Phase 2: Analyze Components
 
@@ -216,7 +213,7 @@ After writing the checklist, display:
 - ✅ Analyze v1 configuration structure
 - ✅ Detect all breaking changes
 - ✅ Generate phase-based checklist
-- ✅ Verify dependencies (delegated where the agent supports it)
+- ✅ Verify dependencies via sub-agent
 - ✅ Write checklist to `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
 - ✅ Read-only analysis (safe)
 
@@ -227,7 +224,7 @@ After writing the checklist, display:
 - ❌ Create git commits
 
 ### Handoff to Other Skills
-| Work | Skill to Use |
+| Task | Skill to Use |
 |------|--------------|
 | Execute migration | `execute-v2-migration` |
 | Write function code | `author-composition` |
@@ -243,7 +240,7 @@ The skill completes successfully when:
 
 1. ✅ Confirmed v1 configuration (or exited gracefully if not)
 2. ✅ Discovered all XRDs, functions, tests, examples
-3. ✅ Verified dependencies
+3. ✅ Verified dependencies via sub-agent
 4. ✅ Analyzed all components for breaking changes
 5. ✅ Generated checklist at `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
 6. ✅ Displayed summary with metrics and next steps

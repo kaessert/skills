@@ -95,15 +95,15 @@ More questions it handles:
 <!-- BEGIN skills-table -->
 | Skill | What it is for |
 |---|---|
-| [`author-composition`](skills/author-composition/SKILL.md) | Write, extend, and debug Crossplane composition functions in an Upbound control-plane project, in KCL, Python, TypeScript, or Go. |
-| [`author-configuration-package`](skills/author-configuration-package/SKILL.md) | Create, scaffold, modify, and extend a Crossplane configuration package in an Upbound control-plane project. |
-| [`author-tests`](skills/author-tests/SKILL.md) | Write, modify, refactor, or plan the refactoring of Crossplane configuration tests in an Upbound control-plane project, both composition tests and E2E tests, in KCL, Python, YAML, Go, or go-templating. |
+| [`author-composition`](skills/author-composition/SKILL.md) | Use this skill when the user asks to create, extend, modify, or debug a Crossplane composition function in a control-plane project — in any language (KCL, Python, TypeScript, Go). |
+| [`author-configuration-package`](skills/author-configuration-package/SKILL.md) | Use this skill when user requests to create, scaffold, modify, or extend a Crossplane configuration package. |
+| [`author-tests`](skills/author-tests/SKILL.md) | Use this skill when user requests to implement a feature, write, create, author, modify, refactor or plan refactoring of Crossplane configuration tests (composition tests or E2E tests) in a control-plane project - in any language (KCL, Python, YAML, Go, go-templating). |
 | [`control-plane-project-charter`](skills/control-plane-project-charter/SKILL.md) | The shared development charter for the Upbound control-plane-project skill suite (author-composition, author-tests, author-configuration-package, verify-configuration, e2e-test-configuration, plan-v2-migration, execute-v2-migration). |
-| [`e2e-test-configuration`](skills/e2e-test-configuration/SKILL.md) | Run end-to-end tests for a Crossplane configuration package on an Upbound control plane with `up test run --e2e`, with progress monitoring, stuck detection on a threshold derived from the test's own timeoutSeconds, and failure analysis. |
-| [`execute-v2-migration`](skills/execute-v2-migration/SKILL.md) | Execute a Crossplane v1 to v2 migration plan in an Upbound control-plane project, phase by phase and with minimal interruption. |
-| [`plan-v2-migration`](skills/plan-v2-migration/SKILL.md) | Plan the migration of an existing Crossplane v1 configuration package to Crossplane v2, without changing any files. |
+| [`e2e-test-configuration`](skills/e2e-test-configuration/SKILL.md) | Use this skill when user requests to run E2E tests. |
+| [`execute-v2-migration`](skills/execute-v2-migration/SKILL.md) | Use this skill when user requests to execute or implement a Crossplane v2 migration plan. |
+| [`plan-v2-migration`](skills/plan-v2-migration/SKILL.md) | Use this skill when user requests to migrate, upgrade, or plan migration to Crossplane v2. |
 | [`upbound-hub`](skills/upbound-hub/SKILL.md) | Query and mutate Upbound Hub, the central API for an Upbound Platform deployment, which gives one cross-fleet view of control planes, spaces, realms, types, packages, resources, identity providers, and the image catalog. |
-| [`verify-configuration`](skills/verify-configuration/SKILL.md) | Verify a Crossplane configuration package before commit, and run, deploy, or try the project on a development control plane. |
+| [`verify-configuration`](skills/verify-configuration/SKILL.md) | Use this skill when user requests to verify, validate, or check a Crossplane configuration package before committing, or to run, deploy, or try out the project on a control plane ("run the project", "deploy it", "spin it up", "try it on a control plane", "up project run", "dev control plane"). |
 <!-- END skills-table -->
 
 ## How these skills are built

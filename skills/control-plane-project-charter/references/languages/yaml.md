@@ -5,7 +5,7 @@ is a test-only language here, and its independence from the function language is
 
 The language-agnostic rules — the TDD loop, what a v2 managed resource needs, the container
 boundary, what a green run proves, reporting discipline — are in
-[the charter](../../SKILL.md) and are **not** repeated here. Read the charter first; this
+[`../CHARTER.md`](../../SKILL.md) and are **not** repeated here. Read the charter first; this
 file only tells you how YAML expresses it.
 
 | | |

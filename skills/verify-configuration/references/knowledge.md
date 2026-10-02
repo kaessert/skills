@@ -120,18 +120,15 @@ Generate verification report after build and tests complete.
 ls -1d tests/e2etest-* | sed 's|tests/||' | sort
 ```
 
-#### Step 2: Run Each Test Sequentially Through `e2e-test-configuration`
+#### Step 2: Launch Sub-agents Sequentially
 
-Run one E2E test at a time. If your agent can delegate work, hand each test to a delegated
-agent and wait for its result before starting the next; otherwise run it yourself. Either way
-each test goes through the `e2e-test-configuration` skill, which owns monitoring and stuck
-detection.
+**For each E2E test**, launch a sub-agent:
 
-**Brief for each job:**
+**Subagent prompt:**
 ```text
 Run E2E test: <test-name>
 
-Load the e2e-test-configuration skill and run that one test.
+Load the `e2e-test-configuration` skill for `<test-name>`
 
 Return:
 - If PASSED: Brief success summary
@@ -140,16 +137,16 @@ Return:
 
 **Execution pattern:**
 ```text
-For each test (or each job, if delegated):
-  Run <name> through e2e-test-configuration
-  → Wait for completion (30-40 min typical); where the agent supports it,
-    run in the background and poll its output rather than blocking blind
+For each test:
+  subagent(prompt="Run E2E test: <name>. Load the `e2e-test-configuration` skill for <name>...",
+       wait=True)
+  → Wait for completion (30-40 min typical)
   → Extract result (PASSED with summary OR FAILED with analysis)
   → Continue to next test
 ```
 
 **Error Handling:**
-- A job fails to start → Skip test, log error, continue
+- Subagent launch fails → Skip test, log error, continue
 - Skill invocation fails → Capture error as test failure, continue
 - E2E test fails → Include in cumulated report, continue
 
@@ -185,7 +182,7 @@ Write to: `e2e-test-report-YYYY-MM-DD.md`
 
 ### ❌ test-name (FAILED)
 **Duration:** 28m
-**Failure Analysis:** [complete analysis from the test run]
+**Failure Analysis:** [complete analysis from sub-agent]
 
 ## Summary
 All tests: [PASSED/FAILED status for each]
@@ -272,8 +269,9 @@ up composition render apis/vpc/composition.yaml \
 
 **Execution:**
 - After composition tests pass
-- Requires user confirmation (a delegated agent reports the question instead)
-- One job per test, each through the `e2e-test-configuration` skill
+- Requires user confirmation
+- Orchestrated via sub-agents
+- Each sub-agent invokes e2e-test-configuration skill
 
 ---
 
@@ -352,7 +350,7 @@ START
   Discover E2E tests
   ↓
   For each test:
-    Run the test through e2e-test-configuration (own job if delegated)
+    Launch sub-agent → Invoke e2e-test-configuration skill
     ↓
     Collect result (pass/fail + analysis)
   ↓
@@ -369,7 +367,7 @@ EXIT
 
 ### After Successful Verification
 
-Ask the user (as a delegated agent, put this in your report instead):
+Ask the user:
 ```text
 Verification passed! Would you like to run E2E tests now?
 

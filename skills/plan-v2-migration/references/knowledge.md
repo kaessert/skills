@@ -472,16 +472,16 @@ grep -E "CompositeConnectionDetails|writeConnectionSecretToRef" "$FUNC"
 
 ## Dependency Verification
 
-If your agent can delegate work to a separate agent, delegate dependency verification so the large marketplace responses stay out of the main context; otherwise do it inline and keep only the report.
+Use a sub-agent for dependency verification to avoid loading large responses into main context.
 
-### Delegation Prompt Template
+### Subagent Prompt Template
 
 ```text
 Read upbound.yaml and extract all dependencies from spec.dependsOn.
 
 For each PROVIDER:
 1. Extract provider name and current version
-2. Use WebFetch to check: https://marketplace.upbound.io/providers/upbound/{provider}/{version}#managedResources
+2. Fetch the page to check: https://marketplace.upbound.io/providers/upbound/{provider}/{version}#managedResources
 3. Look for "Namespace Scoped ({count})" - count > 0 means v2 compatible
 4. If count = 0, find a version that IS compatible
 
@@ -596,7 +596,7 @@ The skill succeeds when:
 
 1. ✅ v1 configuration correctly detected
 2. ✅ All XRDs, functions, tests, examples analyzed
-3. ✅ Dependencies verified
+3. ✅ Dependencies verified via sub-agent
 4. ✅ File-specific changes enumerated
 5. ✅ Phase-based checklist generated
 6. ✅ Output written to `.agents/plans/CROSSPLANE_V2_MIGRATION.md`

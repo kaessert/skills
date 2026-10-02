@@ -1,6 +1,6 @@
 ---
 name: author-configuration-package
-description: Create, scaffold, modify, and extend a Crossplane configuration package in an Upbound control-plane project. Use when asked to start a new configuration package or project (`up project init`), design or change an XRD, add a resource to an existing package, set up a composition pipeline skeleton, add or install a provider or function ("add provider-aws-s3", "install the AWS provider", `up dep add`), generate a function scaffold, build the project, or set up the Python environment ("configure a venv", "my imports do not resolve", "set the VS Code interpreter"). Covers the build order that `up` needs (dependencies, first build, then `up function generate`), example-first XRD design, marketplace package discovery, and mechanical XRD schema checks. Not for writing composition function logic, which is `author-composition`, and not for writing tests, which is `author-tests`.
+description: Use this skill when user requests to create, scaffold, modify, or extend a Crossplane configuration package. Handles project initialization, XRD creation/modification, composition setup, dependency management, function generation, building, and setting up the local development environment. Use immediately when user mentions creating/scaffolding/modifying/extending a configuration package, adding new resources to an existing package, installing or adding a provider ("add provider-aws-s3", "install the AWS provider", `up dep add`), or setting up the Python environment ("configure a venv", "my imports do not resolve", "set the VS Code interpreter"). Use this skill instead of manually creating project structures, XRDs, or running `up project init`/`up function generate` commands directly. This skill ensures correct build order, proper scaffolding, and prevents common initialization mistakes that manual setup lacks.
 license: Apache-2.0
 references:
   - references/knowledge.md
@@ -10,15 +10,12 @@ references:
 
 Scaffold and modify Crossplane configuration packages. This skill handles structure, XRDs, dependencies, and building - NOT composition implementation.
 
-## Phase 0: Load the charter, and you are bound by it
+## Phase 0: You run inline, and you are bound by the charter
 
-**Load the `control-plane-project-charter` skill first and read its SKILL.md end to end.**
-This skill is one of a suite, and the charter holds the rules every skill in it follows.
-Nothing in it is repeated here; when this file and the charter disagree, the charter wins.
-
-This skill runs in the user's conversation: you share their working directory, and you can
-ask. Charter §1 says what that means for asking questions, and §4 what it means for your
-summary. Both apply in full.
+This skill runs inline — you expand into the caller's conversation, share their
+working directory, and can ask. `control-plane-project-charter` §1 says what
+that means for asking questions, and §4 (`control-plane-project-charter`) what it
+means for your summary. Both apply in full, and are not repeated here.
 
 **Read the whole charter before you start.** It also carries the TDD loop (§3), what a v2
 composed resource needs (§5), the container boundary (§7), and what a green run does and does
@@ -39,13 +36,6 @@ not prove (§8).
 - ❌ Write composition logic → Use `author-composition`
 - ❌ Create tests → Use `author-tests`
 - ❌ Run verification → Use `verify-configuration`
-
-**When the request goes past scaffolding, hand off — do not carry on from the charter alone.**
-Before writing any function code, load the `author-composition` skill and follow it; before
-writing any composition or E2E test, load the `author-tests` skill. The charter holds the
-shared rules, but the composition checklist (provider-validity checks, the `render.log` audit,
-the coverage rules) lives only in those skills, and skipping them is how a green suite ends up
-claiming more than it checked.
 
 ## Prefer the CLI generators over hand-writing YAML
 
@@ -79,7 +69,7 @@ up example generate --scope=namespace --name example --namespace default \
     --api-group platform.example.com --api-version v1alpha1 --kind StorageBucket
 #   -> examples/storagebucket/example.yaml   (singular!) with spec: {}
 # Fill in the spec so it is the API you want users to write, then:
-# Now WRITE apis/storagebuckets/definition.yaml yourself (charter §5 in control-plane-project-charter has the
+# Now WRITE apis/storagebuckets/definition.yaml yourself (CHARTER.md section 5 has the
 # skeleton). Note the directory is plural even though examples/ is singular.
 up composition generate apis/storagebuckets/definition.yaml
 #   -> apis/storagebuckets/composition.yaml (mode: Pipeline + auto-ready step)
@@ -150,7 +140,7 @@ NEW PROJECT:
   → Phase 1: Gather project info (name, group, org, provider)
   → Phase 2: Define resource (Kind, version)
   → Phase 3: Draft the example XR, then write the XRD to match
-            (charter §5 in control-plane-project-charter has the v2 skeleton; do not infer the schema)
+            (CHARTER.md section 5 has the v2 skeleton; do not infer the schema)
   → Phase 4: Select dependencies (providers)
   → Phase 5: `up composition generate` + select language
   → Phase 6: FIRST BUILD (generates models)
@@ -173,7 +163,7 @@ MODIFY EXISTING:
 3. up project build           # FIRST - generates models
    # Hand-edited the XRD after this? Run it again - the models come FROM the XRD
 4. up function generate ...   # Uses models from step 3
-5. python3 <author-composition>/scripts/setup_venv.py   # Python: BEFORE you write the function body
+5. python3 "$SCRIPTS/setup_venv.py"   # Python: BEFORE you write the function body
 6. up project build           # FINAL - builds with function
 ```
 
@@ -189,9 +179,10 @@ underlined on correct code, go-to-definition into the generated models goes nowh
 interpreter. The fast tier also cannot run without it.
 
 It is not needed to *build*, since the function runs in a container, which is exactly why it
-gets deferred and then never done. Do it at step 5. `setup_venv.py` ships with the `author-composition` skill, in its
-`scripts/` directory; the charter skill's `languages/python.md` reference has the details and
-the by-hand equivalent.
+gets deferred and then never done. Do it at step 5. `$SCRIPTS` is
+`<author-composition>/scripts`, the `author-composition` skill's scripts directory; see
+`languages/python.md` (`control-plane-project-charter` `languages/python.md`) for the details and the by-hand
+equivalent.
 
 **NEVER:**
 - Run `up function generate` before first build
@@ -205,23 +196,23 @@ the by-hand equivalent.
 
 `up dep add` needs a package **reference** (e.g. `xpkg.upbound.io/upbound/provider-azure-network`). When the user names a **cloud + resource** but not the ref (e.g. "compose an Azure ResourceGroup + VirtualNetwork"), resolve it before adding — do **not** guess a package name blindly.
 
-**Preferred — Upbound Marketplace MCP server** (if one is configured for your agent). It uses your existing `up login` credentials:
+**Preferred — Upbound Marketplace MCP** (if one is configured for your agent). It uses your existing `up login` credentials:
 1. `search_packages` — filter by type (provider/function), cloud/family, and tier to find the package + exact `xpkg` ref.
 2. `get_package_version_resources` (or `..._groupkind_resources`) — get the **exact group/kind/version** you'll compose (e.g. `ResourceGroup` → `azure.m.upbound.io/v1beta1`), so the composition uses real Kinds from the start.
 3. `up dep add <ref>` (omit the tag for latest, or pin `:vX.Y.Z`), then `up dep update-cache`.
 
-**Fallback — web search** (no MCP): search for `site:marketplace.upbound.io <cloud> <service> provider` (functions: `... function`), or fetch a page like `https://marketplace.upbound.io/providers/upbound/provider-azure-network`, and read the ref + latest version off it. Marketplace *pages* list scope/description, not always exact Kinds — confirm Kinds from the generated models after the first build.
+**Fallback — web search and fetch** (no MCP): search for `site:marketplace.upbound.io <cloud> <service> provider` (functions: `... function`), or fetch a page like `https://marketplace.upbound.io/providers/upbound/provider-azure-network`, and read the ref + latest version off it. Marketplace *pages* list scope/description, not always exact Kinds — confirm Kinds from the generated models after the first build.
 
 **Base resources live in the family package.** `ResourceGroup`, `ProviderConfig`, and other cross-service basics ship in **`provider-family-<cloud>`** (e.g. `provider-family-azure`), **not** a service provider. Service providers (`provider-<cloud>-<service>`) **transitively depend on the family**, so adding one (e.g. `provider-azure-network`) pulls the family in automatically — but add `provider-family-<cloud>` explicitly when you compose a base resource (like `ResourceGroup`) directly.
 
-**Always:** prefer **v2+ Upbound Official families** (`provider-<cloud>-<service>`) over the monolithic `provider-<cloud>`; after the first build, verify the composed resources exist under `.up/python/models` (or the KCL/Go model tree) and correct Kinds/API versions. When more than one package/family could fit, ask the user to choose between the candidates rather than guessing.
+**Always:** prefer **v2+ Upbound Official families** (`provider-<cloud>-<service>`) over the monolithic `provider-<cloud>`; after the first build, verify the composed resources exist under `.up/python/models` (or the KCL/Go model tree) and correct Kinds/API versions. When more than one package/family could fit, ask the user, listing the candidates rather than guessing.
 
 ## Quick Reference
 
 | Phase | Action | Key Command |
 |-------|--------|-------------|
-| 1-2 | Project/Resource info | ask the user |
-| 3 | XRD schema wizard | Loop until user done, then `python3 <author-configuration-package>/scripts/check_xrd_schema.py apis/*/definition.yaml` |
+| 1-2 | Project/Resource info | Ask the user |
+| 3 | XRD schema wizard | Loop until user done, then `scripts/check_xrd_schema.py apis/*/definition.yaml` |
 | 4 | Dependencies | `up dep update-cache` |
 | 5 | Composition + language | Create skeleton |
 | 6 | First build | `up project build` |
@@ -315,7 +306,6 @@ Two things worth confirming rather than guessing:
   the kind of thing that gets guessed wrong. Confirm it from the generated tree, where the
   module path *is* the reversed group:
   `python3 <author-composition>/scripts/probe_project.py --project <root> ClusterProviderConfig`
-  (the probe ships with the `author-composition` skill)
   → `models.io.upbound.m.aws.clusterproviderconfig` = `aws.m.upbound.io`. (A `grep` for
   `Literal` in that module shows the credential `source` values, not the apiVersion.)
 - **`ClusterProviderConfig` (cluster-scoped) vs `ProviderConfig` (namespaced)** — use the
@@ -354,7 +344,7 @@ kubectl apply -f examples/providerconfig.yaml
 
 ## Interactive Wizard (Phase 3)
 
-Ask the user, one field at a time, until they say done:
+Ask in a loop until user says done:
 
 1. Field name (e.g., region, cidr)
 2. Field type (string, integer, boolean, array, object)
@@ -371,18 +361,12 @@ Build OpenAPIv3 schema as you go.
 field is `vpcId` while the Kind is `VPC`, that a repeated group prefix may or may not be stutter,
 that an unbounded array leaves no CEL budget, or that redefining `READY` prints the column twice.
 XRD versions must round-trip, so all of that is permanent from the first version that ships.
-The charter skill's `charter/xrd-design.md` reference has the rules; run the mechanical
-ones before the first build with [`scripts/check_xrd_schema.py`](scripts/check_xrd_schema.py),
-which ships with this skill and needs PyYAML (the project venv from step 5 has it).
-
-**Script paths.** This skill writes two kinds of path, and they are different directories:
-`<author-configuration-package>/scripts/…` is this skill's own [`scripts/`](scripts/), and
-`<author-composition>/scripts/…` (`setup_venv.py`, `probe_project.py`) belongs to the
-`author-composition` skill. Replace each placeholder with that skill directory's absolute path
-in every command — not through a shell variable, which most agents lose between commands.
+[`charter/xrd-design.md` (`control-plane-project-charter` `charter/xrd-design.md`) has the rules; run the mechanical
+ones before the first build:
 
 ```bash
-python3 <author-configuration-package>/scripts/check_xrd_schema.py apis/*/definition.yaml
+python3 <author-configuration-package>/scripts/check_xrd_schema.py \
+  apis/*/definition.yaml
 ```
 
 Exit `0` is clean, `10` is at least one finding, and `2` means it extracted nothing — a corpus

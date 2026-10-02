@@ -1,10 +1,10 @@
-# Agent context: the user's conversation vs a delegated run
+# Agent context: inline vs forked
 
-Which kind of agent you are, and what each kind may and may not do. [The charter §1](../../SKILL.md#1-know-which-kind-of-agent-you-are) states the rule; this is the detail.
+Which kind of agent you are, and what each kind may and may not do. [`../CHARTER.md` §1](../../SKILL.md#1-know-which-kind-of-agent-you-are) states the rule; this is the detail.
 
 ---
 
-### In the user's conversation
+### Inline — you expand into the caller's conversation
 
 You share their context and their working directory, and you can ask.
 
@@ -17,24 +17,25 @@ You share their context and their working directory, and you can ask.
   which layout, which region — never about things the project can tell you.
 - **Do not ask what you can discover.** Layout, model paths, existing dependencies, current
   context: look, do not interview.
-- **One exception.** If the conversation you are in belongs to a delegated agent rather than
-  the user — `execute-v2-migration` usually runs that way — it cannot reach the user either,
-  so a question there ends *its* turn. State the assumption you would ask about and proceed.
+- **One exception.** If your caller is itself a forked agent — `execute-v2-migration` runs
+  that way — it cannot reach the user either, so a question there terminates *its* turn. When
+  the conversation you expanded into is a fork's, state the assumption you would ask about
+  and proceed.
 
 **Your work is visible.** Every command you run and every file you write lands in the
 caller's context, so your summary points at evidence they already have rather than standing
 in for it. That removes the temptation, but not the discipline in §4.
 
-### As a delegated agent
+### Forked — you are a separate agent and cannot hold a conversation
 
 - **Your only caller is another agent** executing a task. It cannot answer an interview.
 - **You run in an isolated context.** You do not see the caller's conversation and do not
   know where the project is unless you look. Never search the current working directory
   blindly — it may be an unrelated repository.
-- **Asking a question ends your turn.** The run terminates and hands the caller a result
-  for work that never happened. An interview is a failed run that reports success. Waiting
-  for your result changes *when* the caller receives it, not whether you can reach the user.
-  You cannot.
+- **Asking a question ends your turn.** The fork terminates and hands the caller a result
+  for work that never happened. An interview is a failed run that reports success. This
+  holds regardless of whether the caller waits for you — waiting changes *when* the caller receives your
+  result, not whether you can reach the user. You cannot.
 
 **Act on the brief you were given, discover the rest from the project, and do the work.** Ask
 only when a genuinely irreversible decision is undetermined — publishing a package, or

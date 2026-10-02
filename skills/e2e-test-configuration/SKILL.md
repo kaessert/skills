@@ -1,6 +1,6 @@
 ---
 name: e2e-test-configuration
-description: Run end-to-end tests for a Crossplane configuration package on an Upbound control plane with `up test run --e2e`, with progress monitoring, stuck detection on a threshold derived from the test's own timeoutSeconds, and failure analysis. Use when asked to run or execute E2E tests, validate a configuration against real cloud resources on Upbound Cloud or a Space, or debug an E2E run that failed, hung, or ended in context deadline exceeded. Prefer it to running raw `up test run --e2e` even when docs or bug reports show the raw command, because it checks preconditions first, states the target, catches a run silently falling back to local KIND, and reports only what the captured output shows. Not for writing tests, which is `author-tests`, nor for builds and composition tests, which is `verify-configuration`.
+description: Use this skill when user requests to run E2E tests. Handles E2E test execution on Upbound Cloud with intelligent monitoring, stuck detection on a threshold derived from the test's own timeoutSeconds, and comprehensive debugging. Use immediately when user mentions running/executing E2E tests, validating implementations, or debugging test failures. Handles test selection, pre-validation, background execution, progress monitoring, and detailed failure analysis. Use this skill instead of running raw `up test run --e2e` commands directly, even when documentation or bug reports show the raw command. This skill wraps the command with monitoring and debugging that raw execution lacks.
 license: Apache-2.0
 references:
   - references/knowledge.md
@@ -8,38 +8,35 @@ references:
 
 # E2E Test Runner for Crossplane Configurations
 
-Run end-to-end tests with active monitoring, stuck detection derived from the test's own `timeoutSeconds`, and debugging.
+Run end-to-end tests with active monitoring, stuck detection (15 min threshold), and comprehensive debugging.
 
 See [knowledge.md](references/knowledge.md) for detailed commands and troubleshooting prompts.
 
-## Phase 0: Load the charter, and know how you were started
+## Phase 0: Act as a separate agent, and you are bound by the charter
 
-**Load the `control-plane-project-charter` skill first and read its SKILL.md.** This skill
-is bound by it and does not repeat it. It carries the TDD loop (§3), what a v2 composed
-resource needs (§5), the container boundary (§7), what a green run does and does not prove
-(§8), and the rule against creating infrastructure as a side effect (§9).
+This skill is written for a separate agent (a forked sub-agent) — one that does not see the
+caller's conversation, and for which **asking a question ends the turn**. Act as one even if
+you were loaded into a conversation. `control-plane-project-charter` §1 says what that means;
+act on the brief you were given, discover the rest from the project, and do the work.
 
-This skill is often run as a delegated agent, because an E2E run is long. If you are one,
-**you cannot ask**: a question ends your turn and hands back a result for work that never
-happened. Act on the brief, discover the rest from the project, and state any assumption you
-would otherwise have asked about. Charter §1 has the detail.
+Your only output channel is prose: the caller cannot see your exit codes, your `render.log`,
+or your resource tree. That is why §4 (`control-plane-project-charter`) — report the
+effect, not the intent — is binding on every summary you write, and it is not repeated here.
 
-Either way, the caller cannot see your exit codes, your logs, or your resource tree — only
-what you write. That is why charter §4 (report the effect, not the intent) binds every
-summary.
+**Read the whole charter before you start.** It also carries the TDD loop (§3), what a v2
+composed resource needs (§5), the container boundary (§7), what a green run does and does not
+prove (§8), and the rule against creating infrastructure as a side effect (§9).
 
 ## Context Efficiency (CRITICAL)
 
-Whoever reads your result needs findings, not transcripts:
+This skill returns to parent agent. Minimize context:
 
-1. **Collect debug info in one pass and summarize it.** If your agent can delegate work to
-   a separate agent, hand it the checklist in [knowledge.md](references/knowledge.md) and
-   keep only its summary; otherwise run the checklist yourself and keep only the findings.
+1. **Use sub-agent for troubleshooting** - Launch a sub-agent for debug collection
 2. **Process data internally** - Don't output raw kubectl YAML
 3. **Return only key findings** - Summaries, not full logs
 4. **Output limits:**
    - Success: 5-10 lines
-   - Stuck/Failure: 50-100 lines of analysis
+   - Stuck/Failure: 50-100 lines (analysis from sub-agent)
 5. **No error analysis during monitoring** - Brief mention only, analyze when stuck
 
 ## Arguments
@@ -121,9 +118,7 @@ If no test specified:
 ```bash
 ls -1d tests/e2etest-* | sed 's|tests/||'
 ```
-Present the list and ask which to run. As a delegated agent with no test named in the
-brief, report the list and stop: every run creates real cloud resources, so "all of them"
-is not an assumption to make for the user.
+Present list, ask user which to run.
 
 ### Phase 2.5: Extract Resources to Monitor
 
@@ -181,9 +176,8 @@ is not overwritten — it is believed, fails to resolve, and the run **silently 
 from an earlier session contained an error string rather than a kubeconfig, and the run
 degraded to local KIND without a word.
 
-Never pass a kubeconfig you did not write in this run. Delete it and write it fresh at the
-start of every run, and check it parses before handing it over. A file that exists is not a
-kubeconfig.
+Never pass a fixed, predictable path you did not create in this run. Write it fresh with
+`mktemp`, and check it parses before handing it over. A file that exists is not a kubeconfig.
 
 **Never create a group, space or control plane as a side effect.** If the group your context
 names does not exist, that is a precondition to report, not something to fix with
@@ -196,7 +190,7 @@ path `--e2e` builds and pushes the project package, then installs it onto a cont
 it gives no pull credential. If the repository is private, the install cannot pull what the
 push just wrote: the run stalls on `Waiting for package to be ready` and eventually exits
 `context deadline exceeded`, a message that names neither half of the problem. The real
-error is in `kubectl describe configuration.pkg.crossplane.io <project> --kubeconfig /tmp/e2e-<test-name>.kubeconfig`.
+error is in `kubectl describe configuration.pkg.crossplane.io <project> --kubeconfig "$KCFG"`.
 
 `--public` is the flag that avoids it — `up test run --help`: *"Create new repositories
 with public visibility."* Note **new**: it governs repositories being created, so it is not
@@ -217,22 +211,21 @@ and it cannot be undone by re-running without the flag. So:
 Local KIND does not push to a repository at all, so none of this applies there.
 
 Derive the group from the context you just resolved — never hardcode one. The third
-segment of `up ctx . --short` is the group. **Write literal values into every command** —
-the group, and the paths under `/tmp/e2e-<test-name>.*`: most agents start each command in
-a fresh shell, so a variable set in one call is empty in the next poll or kill.
+segment of `up ctx . --short` is the group:
 
 ```bash
-up ctx . --short | cut -d/ -f3        # → <group>; empty means pick one with 'up ctx <org>/<space>/<group>'
+GROUP=$(up ctx . --short | cut -d/ -f3)
+[ -n "$GROUP" ] || { echo "no group in context; pick one with 'up ctx <org>/<space>/<group>'"; exit 1; }
 
-# --kubeconfig is an INPUT the CLI reads, never an output path it writes. Write it fresh
-# for every run — a leftover file is the failure above — and verify it before passing it.
-rm -f /tmp/e2e-<test-name>.kubeconfig
-up ctx . -f- > /tmp/e2e-<test-name>.kubeconfig
-grep -q '^apiVersion:' /tmp/e2e-<test-name>.kubeconfig || { echo "not a kubeconfig"; head -3 /tmp/e2e-<test-name>.kubeconfig; }
+# --kubeconfig is an INPUT the CLI reads, never an output path it writes. Write the file
+# first, to a fresh name, and verify it before passing it.
+KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
+up ctx . -f- > "$KCFG"
+grep -q '^apiVersion:' "$KCFG" || { echo "not a kubeconfig: $KCFG"; head -3 "$KCFG"; exit 1; }
 
 # Add --public ONLY if the caller has chosen it (see above). Never on your own.
 up test run tests/<test-name> --e2e \
-  --control-plane-group=<group> --kubeconfig /tmp/e2e-<test-name>.kubeconfig \
+  --control-plane-group="$GROUP" --kubeconfig "$KCFG" \
   2>&1 | tee /tmp/e2e-<test-name>.log
 echo "EXIT=${PIPESTATUS[0]}"
 ```
@@ -241,10 +234,10 @@ Pass `--control-plane-group` explicitly even when the context already names the 
 It defaults to "the group specified in the current context", so a Space-level context
 with no group silently degrades to local KIND — the failure this phase exists to catch.
 
-**Run it in the foreground when your shell can wait for it.** If your agent can hold one
-command open for the whole run (many cap a single command at about ten minutes), one call
-returns the complete output and its true exit code in a single result. That is the whole
-evidentiary record, delivered intact — no polling, no partial view, nothing to reconstruct.
+**Run it in the foreground.** One Bash call with `timeout: 600000` (10 minutes, the
+tool's maximum) returns the run's complete output and its true exit code in a single
+result. That is the whole evidentiary record, delivered intact — no polling, no partial
+view, nothing to reconstruct.
 
 Background execution is what produced the worst reporting failure this skill has had: the
 run was polled every three minutes, the polls stopped before the last resource transition,
@@ -252,26 +245,16 @@ and the report said *"verified all resources reached Ready status"* directly abo
 showing `Ready=False`. Both halves came from the same run; the verdict was written from an
 incomplete view of it.
 
-**If the run cannot fit, background is the only option — use it correctly.** Read the
-test's `spec.timeoutSeconds` first (the scaffold default is 4500s, i.e. 75 minutes; a run
-that has to pull providers for the first time will not fit either). Use your agent's own
-background execution if it has one. Otherwise detach it yourself, with the exit code written
-into the log so a later shell can read it:
+**If the run cannot fit in ten minutes, background is the only option — use it correctly.**
+Read the test's `spec.timeoutSeconds` first (the scaffold default is 4500s, i.e. 75
+minutes; a run that has to pull providers for the first time will not fit either). Then:
 
-```bash
-rm -f /tmp/e2e-<test-name>.log /tmp/e2e-<test-name>.pid
-nohup bash -c 'up test run "tests/$0" --e2e --control-plane-group="$1" --kubeconfig "$2"
-               echo "EXIT=$?"' <test-name> <group> /tmp/e2e-<test-name>.kubeconfig > /tmp/e2e-<test-name>.log 2>&1 &
-echo $! > /tmp/e2e-<test-name>.pid
-```
-
-- **Wait for it to exit.** The run is finished when `EXIT=` appears in the log (or your
-  agent reports the background job done), and not before.
-- **Never write a verdict from a poll.** A poll is a progress view for the user, not a
-  result.
-- If you must stop early — a target mismatch, a stuck run — stop it by PID (below), say the
-  run was *terminated*, and report what you terminated it for. A killed run has no outcome
-  to report.
+- Start it detached and **wait for it to exit.** You are re-invoked on completion with the
+  real exit code; that notification, plus the `tee`'d log, is your evidence.
+- **Never write a verdict from a poll of the background output.** A poll is a progress view for the
+  user, not a result. The run is finished when the process exits and not before.
+- If you must stop early — a target mismatch, a stuck run — say the run was *terminated*,
+  and report what you terminated it for. A killed run has no outcome to report.
 
 **Check the first progress line against the target you announced.** The run says which
 it chose in its first line, and the two are unmistakable:
@@ -292,14 +275,14 @@ Creating development control plane in Spaces         <- SPACE
 
   If that contradicts your announced target, **the run's result is void.** Report the
   mismatch, not the outcome — including when the exit code is 0. Do not report a pass.
-- **Background.** You can see the line while it runs (`head -5 /tmp/e2e-<test-name>.log`), so stop the run
-  there and then rather than spending 30 minutes on a question nobody asked.
+- **Background.** You can see the line while it runs, so kill the run there and then rather
+  than spending 30 minutes on a question nobody asked.
 
 Either way: a pass on local KIND is not evidence about the Space the user pointed at. It is
 a different environment. Re-run with `--control-plane-group=<group>` (and `up ctx` into a
 group-level context) once the target is right.
 
-**Capturing the output is mandatory, and it is the only evidence you will get.** `--function-logs` is
+**`tee` is mandatory, and it is the only evidence you will get.** `--function-logs` is
 **not supported with `--e2e`**, and `--output-dir` only ever defaults to
 `_output/composition_test` / `_output/operation_test` — **there is no `_output/e2e*`
 directory, ever.** So unlike a composition test, an E2E run leaves no artifact behind. The
@@ -317,10 +300,8 @@ reach `Ready` after the last poll you took. Report progress from polls; report o
 from the exit code and the completed log.
 
 **Every 3 minutes:**
-1. Read the log without blocking — `tail -n 20 /tmp/e2e-<test-name>.log`, and `grep '^EXIT=' /tmp/e2e-<test-name>.log` to see
-   whether it has finished
-2. Compare with the previous poll (`wc -c < /tmp/e2e-<test-name>.log` is enough) - If it grew, reset the
-   progress timer
+1. `read_output(job, block=False)` - Check progress
+2. Compare output - If changed, reset progress timer
 3. Show brief update: `[00:05:30] Phase: Waiting for resources`
 4. **If no progress for the stuck threshold** → Check `crossplane beta trace` for "Creating"
    - If still "Creating" → Reset timer, continue
@@ -392,17 +373,9 @@ When stuck (15 min no progress, not actively creating):
    no pull credential on that Space (common when `up profile list` shows the active profile as
    `disconnected`). Fix `spec.repository` in `upbound.yaml` or the Space's pull secret; retrying
    the test will not help.
-3. **Run the stuck-investigation checklist** in [knowledge.md](references/knowledge.md),
-   or delegate it if your agent can — either way, keep only the analysis (max 100 lines)
-4. **Stop the run** by PID. `up` is a child of the wrapper shell, so stop both:
-
-   ```bash
-   PID=$(cat /tmp/e2e-<test-name>.pid); pkill -P "$PID"; kill "$PID" 2>/dev/null
-   ```
-
-   A terminated run skips teardown. Check `up controlplane list` for
-   `configuration-<project>-uptest-<test>` and report what is left behind; deleting it is
-   the user's call.
+3. **Launch troubleshooting sub-agent** - See [knowledge.md](references/knowledge.md) for full prompt
+4. **Receive concise analysis** (max 100 lines)
+5. **Cancel test**: `stop(job)`
 
 > `up: error: context deadline exceeded` is not a diagnosis — it is the absence of one. Always
 > report the underlying Configuration/Provider condition message instead.
@@ -415,9 +388,9 @@ Before writing a single line of the report, produce these three things. If you c
 produce all three, **the report is "UNVERIFIED — could not confirm", not a pass**:
 
 ```bash
-echo "exit code: ${PIPESTATUS[0]:-unknown}"     # or the exit status your shell reported
+echo "exit code: ${PIPESTATUS[0]:-unknown}"     # or the exit status Bash reported
 tail -30 /tmp/e2e-<test-name>.log                # the run's own final output
-kubectl --kubeconfig /tmp/e2e-<test-name>.kubeconfig get managed -A   # if not yet torn down
+kubectl --kubeconfig "$KCFG" get managed -A   # if not yet torn down
 ```
 
 Then:
@@ -447,40 +420,51 @@ Then:
   `az ... show`, `gcloud ... describe` — **before teardown**, and quoted it. If the
   resource is already deleted, the honest report is "not verified at the provider".
 
+**Success:** Test name, exit code, duration *quoted from the log*, resources created,
+timeline (5-10 lines)
+
+**Stuck/Failure:** Test name, stuck duration, phase, last output, sub-agent analysis,
+proposed fixes (50-100 lines)
+
 **Cannot verify:** Say exactly that, say which of the three artifacts above you could not
 produce, and stop. An unverified run reported as a pass is worse than a failed run — it
 gets relayed onward as fact.
 
-See [knowledge.md](references/knowledge.md) for what a success and a stuck/failure report contain, with templates.
+See [knowledge.md](references/knowledge.md) for report templates.
 
 ## Critical Requirements
 
 | Requirement | Details |
 |-------------|---------|
 | Control plane group | Pass `--control-plane-group` explicitly, derived from the current context (`up ctx . --short \| cut -d/ -f3`). Never hardcode a group |
-| Kubeconfig | Delete and rewrite `/tmp/e2e-<test-name>.kubeconfig` from `up ctx . -f-` for every run, check it parses, pass it with `--kubeconfig` |
+| Kubeconfig | Write the current context to `/tmp/kubeconfig-e2e` with `up ctx . -f-`, pass it with `--kubeconfig` |
 | Pre-validation | Build + composition tests before E2E |
 | Monitoring | Every 3 minutes, don't passively wait |
 | Stuck threshold | `min(15 min, spec.timeoutSeconds / 3)` — read the test first; a fixed 15 min never fires on a 300s test |
-| Troubleshooting | Run the checklist once (or delegate it), return only the analysis |
-| Evidence | Capture the run to `/tmp/e2e-<test>.log` (`tee`, or the background redirect). `--function-logs` is unsupported with `--e2e` and no `_output/e2e*` is ever written, so stdout + exit code are the *only* record |
+| Troubleshooting | Use sub-agent, keep main context clean |
+| Evidence | `tee` the run to `/tmp/e2e-<test>.log`. `--function-logs` is unsupported with `--e2e` and no `_output/e2e*` is ever written, so stdout + exit code are the *only* record |
 | Reporting | Report in the terminal, and quote raw captured output for every claim. No artifacts + no log = report "UNVERIFIED", never a pass |
 | Target | Resolve and state local-vs-Space *before* running; `--e2e` targeting differs from `up project run` and the CLI does not announce it |
 | Scope | Run tests and report - delegate fixes to parent |
 
 ## Provider API Versions
 
-**Always use the `.m.` API groups** (`aws.m.upbound.io/v1beta1`) — `.m.` is the modern
-(Crossplane v2) group. [knowledge.md](references/knowledge.md) lists the misconceptions to avoid.
+**ALWAYS use the `.m.` API groups:** `aws.m.upbound.io/v1beta1`. `.m.` = **modern** (Crossplane v2), not "naMespaced" — the group also holds the cluster-scoped `ClusterProviderConfig`.
+
+Never say:
+- "Family providers use v1 API"
+- "Single vs family providers have different APIs"
+
+See [knowledge.md](references/knowledge.md) for full explanation.
 
 ## Success Criteria
 
 - Pre-validation completes before E2E
 - **Resolved target (local vs Space) stated before the run**
-- Test runs with correct flags, output captured to the log
+- Test runs with correct flags, output captured with `tee`
 - Active monitoring every 3 minutes
 - Stuck detection at `min(15 min, timeoutSeconds / 3)`, derived from the test
-- Stuck runs investigated with the checklist, and stopped by PID
+- Subagent launched for troubleshooting
 - Concise analysis returned (max 100 lines)
 - **Every reported figure — duration, exit code, readiness — quoted from captured output**
 - **A run whose output was not captured is reported UNVERIFIED, never as a pass**
