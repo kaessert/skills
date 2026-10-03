@@ -30,6 +30,13 @@ effect, not the intent — is binding on every summary you write, and it is not 
 composed resource needs (§5), the container boundary (§7), what a green run does and does not
 prove (§8), and the rule against creating infrastructure as a side effect (§9).
 
+## Local-only projects and projects with their own gate
+
+- **The project's own gate runs E2E** — use it, and report its command, exit code and output
+  (`control-plane-project-charter` §4, §2).
+- **Upbound Cloud is ruled out** — use `--local`, skip the Space-context checks and the
+  push-target decision, and run in the foreground with no monitoring loop if it fits.
+
 ## Context Efficiency (CRITICAL)
 
 This skill returns to parent agent. Minimize context:

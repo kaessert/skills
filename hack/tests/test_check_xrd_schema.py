@@ -16,6 +16,7 @@ be wrong in ways that look exactly like compliance:
 from __future__ import annotations
 
 import io
+import os
 import shutil
 import sys
 import tempfile
@@ -33,12 +34,17 @@ except ImportError:
     c = None
 
 
-def run(paths, min_corpus=None):
+def run(paths, min_corpus=None, exceptions=None):
     """Run the checker over `paths`, returning (exit_code, output)."""
     out = io.StringIO()
     if min_corpus is None:
         min_corpus = c.DEFAULT_MIN_CORPUS
-    code = c.run([str(p) for p in paths], min_corpus=min_corpus, out=out)
+    code = c.run(
+        [str(p) for p in paths],
+        min_corpus=min_corpus,
+        out=out,
+        exceptions=str(exceptions) if exceptions else None,
+    )
     return code, out.getvalue()
 
 
@@ -364,3 +370,79 @@ class CheckXrdSchemaTest(unittest.TestCase):
         assert any("gatewayName" in ln for ln in reviews)
         assert any("gatewayTimeoutSeconds" in ln for ln in reviews)
         assert not any("gatewayName" in ln or "gatewayTimeoutSeconds" in ln for ln in fails)
+
+    # ---------------------------------------------------------------------------
+    # Enum-casing exceptions: values that mirror an upstream API verbatim
+    # ---------------------------------------------------------------------------
+
+    def exceptions_file(self, body):
+        f = self.tmp() / "xrd-schema-exceptions.yaml"
+        f.write_text(body)
+        return f
+
+    def test_excepted_enum_prints_its_reason_and_other_findings_stay(self):
+        exc = self.exceptions_file(
+            "enumCasing:\n"
+            "  - field: spec.packageType\n"
+            "    reason: package manager names as the registry spells them\n"
+        )
+        code, output = run([FIXTURES / "bad.yaml"], exceptions=exc)
+        assert code == c.EXIT_FINDINGS
+        assert "FAIL:   " not in "\n".join(
+            ln for ln in output.splitlines() if "packageType: enum value" in ln
+        )
+        assert (
+            "EXCEPTED: " in output
+            and "spec.packageType: enum value 'maven'" in output
+            and "-- package manager names as the registry spells them" in output
+        )
+        assert "FAIL:   " in output and "minVersion: enum value 'tls12'" in output
+
+    def test_schema_whose_only_defects_are_excepted_exits_clean(self):
+        d = self.tmp()
+        xrd = d / "definition.yaml"
+        xrd.write_text(
+            (FIXTURES / "good.yaml").read_text().replace(
+                "enum: [TLS12, TLS13]", "enum: [tls12, tls13]"
+            )
+        )
+        exc = self.exceptions_file(
+            "enumCasing:\n"
+            "  - field: spec.tlsConfig.minVersion\n"
+            "    reason: OpenSSL protocol names, passed through verbatim\n"
+        )
+        code, output = run([xrd])
+        assert code == c.EXIT_FINDINGS, output
+        code, output = run([xrd], exceptions=exc)
+        assert code == c.EXIT_CLEAN, output
+        assert "2 excepted" in output
+
+    def test_exception_without_reason_is_an_input_error(self):
+        exc = self.exceptions_file("enumCasing:\n  - field: spec.packageType\n")
+        code, output = run([FIXTURES / "bad.yaml"], exceptions=exc)
+        assert code == c.EXIT_NO_CORPUS
+        assert "EXCEPTIONS ERROR" in output and "has no reason" in output
+
+    def test_stale_exception_is_reported_for_review(self):
+        exc = self.exceptions_file(
+            "enumCasing:\n"
+            "  - field: spec.noSuchField\n"
+            "    reason: left over from a rename\n"
+        )
+        _code, output = run([FIXTURES / "bad.yaml"], exceptions=exc)
+        assert any(
+            ln.startswith("REVIEW:") and "'spec.noSuchField' matches no finding" in ln
+            for ln in output.splitlines()
+        ), output
+
+    def test_default_exceptions_file_is_read_from_the_working_directory(self):
+        exc = self.exceptions_file(
+            "enumCasing:\n"
+            "  - field: spec.packageType\n"
+            "    reason: package manager names as the registry spells them\n"
+        )
+        cwd = os.getcwd()
+        os.chdir(exc.parent)
+        self.addCleanup(os.chdir, cwd)
+        _code, output = run([FIXTURES / "bad.yaml"])
+        assert "EXCEPTED: " in output and "spec.packageType" in output

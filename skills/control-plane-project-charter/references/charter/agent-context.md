@@ -17,10 +17,11 @@ You share their context and their working directory, and you can ask.
   which layout, which region — never about things the project can tell you.
 - **Do not ask what you can discover.** Layout, model paths, existing dependencies, current
   context: look, do not interview.
-- **One exception.** If your caller is itself a forked agent — `execute-v2-migration` runs
-  that way — it cannot reach the user either, so a question there terminates *its* turn. When
-  the conversation you expanded into is a fork's, state the assumption you would ask about
-  and proceed.
+- **Unless nobody can answer.** If your caller is itself a forked agent — `execute-v2-migration`
+  can run that way — it cannot reach the user either, so a question there terminates *its* turn.
+  The same holds in an autonomous run with no user in the loop. In both cases, decide from the
+  project's own spec and state the assumption you made, or stop and report the open question
+  as your result. Never block on a question nobody can answer.
 
 **Your work is visible.** Every command you run and every file you write lands in the
 caller's context, so your summary points at evidence they already have rather than standing

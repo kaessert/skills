@@ -120,7 +120,12 @@ xray:
 
 A bare boolean with no `default` also leaves unset and `false` indistinguishable to the composition.
 
-**Enum values are CamelCase with an initial capital**, per the [Kubernetes API conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#constants): `ClusterFirst`, `Pending`, `ClientIP`. The XR is your platform's contract, not a thin wrapper, so translating to the backend's vocabulary is the composition's job. The one defensible exception is a value that is a proper noun with established casing (`npm`, `PyPI`, `NuGet`), where CamelCasing produces something wrong (`Npm`) and reintroduces the casing trap. Write the exception down where the field is.
+**Enum values are CamelCase with an initial capital**, per the [Kubernetes API conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#constants): `ClusterFirst`, `Pending`, `ClientIP`. The XR is your platform's contract, not a thin wrapper, so translating to the backend's vocabulary is the composition's job. Two exceptions are defensible:
+
+- **A proper noun with established casing** (`npm`, `PyPI`, `NuGet`), where CamelCasing produces something wrong (`Npm`) and reintroduces the casing trap.
+- **Values that mirror an upstream API verbatim**, when the platform deliberately passes them through and consumers already use them: AWS engine names (`aurora-postgresql`, `oracle-se2`), protocols (`udp`). Translating them is the composition's job only when the XR presents its own vocabulary; when it doesn't, renaming them gains nothing and breaks recognition.
+
+Write each exception down with its reason — in the field's description, and in the project's `xrd-schema-exceptions.yaml` so that `check_xrd_schema.py` records it rather than failing on it forever.
 
 ---
 

@@ -347,7 +347,7 @@ Tell skill: "Migrate this function from v1 to v2"
 - REMOVE providerConfigRef where it names the v2 default — that is
   `{kind: ClusterProviderConfig, name: default}`, or a v1 `providerConfigRef` naming
   `default`, both of which the API server now supplies. **Keep** one that names a
-  non-`default` config: a platform with more than one credential set it deliberately, and
+  non-`default` config: the platform set it deliberately, and
   deleting it silently repoints those resources at the default account. Never add a `kind`
   field to a reference you are keeping without checking the object exists — see below
 - REMOVE managementPolicies and any deletionPolicy on managed resources

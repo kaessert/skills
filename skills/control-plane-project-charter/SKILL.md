@@ -28,6 +28,7 @@ references:
   - references/languages/python/tests.md
   - references/languages/typescript.md
   - references/languages/yaml.md
+  - references/rules-card.md
 ---
 # Development Charter
 
@@ -56,6 +57,7 @@ or the worked example behind a rule.
 | [`charter/container.md`](references/charter/container.md) | which languages are containerized, and what crosses the boundary (§7) |
 | [`charter/evidence.md`](references/charter/evidence.md) | reading a render, how `assertResources` matches, making a suite exhaustive (§8) |
 | [`charter/generators.md`](references/charter/generators.md) | the `--language` slugs, and what each CLI generator actually emits (§10) |
+| [`rules-card.md`](references/rules-card.md) | the charter on one screen, for an orchestrator to paste into agent instructions |
 
 ---
 
@@ -69,13 +71,24 @@ When a skill says to hand work to a sub-agent, or to run a command in the backgr
 your harness's own way of doing that. If it has none, do the work in band: follow the brief
 yourself, or run the command in the foreground — never detach it yourself.
 
+**When nobody can answer, never block on a question.** In an autonomous run — no user in the
+loop, or a caller that cannot relay a question — decide from the project's own spec and say
+which assumption you made, or stop and report the open question as your result. Wherever a
+skill says to ask, read it with this rule.
+
 **Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) — what each context may and may not do, why a fork's only output channel is prose, and how to delegate or run long commands when your harness cannot.
 
 
 ## 2. Discover, do not interview
 
-Whatever your `context:`, the project answers most questions faster and more reliably than
-the user does.
+Inline or forked, the project answers most questions faster and more reliably than the user
+does.
+
+**The project's own decisions win over these skills' defaults.** When a design document,
+work item or agent instruction for this project decides something differently — a
+`providerConfigRef` the platform needs, a gate script in place of a skill's verification
+steps, local E2E only — follow it, and say in your report where you departed from a
+skill's default and why.
 
 | What you need | Where it is |
 |---|---|
@@ -219,7 +232,7 @@ breaks the resource.
 |---|---|---|
 | `metadata.namespace` | **No** | **If the XR is namespaced**, Crossplane overwrites it with the XR's namespace (`if xr.GetNamespace() != "" { cd.SetNamespace(...) }`), so a function setting a *different* namespace is silently overridden, not merged with. A **cluster-scoped** XR is the exception — its composed resources keep the namespace the function sets, which is how a cluster XR targets one. (A namespaced XR composing a cluster-scoped kind is a hard error, not a namespace question.) |
 | `managementPolicies` | **No** | The namespaced MR spec carries `+kubebuilder:default={"*"}`, so the API server fills it in. Set it only for a genuinely different policy — e.g. `["Create","Observe","Update","LateInitialize"]` to orphan on delete, which for a namespaced MR is the *only* way to orphan: there is no `deletionPolicy` field on the namespaced spec at all. |
-| `providerConfigRef` | **No** | The same struct, the same way: `+kubebuilder:default={"kind":"ClusterProviderConfig","name":"default"}`. |
+| `providerConfigRef` | **No**, if `ClusterProviderConfig/default` exists and is the right one | The same struct, the same way: `+kubebuilder:default={"kind":"ClusterProviderConfig","name":"default"}`. |
 | `metadata.name` | Only for a stable external name | Otherwise Crossplane generates `<prefix>-<sha256(xr-uid + composition-resource-name)[:12]>`, where the prefix comes from the `crossplane.io/composite` label, truncated to 63 chars. Deterministic for one XR instance, **not** across re-creations — and it falls back to a random 5-char suffix when the composition-resource-name annotation or the controller ownerRef is missing. Inside a *render* it is fully deterministic and safe to assert — see §8. |
 | `crossplane.io/composition-resource-name` | Never by hand | It comes from the key you store the resource under. |
 

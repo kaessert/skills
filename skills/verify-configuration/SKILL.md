@@ -28,6 +28,16 @@ effect, not the intent — is binding on every summary you write, and it is not 
 composed resource needs (§5), the container boundary (§7), what a green run does and does not
 prove (§8), and the rule against creating infrastructure as a side effect (§9).
 
+## Local-only projects and projects with their own gate
+
+- **The project has its own gate** — a script or make target that builds and runs the
+  tests. Run it instead of the steps it covers, and report its command, exit code and output
+  (`control-plane-project-charter` §4). The project's decision wins over this skill's steps
+  (§2).
+- **Upbound Cloud is ruled out** — by the project or the user. Use `--local` throughout and
+  skip the Space-context checks and the push-target decision. A local run that fits in your
+  shell's timeout runs in the foreground, with no monitoring loop.
+
 ## Purpose
 
 This skill **VERIFIES** that a configuration package is ready by:

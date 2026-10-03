@@ -10,6 +10,18 @@ references:
 
 Author and modify Crossplane configuration tests, in any language `up test generate` supports.
 
+## Before you report — always, even if you load nothing else
+
+The full rules are `control-plane-project-charter` §4 and §8 and the charter's `tdd.md`. These
+four are the ones reports break most often:
+
+1. **Name what ran and its exit code.** No command, no claim.
+2. **For every test you added or changed, name the code change that turns it red**, and say
+   whether you made that change and saw the test fail. If you did not, call the test unproven.
+3. **Name the layer you reached** — render, composition test, local control plane, cloud — and
+   never claim one you did not reach.
+4. **Comments and docs claim no more than the test checks.**
+
 ## Core Principle
 
 **A test's *meaning* is language-agnostic; only its *syntax* differs.**
@@ -141,7 +153,8 @@ EXECUTE REFACTORING:
 
 **CRITICAL**: always use the `.m.` API groups in tests. The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See `control-plane-project-charter` §5.
 
-**A composed managed resource should carry no `providerConfigRef` at all** — the API server
+**A composed managed resource should carry no `providerConfigRef`** unless the right config is
+not `ClusterProviderConfig/default` (`control-plane-project-charter` §5) — the API server
 defaults it to `{kind: ClusterProviderConfig, name: default}`, which is the object the templates
 and generated E2E tests create. See
 `control-plane-project-charter` §5

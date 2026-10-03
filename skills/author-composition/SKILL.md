@@ -11,6 +11,18 @@ references:
 Author and modify Crossplane composition functions, in any language `up function generate`
 supports.
 
+## Before you report — always, even if you load nothing else
+
+The full rules are `control-plane-project-charter` §4 and §8 and the charter's `tdd.md`. These
+four are the ones reports break most often:
+
+1. **Name what ran and its exit code.** No command, no claim.
+2. **For every test you added or changed, name the code change that turns it red**, and say
+   whether you made that change and saw the test fail. If you did not, call the test unproven.
+3. **Name the layer you reached** — render, composition test, local control plane, cloud — and
+   never claim one you did not reach.
+4. **Comments and docs claim no more than the test checks.**
+
 ## Core principle
 
 **A composition's *meaning* is language-agnostic; only its *syntax* differs.**
@@ -182,8 +194,9 @@ The language file has the bootstrap and the syntax. Language-independent, in ord
 
 1. Parse the observed XR using the language's required bootstrap (Python needs
    `struct_to_dict`; skipping it fails *silently* on current Up CLI versions).
-2. Create managed resources with **`forProvider` only** — no `providerConfigRef`, no
-   `managementPolicies`, no `metadata.namespace`
+2. Create managed resources with **`forProvider` only** — no `providerConfigRef` (unless the
+   right config is not `ClusterProviderConfig/default`), no `managementPolicies`, no
+   `metadata.namespace`
    (`control-plane-project-charter` §5).
 3. Convert flexible maps to the language's plain map type before assigning them.
 4. Extract connection details by **composition key**, not by resource name.
@@ -222,8 +235,8 @@ lifecycle task, both with a fully green composition suite:
 **2. Grep your own function** with the two checks in
 `control-plane-project-charter` §5, and judge
 each hit rather than counting them. Legitimate hits: a `namespace` on a Secret or ConfigMap you
-compose yourself, and a `providerConfigRef` on a platform that genuinely has more than one
-credential — in which case `kind` must name an object the project actually creates.
+compose yourself, and a `providerConfigRef` where the right config is not
+`ClusterProviderConfig/default` — in which case `kind` must name an object that exists.
 
 **3. The suite is not done until it satisfies all three rules:**
 
@@ -301,8 +314,8 @@ Language-independent:
       spelling differs per language, see the `languages/` file
 - [ ] Add the language's XR-parsing bootstrap where it is required
 - [ ] **Delete** `providerConfigRef` from managed resources (namespaced MRs default to
-      `ClusterProviderConfig/default`); keep it only where multiple credentials really exist,
-      with a `kind` that matches an object you create
+      `ClusterProviderConfig/default`); keep it only where the right config is not that one,
+      with a `kind` that matches an object that exists
 - [ ] **Delete** `deletionPolicy` — `managementPolicies: ["*"]` is the default; set it only
       for a non-default policy (e.g. `["Create","Observe","Update","LateInitialize"]` to
       orphan on delete)

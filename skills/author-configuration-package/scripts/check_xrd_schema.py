@@ -5,6 +5,7 @@
 Usage:
     python3 check_xrd_schema.py apis/*/definition.yaml
     python3 check_xrd_schema.py --min-corpus 3 apis/tiny/definition.yaml
+    python3 check_xrd_schema.py --exceptions xrd-schema-exceptions.yaml apis/*/definition.yaml
 
 Collisions, allowlist casing, group stutter, enum casing, missing descriptions,
 unbounded lists and printer columns Crossplane already appends are all greppable
@@ -50,6 +51,21 @@ What this reports as REVIEW rather than FAIL, because the call is semantic:
     Both shapes are prefix-anchored matches on the group.
   * Booleans, and strings with no enum, pattern, maxLength or format.
 
+Enum casing has one recorded escape hatch. Values that mirror an upstream API
+verbatim (`aurora-postgresql`, `udp`) are not yours to rename when consumers
+pass them through unchanged. List such fields in an exceptions file, each with a
+reason:
+
+    enumCasing:
+      - field: spec.parameters.engine
+        reason: AWS RDS engine names, passed through to the provider verbatim
+
+`field` is the path the finding prints, without the file and version. The file
+is read from --exceptions, or from ./xrd-schema-exceptions.yaml when it exists.
+Excepted findings print as EXCEPTED with their reason and do not fail the run.
+An entry without a reason is an input error (exit 2), and an entry that no
+longer matches a finding is reported for REVIEW, so stale exceptions surface.
+
 What it does not look at all, and why it does not try:
 
   * Kind stutter. `repositoryClass` is a good name and `repositoryName` is not,
@@ -65,6 +81,8 @@ from __future__ import annotations
 
 import argparse
 import glob
+import os
+import re
 import sys
 
 try:
@@ -138,6 +156,39 @@ CROSSPLANE_COLUMNS = {"SYNCED", "READY", "COMPOSITION", "COMPOSITIONREVISION", "
 DEFAULT_MIN_CORPUS = 5
 
 XRD_KINDS = ("CompositeResourceDefinition", "CustomResourceDefinition")
+
+DEFAULT_EXCEPTIONS = "xrd-schema-exceptions.yaml"
+
+# `<file>[<version>].<field>: enum value '<v>' is not CamelCase ...`
+ENUM_CASING_RE = re.compile(r"^.*?\]\.(?P<field>[^:]+): enum value .* is not CamelCase")
+
+
+class ExceptionsError(Exception):
+    """The exceptions file cannot be used as written."""
+
+
+def load_exceptions(path):
+    """Return {field: reason} for enum-casing exceptions in `path`."""
+    with open(path, encoding="utf-8") as fh:
+        doc = yaml.safe_load(fh) or {}
+    if not isinstance(doc, dict):
+        raise ExceptionsError(f"{path}: expected a mapping with an enumCasing list")
+    entries = doc.get("enumCasing") or []
+    if not isinstance(entries, list):
+        raise ExceptionsError(f"{path}: enumCasing must be a list")
+    out = {}
+    for i, e in enumerate(entries):
+        field = (e or {}).get("field") if isinstance(e, dict) else None
+        reason = (e or {}).get("reason") if isinstance(e, dict) else None
+        if not isinstance(field, str) or not field.strip():
+            raise ExceptionsError(f"{path}: enumCasing[{i}] has no field")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ExceptionsError(
+                f"{path}: enumCasing[{i}] ({field}) has no reason -- an exception "
+                "nobody can explain is a defect nobody fixed"
+            )
+        out[field.strip()] = reason.strip()
+    return out
 
 
 def split_words(s):
@@ -366,9 +417,22 @@ def check(path):
     return names, findings, review, kinds
 
 
-def run(patterns, min_corpus=DEFAULT_MIN_CORPUS, out=None):
-    """Check every file matching `patterns`. Returns an exit code."""
+def run(patterns, min_corpus=DEFAULT_MIN_CORPUS, out=None, exceptions=None):
+    """Check every file matching `patterns`. Returns an exit code.
+
+    `exceptions` is a path to an exceptions file. None means use
+    DEFAULT_EXCEPTIONS from the current directory when it exists.
+    """
     out = out or sys.stdout
+    if exceptions is None and os.path.exists(DEFAULT_EXCEPTIONS):
+        exceptions = DEFAULT_EXCEPTIONS
+    excepted_fields = {}
+    if exceptions:
+        try:
+            excepted_fields = load_exceptions(exceptions)
+        except (OSError, yaml.YAMLError, ExceptionsError) as e:
+            print(f"EXCEPTIONS ERROR: {e}", file=out)
+            return EXIT_NO_CORPUS
     paths = []
     for a in patterns:
         paths.extend(sorted(glob.glob(a)))
@@ -440,13 +504,34 @@ def run(patterns, min_corpus=DEFAULT_MIN_CORPUS, out=None):
                 f"{where}: field name {n!r} canonicalises {w!r} -- {fix}"
             )
 
+    excepted, used = [], set()
+    if excepted_fields:
+        kept = []
+        for f in all_findings:
+            m = ENUM_CASING_RE.match(f)
+            if m and m.group("field") in excepted_fields:
+                field = m.group("field")
+                used.add(field)
+                excepted.append(f"{f} -- {excepted_fields[field]}")
+            else:
+                kept.append(f)
+        all_findings = kept
+        for field in sorted(set(excepted_fields) - used):
+            all_review.append(
+                f"{exceptions}: enumCasing exception for {field!r} matches no finding -- "
+                "remove it, or fix the field path"
+            )
+
     for f in sorted(set(all_findings)):
         print("FAIL:   " + f, file=out)
+    for f in sorted(set(excepted)):
+        print("EXCEPTED: " + f, file=out)
     for f in sorted(set(all_review)):
         print("REVIEW: " + f, file=out)
     print(
         f"\ncorpus: {len(all_names)} field names, {kinds} kind(s), {len(paths)} file(s); "
-        f"{len(set(all_findings))} failure(s), {len(set(all_review))} to review",
+        f"{len(set(all_findings))} failure(s), {len(set(all_review))} to review"
+        + (f", {len(set(excepted))} excepted" if excepted else ""),
         file=out,
     )
     return EXIT_FINDINGS if all_findings else EXIT_CLEAN
@@ -474,8 +559,16 @@ def main(argv=None):
             f"(default: {DEFAULT_MIN_CORPUS}). Below it the run is an error, not a pass."
         ),
     )
+    ap.add_argument(
+        "--exceptions",
+        metavar="FILE",
+        help=(
+            f"enum-casing exceptions, each with a reason (default: ./{DEFAULT_EXCEPTIONS} "
+            "when it exists)"
+        ),
+    )
     args = ap.parse_args(argv)
-    return run(args.paths, min_corpus=args.min_corpus)
+    return run(args.paths, min_corpus=args.min_corpus, exceptions=args.exceptions)
 
 
 if __name__ == "__main__":

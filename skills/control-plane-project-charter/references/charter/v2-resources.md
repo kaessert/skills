@@ -140,8 +140,11 @@ regenerate models.
 > conditions, which is easy to mistake for silence. Either way the composition suite passes,
 > and nothing fails until it is on a real control plane.
 
-**Set `providerConfigRef` only when the platform genuinely has more than one credential**,
-and then make `kind` match an object that exists:
+**Omit `providerConfigRef` if and only if a `ClusterProviderConfig` named `default` exists and
+is the right one.** That is the common case. Otherwise set it — when the platform has several
+credentials, and also when it has a single credential whose `ClusterProviderConfig` is not named
+`default` (omitting the reference there leaves every resource inert). Then make `kind` match an
+object that exists:
 
 | `kind` | Selects | When |
 |---|---|---|

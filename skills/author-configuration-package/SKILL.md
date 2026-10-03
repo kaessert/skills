@@ -10,6 +10,18 @@ references:
 
 Scaffold and modify Crossplane configuration packages. This skill handles structure, XRDs, dependencies, and building - NOT composition implementation.
 
+## Before you report — always, even if you load nothing else
+
+The full rules are `control-plane-project-charter` §4 and §8 and the charter's `tdd.md`. These
+four are the ones reports break most often:
+
+1. **Name what ran and its exit code.** No command, no claim.
+2. **For every test you added or changed, name the code change that turns it red**, and say
+   whether you made that change and saw the test fail. If you did not, call the test unproven.
+3. **Name the layer you reached** — render, composition test, local control plane, cloud — and
+   never claim one you did not reach.
+4. **Comments and docs claim no more than the test checks.**
+
 ## Phase 0: You run inline, and you are bound by the charter
 
 This skill runs inline — you expand into the caller's conversation, share their
@@ -372,6 +384,13 @@ python3 <author-configuration-package>/scripts/check_xrd_schema.py \
 Exit `0` is clean, `10` is at least one finding, and `2` means it extracted nothing — a corpus
 error, not a pass. `FAIL` lines are defects; `REVIEW` lines (booleans, bare strings) are calls
 for you to make. The `ACRONYMS` table applies to the **Kind** only; trim it to the acronyms this API uses.
+
+An enum whose values mirror an upstream API verbatim (`aurora-postgresql`) fails the casing
+rule by design. When that is a deliberate decision, record it in `xrd-schema-exceptions.yaml`
+at the project root, one entry per field with a mandatory `reason` (format in the script's
+docstring); the script reads it from the working directory, prints those findings as
+`EXCEPTED`, and can then serve as a gate. A skeleton XRD has too few fields to count as an
+extraction, so pass `--min-corpus` until the API has grown.
 
 ## Post-Scaffolding Hand-off
 
