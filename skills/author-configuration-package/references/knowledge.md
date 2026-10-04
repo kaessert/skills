@@ -105,6 +105,12 @@ _output/
 # Generated models
 .up/
 
+# Go: `go build ./...` writes a binary named after its directory. One line per
+# function; the test patterns cover every scaffolded test directory.
+functions/<function-name>/<function-name>
+tests/*/test-*
+tests/*/e2etest-*
+
 # IDE files
 .vscode/
 .idea/
