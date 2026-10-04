@@ -117,13 +117,16 @@ requirement on a file — dependencies in `upbound.yaml`, a frozen XRD surface, 
 
 **Existing tests decide; otherwise the composition language does.** Detect the *test* language from the `tests/` directory first — a project may already mix languages (`configuration-aws-ctp` is Python functions with YAML tests), and new tests match what is there. With no tests yet, write them in the composition language whenever `up` supports it as a test language, and fall back to YAML only when it does not. The full rule and its reasons: `control-plane-project-charter` §10.
 
+The files named below are in the charter's `languages/` directory
+(`control-plane-project-charter/references/languages/`, beside this skill's directory).
+
 ```
 Inspect tests/ (skip empty projects):
-  tests/*/**.k                         → KCL      → ../../languages/kcl.md
-  tests/*/test/__main__.py, main.py    → Python   → ../../languages/python.md
-  tests/*/*.yaml, no other test source → YAML     → ../../languages/yaml.md
-  tests/*/go.mod + main.go             → Go       → ../../languages/go/tests.md
-  tests/*/*.gotmpl (every file)        → go-templating → ../../languages/go-templating.md
+  tests/*/**.k                         → KCL           → kcl.md
+  tests/*/test/__main__.py, main.py    → Python        → python.md
+  tests/*/*.yaml, no other test source → YAML          → yaml.md
+  tests/*/go.mod + main.go             → Go            → go/tests.md
+  tests/*/*.gotmpl (every file)        → go-templating → go-templating.md
 
 No tests yet? Pick the language:
   1. Match existing test style if any test exists anywhere

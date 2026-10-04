@@ -70,14 +70,15 @@ intent) says what it means for your summary. Both apply in full.
 ## Phase 1: Detect the language *and the Crossplane generation* — do not ask
 
 **The function language is not necessarily the test language.** Detect the *function*
-language from `functions/`:
+language from `functions/`, then read the file named. It is in the charter's `languages/`
+directory (`control-plane-project-charter/references/languages/`, beside this skill's directory):
 
 ```
-functions/*/*.k                            → KCL         → ../../languages/kcl.md
-functions/*/main.py | */function/fn.py     → Python      → ../../languages/python.md
-functions/*/*.ts                           → TypeScript  → ../../languages/typescript.md
-functions/*/*.go                           → Go          → ../../languages/go.md
-functions/*/*.gotmpl                       → go-templating → ../../languages/go-templating.md
+functions/*/*.k                            → KCL           → kcl.md
+functions/*/main.py | */function/fn.py     → Python        → python.md
+functions/*/*.ts                           → TypeScript    → typescript.md
+functions/*/*.go                           → Go            → go.md, then go/functions.md
+functions/*/*.gotmpl                       → go-templating → go-templating.md
 ```
 
 New tests follow the function language unless the project already has tests in another one
