@@ -50,16 +50,16 @@ So this skill has two layers:
 ## Scope
 
 **This skill DOES:**
-- ✅ Create/modify composition tests and E2E tests in any supported language
-- ✅ Plan test refactoring (creates `.agents/tasks/REFACTOR_TESTS.md`)
-- ✅ Execute refactoring (one priority item at a time)
-- ✅ Generate scaffolds with `up test generate`
-- ✅ **Run the test you just wrote** — `up test run "tests/<t>"`, directly, as the RED/GREEN loop requires
+- Create/modify composition tests and E2E tests in any supported language
+- Plan test refactoring (creates `.agents/tasks/REFACTOR_TESTS.md`)
+- Execute refactoring (one priority item at a time)
+- Generate scaffolds with `up test generate`
+- **Run the test you just wrote** — `up test run "tests/<t>"`, directly, as the RED/GREEN loop requires
 
 **This skill does NOT:**
-- ❌ Build the package, or run the whole suite as a gate (the project's own gate, else `verify-configuration` — but *after* the loop below, never inside it)
-- ❌ Execute E2E tests (use `e2e-test-configuration`)
-- ❌ Implement composition features (use `author-composition`)
+- Build the package, or run the whole suite as a gate (the project's own gate, else `verify-configuration` — but *after* the loop below, never inside it)
+- Execute E2E tests (use `e2e-test-configuration`)
+- Implement composition features (use `author-composition`)
 
 ## The TDD loop — this skill owns the RED step
 
@@ -315,10 +315,11 @@ Planning or executing a test refactor: follow
 
 ## Success Criteria
 
-Test authoring is complete when:
-- ✅ Test language detected/chosen and scaffold generated (or existing test read)
-- ✅ Test content follows the agnostic rules + the matching per-language reference
-- ✅ All critical fields asserted (not just existence)
-- ✅ The new assertion was observed to FAIL before the implementation existed, and to pass after
-- ✅ The gate passed once the suite was green — the project's own gate if it has one, else
+Checks for you before you report, not a report format (charter §4: report what ran). Test
+authoring is complete when:
+- Test language detected/chosen and scaffold generated (or existing test read)
+- Test content follows the agnostic rules + the matching per-language reference
+- All critical fields asserted (not just existence)
+- The new assertion was observed to FAIL before the implementation existed, and to pass after
+- The gate passed once the suite was green — the project's own gate if it has one, else
   `verify-configuration`, without a deploy where none is allowed (see The gate, after the loop)

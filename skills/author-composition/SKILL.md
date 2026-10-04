@@ -348,6 +348,8 @@ language-independent checklist is in
 
 ## Success criteria
 
+Checks for you before you report, not a report format (`control-plane-project-charter` §4).
+
 1. The function language was detected, not assumed, and the matching `languages/` file was read
 2. Import paths resolved from the project, never derived by hand
 3. Managed resources carry `forProvider` plus only what the project sets, with no dangling

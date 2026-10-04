@@ -223,6 +223,8 @@ Do NOT ask for confirmation on individual files or phases.
 
 ## Success Criteria
 
+Checks for you before you report, not a report format (`control-plane-project-charter` §4).
+
 - [ ] Migration plan read and parsed
 - [ ] Git branch created
 - [ ] Dependencies updated to v2 versions

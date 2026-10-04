@@ -310,11 +310,11 @@ up project build
 
 **Validate models generated:**
 ```bash
-if [ -d ".up/kcl/models" ]; then
-  echo "✅ Models generated"
+if [ -d ".up/kcl/models" ]; then     # .up/python/models, .up/go/models for those languages
+  echo "models generated"
   ls .up/kcl/models/ | head -10
 else
-  echo "❌ Models missing - check providers"
+  echo "models missing - check providers"
 fi
 ```
 

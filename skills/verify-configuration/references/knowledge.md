@@ -60,6 +60,8 @@ up test run tests/test-*
 - Exit code 0
 - Output shows "Failed tests: 0"
 - All tests show ✓ pass indicator
+- It did **not** print `No test files found` — that is zero tests run, though it exits 0
+  (`control-plane-project-charter` §8)
 
 **If tests fail:**
 - Count passing vs failing tests
@@ -73,34 +75,34 @@ up test run tests/test-*
 
 Generate verification report after build and tests complete.
 
+Report what ran and what it printed, with no checkmarks (`control-plane-project-charter` §4:
+report the effect, not the intent).
+
 #### Success Report Template
 
 ```markdown
-## ✅ Verification: PASSED
+## Verification: build and composition tests passed
 
-**Build:** ✅ Success
-**Composition Tests:** ✅ All passed
+**Build:** `up project build` → exit 0; package [path in _output/]
+**Composition tests:** `up test run tests/test-*` → exit 0; [the summary line it printed]
 **Duration:** [X] minutes
-
-### Pre-Commit Status
-✅ Build succeeds
-✅ All composition tests pass
-⚠️  E2E tests required before commit
+**Layer reached:** composition test (render). Not deployed; provider validity unchecked.
+**Not run:** E2E tests [required before commit | ruled out by the project]
 ```
 
 #### Failure Report Template
 
 ```markdown
-## ❌ Verification: FAILED
+## Verification: FAILED at [build | composition tests]
 
-**Build:** [✅ Success | ❌ Failed]
-**Composition Tests:** [✅ All passed | ❌ X failed]
+**Build:** `up project build` → exit [code]
+**Composition tests:** `up test run tests/test-*` → exit [code]; [X] failed [or: not run, build failed]
 
 ### Failed Tests
-[List test names that failed]
+[Each failing test name, with its failure message quoted]
 
 ### Pre-Commit Status
-❌ Cannot commit - verification failed
+Cannot commit - verification failed
 
 ### Next Steps
 - Review and fix failures
@@ -171,16 +173,16 @@ Write to: `e2e-test-report-YYYY-MM-DD.md`
 
 | Test | Status | Duration |
 |------|--------|----------|
-| e2etest-... | ✅ PASSED | 35m |
-| e2etest-... | ❌ FAILED | 28m |
+| e2etest-... | PASSED | 35m |
+| e2etest-... | FAILED | 28m |
 
 ## Detailed Results
 
-### ✅ test-name (PASSED)
+### test-name (PASSED)
 **Duration:** 35m
 **Summary:** [brief success summary]
 
-### ❌ test-name (FAILED)
+### test-name (FAILED)
 **Duration:** 28m
 **Failure Analysis:** [complete analysis from sub-agent]
 
@@ -199,9 +201,9 @@ Failed tests: [list if any]
 **Report:** e2e-test-report-YYYY-MM-DD.md
 
 ### Test Results
-✅ test-1 (35m)
-❌ test-2 (28m) - [brief error]
-✅ test-3 (40m)
+- test-1: PASSED (35m)
+- test-2: FAILED (28m) - [brief error]
+- test-3: PASSED (40m)
 ```
 
 ---

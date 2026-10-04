@@ -56,8 +56,8 @@ Every test - in any language - produces one of two objects under `apiVersion: me
 
 | API Type | Format | Use in tests |
 |----------|--------|--------------|
-| **Namespaced** | `aws.m.upbound.io/v1beta1` | ✅ ALWAYS |
-| Cluster-scoped | `aws.upbound.io/v1beta1` | ❌ Not in tests |
+| **Namespaced** | `aws.m.upbound.io/v1beta1` | Always |
+| Cluster-scoped | `aws.upbound.io/v1beta1` | Never |
 
 The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See `control-plane-project-charter` §5. How the `.m.` is expressed depends on language (import path for KCL/Python, `apiVersion` string for YAML) — see the per-language references.
 
@@ -149,38 +149,38 @@ This is how you verify "resource B only renders once resource A is Ready" and "t
 Language-neutral mistakes. (KCL import-syntax and Python dump-mode mistakes live in their own references.)
 
 ### 1. Wrong ProviderConfig authentication
-❌ Hardcoded long-lived keys inlined in the test.
-✅ Web identity / injected identity (`source: Upbound`) where available; otherwise a `source: Secret` ProviderConfig whose value is sourced from a **`UP_`-prefixed** env var into `stringData` (the training-lab pattern; the prefix is what gets it across the generation container's boundary). Never commit real keys.
+**Wrong:** Hardcoded long-lived keys inlined in the test.
+**Right:** Web identity / injected identity (`source: Upbound`) where available; otherwise a `source: Secret` ProviderConfig whose value is sourced from a **`UP_`-prefixed** env var into `stringData` (the training-lab pattern; the prefix is what gets it across the generation container's boundary). Never commit real keys.
 
 ### 2. Stale or missing crossplane block (E2E)
-❌ Copying a pinned `version:` from an old example (rots immediately).
-✅ Track a channel (`autoUpgrade.channel: Stable` or `Rapid`, no pinned version) — recommended, what real configs use, and a fine default.
-✅ Or pin a **current** UXP version deliberately when you need determinism: `version: <current>` plus `autoUpgrade.channel`.
+**Wrong:** Copying a pinned `version:` from an old example (rots immediately).
+**Right:** Track a channel (`autoUpgrade.channel: Stable` or `Rapid`, no pinned version) — recommended, what real configs use, and a fine default.
+**Right:** Or pin a **current** UXP version deliberately when you need determinism: `version: <current>` plus `autoUpgrade.channel`.
 
 ### 3. Guessed composed-resource names
-❌ `name: test-vpc` (a guess).
-✅ The exact generated name from `up composition render` (e.g. `vpc-test-vpc`).
+**Wrong:** `name: test-vpc` (a guess).
+**Right:** The exact generated name from `up composition render` (e.g. `vpc-test-vpc`).
 
 ### 4. Timeouts that don't fit
-❌ `timeoutSeconds: 30` (composition) or an E2E timeout too small for what you provision.
-✅ ≥60 for composition; size E2E to the real resources - a couple of Azure resources ≈ 900s, a full EKS cluster + add-ons ≈ 3600-5400s.
+**Wrong:** `timeoutSeconds: 30` (composition) or an E2E timeout too small for what you provision.
+**Right:** ≥60 for composition; size E2E to the real resources - a couple of Azure resources ≈ 900s, a full EKS cluster + add-ons ≈ 3600-5400s.
 
 ### 5. Missing `namespace: default` (v2)
-❌ XR without a namespace, or a namespaced `ProviderConfig` without one.
-✅ `namespace: default` on the XR, and on the `ProviderConfig` kind (namespaced). `ClusterProviderConfig` is cluster-scoped - omit namespace there.
+**Wrong:** XR without a namespace, or a namespaced `ProviderConfig` without one.
+**Right:** `namespace: default` on the XR, and on the `ProviderConfig` kind (namespaced). `ClusterProviderConfig` is cluster-scoped - omit namespace there.
 
 ### 6. Existence-only assertions
-❌ Asserting a resource exists but none of its fields.
-✅ Assert every critical field - region, CIDRs, chart name/version/repo, and the `forProvider` config. Don't assert `providerConfigRef` or `managementPolicies` unless the project's spec or API sets them: by default they are API-server defaults the composition does not set (`control-plane-project-charter` §5), and in Python `exclude_unset=True` keeps them out anyway.
+**Wrong:** Asserting a resource exists but none of its fields.
+**Right:** Assert every critical field - region, CIDRs, chart name/version/repo, and the `forProvider` config. Don't assert `providerConfigRef` or `managementPolicies` unless the project's spec or API sets them: by default they are API-server defaults the composition does not set (`control-plane-project-charter` §5), and in Python `exclude_unset=True` keeps them out anyway.
 
 ### 7. A composed resource with no assertion at all
 `assertResources` is a *partial, positive* check: it verifies the resources you list and ignores every other resource the composition emits. Adding a managed resource to a function and re-running the suite therefore **passes without testing anything** - verified: a whole extra MR plus new `spec` fields left a 2-test suite at 2/2 PASS with assertions untouched.
-✅ Every resource a composition can emit needs an assertion, including ones behind a condition (give those their own test with the triggering XR/observed state).
-✅ Cross-check against reality with `up test run "tests/<t>" --function-logs`, then read `_output/composition_test/<ts>/<test>/render.log` - it lists the rendered XR and every composed resource.
+**Right:** Every resource a composition can emit needs an assertion, including ones behind a condition (give those their own test with the triggering XR/observed state).
+**Right:** Cross-check against reality with `up test run "tests/<t>" --function-logs`, then read `_output/composition_test/<ts>/<test>/render.log` - it lists the rendered XR and every composed resource.
 
 ### 8. `skipDelete: true` in E2E
-❌ Leaves real cloud resources running and costing money.
-✅ Always `skipDelete: false`.
+**Wrong:** Leaves real cloud resources running and costing money.
+**Right:** Always `skipDelete: false`.
 
 ---
 
@@ -236,11 +236,11 @@ Last updated: YYYY-MM-DD
 **It matches the rendered composite too.** Drop the XR itself into `assertResources`
 with a `status` block and composition outputs become testable.
 
-❌ Concluding "the CompositionTest model has no `assertComposite`/`assertStatus` field,
+**Wrong:** Concluding "the CompositionTest model has no `assertComposite`/`assertStatus` field,
 so composition outputs cannot be verified" - and then leaving `assertResources=[]` on
 the very test written to cover status propagation. Observed: a status-propagation test
 that exercised the code path and asserted nothing.
-✅ Assert the composite:
+**Right:** Assert the composite:
 ```python
 assertResources=[
     {
@@ -277,17 +277,17 @@ elements) and reproduced end to end.
 
 So the two mistakes are opposite:
 
-❌ Asserting two keys of a ten-key mapping and concluding the mapping is correct — a
+**Wrong:** Asserting two keys of a ten-key mapping and concluding the mapping is correct — a
 superset match is exactly what a passing partial assertion means.
-❌ Asserting a two-entry subset of a five-entry list expecting a lenient pass — you get a
+**Wrong:** Asserting a two-entry subset of a five-entry list expecting a lenient pass — you get a
 confusing length error instead.
 
-✅ For a **list**, assert the whole thing, in order. That is also what makes the count part
+**Right:** For a **list**, assert the whole thing, in order. That is also what makes the count part
 of the test.
-✅ For a **mapping**, if the *exact* key set is the property under test, that property is not
+**Right:** For a **mapping**, if the *exact* key set is the property under test, that property is not
 expressible in `assertResources`. Read the rendered object out of `render.log`
 (`--function-logs`), or assert something that changes when a surplus key appears.
-✅ State plainly which you did. "Asserted the keys I expect are present" and "confirmed these
+**Right:** State plainly which you did. "Asserted the keys I expect are present" and "confirmed these
 are the only keys emitted" are different claims.
 
 ### 11. Designing coverage without reading the XRD's defaults
@@ -302,6 +302,6 @@ yq '.spec.versions[].schema.openAPIV3Schema.properties.spec' apis/<kind>/definit
   | grep -nE 'default:|required:|enum:'
 ```
 
-❌ "The minimal XR omits `retentionDays`, so this test covers the no-retention branch."
-✅ Check first. If the XRD defaults `retentionDays: 30`, no XR can omit it, that branch is
+**Wrong:** "The minimal XR omits `retentionDays`, so this test covers the no-retention branch."
+**Right:** Check first. If the XRD defaults `retentionDays: 30`, no XR can omit it, that branch is
 unreachable from the API, and the honest coverage note says so — or the default is the bug.

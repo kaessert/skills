@@ -506,19 +506,19 @@ Return structured report with verification URLs.
 ## PROVIDERS
 
 1. provider-aws-s3 (current: v1.14.0)
-   ✅ Supports namespaced managed resources
+   Namespaced managed resources: supported
    Count: 42
    Verified: [marketplace-url]
 
 2. provider-azure-storage (current: v0.42.0)
-   ❌ Does NOT support namespaced managed resources
-   ✅ Recommended: v1.2.0 (verified)
+   Namespaced managed resources: NOT supported
+   Recommended: v1.2.0 (verified)
    Verified: [marketplace-url]
 
 ## CONFIGURATIONS
 
 1. configuration-aws-network (current: v0.10.0)
-   ✅ Supports namespaced XRs
+   Namespaced XRs: supported
    Verified: [github-url]
 ```
 
@@ -598,12 +598,12 @@ GCP providers: provider-gcp-sql → gcpm imports
 
 ## Success Criteria
 
-The skill succeeds when:
+Checks for you before you report, not a report format. The skill succeeds when:
 
-1. ✅ v1 configuration correctly detected
-2. ✅ All XRDs, functions, tests, examples analyzed
-3. ✅ Dependencies verified via sub-agent
-4. ✅ File-specific changes enumerated
-5. ✅ Phase-based checklist generated
-6. ✅ Output written to `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
-7. ✅ Summary displayed to user
+1. v1 configuration correctly detected
+2. All XRDs, functions, tests, examples analyzed
+3. Dependencies verified via sub-agent
+4. File-specific changes enumerated
+5. Phase-based checklist generated
+6. Output written to `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
+7. Summary displayed to user

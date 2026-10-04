@@ -411,9 +411,9 @@ items = [_test1, _test2]
 ## KCL-Specific Mistakes
 
 ### Wrong import (cluster-scoped)
-❌ `import models.io.crossplane.kubernetes.v1alpha1`
-✅ `import models.io.crossplane.kubernetesm.v1alpha1` (note the `m`)
+**Wrong:** `import models.io.crossplane.kubernetes.v1alpha1`
+**Right:** `import models.io.crossplane.kubernetesm.v1alpha1` (note the `m`)
 
 ### Forgetting the final assignment
-❌ Defining `_items` but never assigning it.
-✅ End the file with `items = _items` (the runner reads `items`).
+**Wrong:** Defining `_items` but never assigning it.
+**Right:** End the file with `items = _items` (the runner reads `items`).

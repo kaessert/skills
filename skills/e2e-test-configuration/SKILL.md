@@ -477,6 +477,8 @@ See [knowledge.md](references/knowledge.md) for full explanation.
 
 ## Success Criteria
 
+Checks for you before you report, not a report format (`control-plane-project-charter` §4).
+
 - Pre-validation completes before E2E
 - **Resolved target (local vs Space) stated before the run**
 - Test runs with correct flags, output captured with `tee`

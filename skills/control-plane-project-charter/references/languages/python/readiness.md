@@ -69,7 +69,7 @@ helm_provider_config = helmproviderv1beta1.ProviderConfig(
             source="Secret",
             secretRef=helmproviderv1beta1.SecretRef(
                 name=f"{observed_xr.metadata.name}-kubeconfig",
-                namespace=parent_ns,                 # ✅ v2: XR namespace (not crossplane-system)
+                namespace=parent_ns,                 # v2: XR namespace (not crossplane-system)
                 key="kubeconfig",
             ),
         ),
@@ -166,7 +166,7 @@ if connection_data:
     connection_secret = corev1.Secret(
         metadata=k8s.ObjectMeta(
             name=f"{platform_name}-connection",
-            namespace=parent_ns,                     # ✅ XR namespace
+            namespace=parent_ns,                     # XR namespace
             labels={
                 "crossplane.io/composite": platform_name,
             },

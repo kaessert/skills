@@ -178,7 +178,7 @@ Use the template from [knowledge.md](references/knowledge.md) → "Migration Che
 After writing the checklist, display:
 
 ```markdown
-## ✅ v2 Migration Plan Generated
+## v2 Migration Plan: [project]
 
 **Output File**: `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
 
@@ -211,18 +211,18 @@ After writing the checklist, display:
 ## Skill Boundaries
 
 ### This Skill Does
-- ✅ Analyze v1 configuration structure
-- ✅ Detect all breaking changes
-- ✅ Generate phase-based checklist
-- ✅ Verify dependencies via sub-agent
-- ✅ Write checklist to `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
-- ✅ Read-only analysis (safe)
+- Analyze v1 configuration structure
+- Detect all breaking changes
+- Generate phase-based checklist
+- Verify dependencies via sub-agent
+- Write checklist to `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
+- Read-only analysis (safe)
 
 ### This Skill Does NOT Do
-- ❌ Modify any code files
-- ❌ Execute the migration
-- ❌ Run builds or tests
-- ❌ Create git commits
+- Modify any code files
+- Execute the migration
+- Run builds or tests
+- Create git commits
 
 ### Handoff to Other Skills
 | Task | Skill to Use |
@@ -237,14 +237,15 @@ After writing the checklist, display:
 
 ## Success Criteria
 
-The skill completes successfully when:
+Checks for you before you report, not a report format (`control-plane-project-charter` §4:
+report the effect, not the intent). The skill completes successfully when:
 
-1. ✅ Confirmed v1 configuration (or exited gracefully if not)
-2. ✅ Discovered all XRDs, functions, tests, examples
-3. ✅ Verified dependencies via sub-agent
-4. ✅ Analyzed all components for breaking changes
-5. ✅ Generated checklist at `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
-6. ✅ Displayed summary with metrics and next steps
+1. Confirmed v1 configuration (or exited gracefully if not)
+2. Discovered all XRDs, functions, tests, examples
+3. Verified dependencies via sub-agent
+4. Analyzed all components for breaking changes
+5. Generated checklist at `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
+6. Displayed summary with metrics and next steps
 
 ---
 

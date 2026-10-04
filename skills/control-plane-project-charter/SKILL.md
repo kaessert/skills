@@ -192,7 +192,8 @@ Before writing any summary:
    verification regardless of what is behind them, and they are what makes an overstated
    report persuasive. Write what ran, what it printed, and what remains unknown. If the
    honest summary is "tests pass; provider validity unchecked; not deployed", that is the
-   summary — it is more useful to the caller than a confident one that is wrong.
+   summary — it is more useful to the caller than a confident one that is wrong. A skill's
+   success criteria are checks for you, not a report format: do not tick them off in a report.
 
 **Abort on a failed precondition; do not proceed and report the symptom.** A check that
 comes back *blocked* — not merely *failed* — means the run you are about to start cannot

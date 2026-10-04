@@ -232,18 +232,18 @@ E2E-test scaffolds.
 ## Python-Specific Mistakes
 
 ### Wrong dump mode
-❌ Using `exclude_none=True` on asserted resources (compares too much) or `exclude_unset=True` on the top-level test.
-✅ Asserted resources: `exclude_unset=True`. Top-level test: `exclude_none=True`.
+**Wrong:** Using `exclude_none=True` on asserted resources (compares too much) or `exclude_unset=True` on the top-level test.
+**Right:** Asserted resources: `exclude_unset=True`. Top-level test: `exclude_none=True`.
 
 ### Imports don't resolve
-❌ Running `up test generate` before `.up/python` exists.
-✅ `up project build` first, so `crossplane-models` is wired into `pyproject.toml`.
+**Wrong:** Running `up test generate` before `.up/python` exists.
+**Right:** `up project build` first, so `crossplane-models` is wired into `pyproject.toml`.
 
 ### Excluding an API contract
-❌ `exclude={"spec": {"writeConnectionSecretToRef"}}`.
-✅ Never exclude `writeConnectionSecretToRef`.
+**Wrong:** `exclude={"spec": {"writeConnectionSecretToRef"}}`.
+**Right:** Never exclude `writeConnectionSecretToRef`.
 
 ### `providerConfigRef` name "default" silently stripped
 The provider models default `providerConfigRef` to `{kind: ClusterProviderConfig, name: default}`, and the function SDK serializes with `exclude_defaults=True` - so a resource whose `providerConfigRef.name` is exactly `default` renders **without** the field, and the assertion won't match.
-❌ `providerConfigRef=...ProviderConfigRef(kind="ClusterProviderConfig", name="default")`
-✅ Use a non-default name (e.g. `azure-provider`) in both the XR/example and the assertion so the field is serialized.
+**Wrong:** `providerConfigRef=...ProviderConfigRef(kind="ClusterProviderConfig", name="default")`
+**Right:** Use a non-default name (e.g. `azure-provider`) in both the XR/example and the assertion so the field is serialized.

@@ -73,10 +73,10 @@ up project run --local --timeout=20m    # Phase 5: run it on a dev control plane
 > *"Phase 5"* below. Being connected to a Space is usually deliberate, and quietly
 > substituting a local KIND cluster changes what is being tested without telling anyone.
 
-**Success criteria:**
-- ✅ Build succeeds (exit 0, package in `_output/`)
-- ✅ All composition tests pass ("Failed tests: 0")
-- ⚠️ E2E tests required (ask user for confirmation)
+**Success criteria** (checks for you, not a report format — report what ran, charter §4):
+- Build succeeds (exit 0, package in `_output/`)
+- All composition tests pass ("Failed tests: 0"), and the run did not print `No test files found`
+- E2E tests offered (ask user for confirmation), unless the project rules them out
 
 ---
 
@@ -351,16 +351,16 @@ Report the underlying condition message to the user — not "the run timed out".
 ## Skill Boundaries
 
 **This skill:**
-- ✅ Builds project
-- ✅ Runs composition tests (local)
-- ✅ Orchestrates E2E via sub-agents
-- ✅ Reports pass/fail status
+- Builds project
+- Runs composition tests (local)
+- Orchestrates E2E via sub-agents
+- Reports what ran and what it printed
 
 **Other skills:**
-- ❌ Does NOT modify code
-- ❌ Does NOT fix errors → use authoring skills
-- ❌ Does NOT create tests → use author-tests
-- ❌ Does NOT run E2E directly → delegates to e2e-test-configuration
+- Does NOT modify code
+- Does NOT fix errors → use authoring skills
+- Does NOT create tests → use author-tests
+- Does NOT run E2E directly → delegates to e2e-test-configuration
 
 ---
 

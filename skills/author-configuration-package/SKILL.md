@@ -53,18 +53,18 @@ container boundary (§7), and what a green run does and does not prove (§8).
 ## Scope
 
 **This skill DOES:**
-- ✅ Create/modify project structure (apis/, examples/, scripts/)
-- ✅ Write XRDs by hand, with the field list from the spec or the field wizard below
-- ✅ Generate composition pipeline skeletons
-- ✅ Manage dependencies (providers, functions)
-- ✅ Run `up function generate` for function scaffolding
-- ✅ Create example manifests
-- ✅ Build and validate project
+- Create/modify project structure (apis/, examples/, scripts/)
+- Write XRDs by hand, with the field list from the spec or the field wizard below
+- Generate composition pipeline skeletons
+- Manage dependencies (providers, functions)
+- Run `up function generate` for function scaffolding
+- Create example manifests
+- Build and validate project
 
 **This skill does NOT:**
-- ❌ Write composition logic → Use `author-composition`
-- ❌ Create tests → Use `author-tests`
-- ❌ Run verification → Use `verify-configuration`
+- Write composition logic → Use `author-composition`
+- Create tests → Use `author-tests`
+- Run verification → Use `verify-configuration`
 
 ## Use the CLI generators for everything but the XRD
 
@@ -115,8 +115,8 @@ up project build
 
 What this chain gets right, and what to watch:
 
-- ✅ **You control the XRD** — `apiVersion: apiextensions.crossplane.io/v2`, `scope: Namespaced`, no `claimNames`, and the `required:`/`default:`/`additionalProperties`/`status` that an inferred schema cannot express. Do not copy a template's XRD as a starting point: the templates are v1.
-- ✅ **The composition is `mode: Pipeline`** with an auto-ready step, and its function dependency is added to `upbound.yaml` for you.
+- **You control the XRD** — `apiVersion: apiextensions.crossplane.io/v2`, `scope: Namespaced`, no `claimNames`, and the `required:`/`default:`/`additionalProperties`/`status` that an inferred schema cannot express. Do not copy a template's XRD as a starting point: the templates are v1.
+- **The composition is `mode: Pipeline`** with an auto-ready step, and its function dependency is added to `upbound.yaml` for you.
 - ⚠️ **Build before generating the function.** The models are generated from whatever XRD is on disk, and `up function generate` writes `crossplane-models @ file:./../../.up/python` into the new `pyproject.toml` only once `.up/python` exists. So `up project build` must come between writing the XRD and generating the function — which is what the Critical Build Order below already says.
 - ⚠️ **`up example generate` prompts for scope even when every other flag is supplied.** Without a TTY it prints `ERROR: ... could not open a new TTY`, then writes the file with the namespaced default and exits 0 — a confusing mix of error and success. **Always pass `--scope=namespace`** (or `--scope=cluster`).
 - ⚠️ **Write every open-ended map as `additionalProperties`**, never as fixed properties:
@@ -402,22 +402,25 @@ extraction, so pass `--min-corpus` until the API has grown.
 
 ## Post-Scaffolding Hand-off
 
-After final build succeeds, provide:
+After the final build, report what ran and what it printed, not a checklist
+(`control-plane-project-charter` §4: report the effect, not the intent):
 
 ```markdown
-## ✅ Package Scaffolding Complete!
+## Package scaffolding: {project-name}
 
-**Project:** {project-name}
-**Resource:** {Kind} ({api-group}/{version})
-**Language:** {language}
+**Resource:** {Kind} ({api-group}/{version}) · **Language:** {language}
 
-### Next Steps
+**Ran:**
+- `up project build` → exit {code}; package {path under _output/}
+- `check_xrd_schema.py apis/*/definition.yaml` → exit {code}; {findings, or none}
 
-1. **Implement composition logic** using **author-composition** skill
-   - Directory: functions/{resource}/
-   - Entry point: functions/{resource}/main.k
+**Layer reached:** package build. Nothing rendered, no tests run, nothing deployed.
+**Assumed / not verified:** {e.g. Kinds confirmed from the generated models; ProviderConfig not applied}
 
-2. **Build & verify** using **verify-configuration** skill
+### Next steps
+1. Composition logic: `author-composition` (`functions/{resource}/`)
+2. Tests: `author-tests`
+3. Gate: the project's own gate if it has one, else `verify-configuration`
 ```
 
 ## Templates & Detailed Instructions
@@ -432,11 +435,12 @@ See [knowledge.md](references/knowledge.md) for:
 
 ## Success Criteria
 
-Skill succeeds when:
-- ✅ Project structure created
-- ✅ XRD written by hand, with the schema the user or spec defined
-- ✅ First build generates models (`.up/kcl/models/` exists)
-- ✅ `up function generate` creates function structure
-- ✅ Final build succeeds (`.uppkg` created)
-- ✅ Examples created
-- ✅ User guided to language-specific skill
+Checks for you before you report, not a report format (charter §4: report what ran). The
+skill succeeds when:
+- Project structure created
+- XRD written by hand, with the schema the user or spec defined
+- First build generates models (`.up/<language>/` model tree exists)
+- `up function generate` creates function structure
+- Final build succeeds (`.uppkg` created)
+- Examples created
+- User guided to language-specific skill

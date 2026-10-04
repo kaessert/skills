@@ -106,7 +106,7 @@ codegen emit a model class. That schema is the actual defect; fix the XRD (Patte
 # Works under either schema, and is what to write when you are not sure:
 tags = dict(observed_xr.spec.tags) if observed_xr.spec.tags else {}
 
-# ✅ ALSO CORRECT - with extra default tags merged
+# ALSO CORRECT - with extra default tags merged
 base_tags = dict(observed_xr.spec.tags) if observed_xr.spec.tags else {}
 tags = {**base_tags, "ManagedBy": "crossplane", "Platform": platform_name}
 ```
@@ -114,7 +114,7 @@ tags = {**base_tags, "ManagedBy": "crossplane", "Platform": platform_name}
 **XRD schema must use `additionalProperties` (not fixed properties):**
 
 ```yaml
-# ✅ CORRECT - flexible map, Python-compatible
+# CORRECT - flexible map, Python-compatible
 spec:
   properties:
     tags:
@@ -122,7 +122,7 @@ spec:
       additionalProperties:
         type: string
 
-# ❌ WRONG - fixed properties generate None for missing keys → Pydantic fails
+# WRONG - fixed properties generate None for missing keys → Pydantic fails
 spec:
   properties:
     tags:
@@ -329,7 +329,7 @@ Then confirm what actually landed by reading `render.log` from
 ### Flexible Maps (tags, labels, annotations)
 
 ```yaml
-# ✅ Use additionalProperties for any flexible key-value field
+# Use additionalProperties for any flexible key-value field
 spec:
   properties:
     tags:
