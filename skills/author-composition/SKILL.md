@@ -221,9 +221,10 @@ The language file has the bootstrap and the syntax. Language-independent, in ord
 1. Parse the observed XR using the language's required bootstrap (Python needs
    `struct_to_dict`; skipping it fails *silently* on current Up CLI versions. Go: the
    generated models are not `runtime.Object`s, so convert through JSON, in and out).
-2. Create managed resources with **`forProvider` only** — no `providerConfigRef` (unless the
-   right config is not `ClusterProviderConfig/default`), no `managementPolicies`, no
-   `metadata.namespace` (`control-plane-project-charter` §5: Crossplane v2 fills in the rest).
+2. Create managed resources with **`forProvider` only**, unless the project's spec or API sets
+   more — no `managementPolicies`, no `metadata.namespace`, and omit `providerConfigRef` if and
+   only if `ClusterProviderConfig/default` exists and is the right one
+   (`control-plane-project-charter` §5: defaults the project may override).
 3. Convert flexible maps to the language's plain map type before assigning them.
 4. Extract connection details by **composition key**, not by resource name.
 5. Mark any ProviderConfig ready **after** writing the resource, never before.
@@ -264,8 +265,9 @@ lifecycle task, both with a fully green composition suite:
 **2. Grep your own function** for `providerConfigRef`, `managementPolicies` and `namespace`
 — the two greps in the charter's `charter/v2-resources.md` (§5) — and judge each hit rather
 than counting them. Legitimate hits: a `namespace` on a Secret or ConfigMap you compose
-yourself, and a `providerConfigRef` where the right config is not
-`ClusterProviderConfig/default` — in which case `kind` must name an object that exists.
+yourself, a `providerConfigRef` where the right config is not
+`ClusterProviderConfig/default` — in which case `kind` must name an object that exists — and
+any field the project's spec or API sets.
 
 **3. The suite is not done until it satisfies all three rules:**
 
@@ -312,15 +314,18 @@ That class only fails on a live control plane. Check it there, or say it is unch
 1. Check the language's required bootstrap is present.
 2. Check imports resolve against the probe or the generated schemas, and that every provider
    path is namespaced (`.m.`).
-3. Flag any `providerConfigRef`, `managementPolicies`, or MR `metadata.namespace` as
-   removable — and `providerConfigRef.kind: "ProviderConfig"` as an active bug.
+3. Flag `providerConfigRef`, `managementPolicies` or MR `metadata.namespace` as removable
+   **unless the project's spec or API sets them** — e.g. the XRD exposes `managementPolicies`
+   as a parameter. Flag `providerConfigRef.kind: "ProviderConfig"` as a bug only when no
+   namespaced `ProviderConfig` of that name exists in, or is created in, the XR's namespace
+   (`control-plane-project-charter` §5).
 4. Check flexible maps are converted to a plain map type.
 5. Check the guard-clause order — does a return above the new resource gate it unintentionally?
 6. Check ProviderConfig readiness is marked *after* the resource is written.
 
 **When a test passes but the resource misbehaves on a control plane:**
 1. Read `render.log` — the test may never have asserted it.
-2. Look for a `providerConfigRef` the function should not be setting.
+2. Look for a `providerConfigRef` whose `kind` and name match no object that exists.
 3. Check the guard-clause chain and readiness branches; neither is exercised locally.
 
 Language-specific error messages — Pydantic validation, KCL type errors, TypeScript
@@ -345,7 +350,8 @@ language-independent checklist is in
 
 1. The function language was detected, not assumed, and the matching `languages/` file was read
 2. Import paths resolved from the project, never derived by hand
-3. Managed resources carry `forProvider` only, with no dangling `providerConfigRef`
+3. Managed resources carry `forProvider` plus only what the project sets, with no dangling
+   `providerConfigRef`
 4. A test was written first, run, and observed to fail for the right reason
 5. The RED→GREEN transition is reported, with the failure text
 6. `render.log` was read and every emitted resource is asserted

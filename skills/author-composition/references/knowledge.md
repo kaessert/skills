@@ -261,11 +261,12 @@ Language-independent:
       spelling differs per language, see the `languages/` file
 - [ ] Add the language's XR-parsing bootstrap where it is required
 - [ ] **Delete** `providerConfigRef` from managed resources (namespaced MRs default to
-      `ClusterProviderConfig/default`); keep it only where the right config is not that one,
-      with a `kind` that matches an object that exists
+      `ClusterProviderConfig/default`): omit it if and only if `ClusterProviderConfig/default`
+      exists and is the right one; otherwise keep it, with a `kind` that matches an object
+      that exists
 - [ ] **Delete** `deletionPolicy` — `managementPolicies: ["*"]` is the default; set it only
       for a non-default policy (e.g. `["Create","Observe","Update","LateInitialize"]` to
-      orphan on delete)
+      orphan on delete), or pass it through when the XRD exposes it as a parameter
 - [ ] **Do not add** `namespace` to managed-resource metadata — it is propagated automatically
 - [ ] Update `apiVersion` in test assertions to the `.m.` group
 - [ ] XRD schema: `additionalProperties` for tag and label fields
