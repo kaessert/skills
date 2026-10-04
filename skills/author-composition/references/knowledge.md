@@ -250,3 +250,28 @@ Keep names stable. See the composition-key note at the top: a rename is a migrat
 
 A dash means that language's reference does not yet document the pattern — the pattern still
 applies, and adding it is a useful contribution.
+
+---
+
+## v2 migration checklist
+
+Language-independent:
+
+- [ ] Every provider import/apiVersion switched to the namespaced `.m.` group — the exact
+      spelling differs per language, see the `languages/` file
+- [ ] Add the language's XR-parsing bootstrap where it is required
+- [ ] **Delete** `providerConfigRef` from managed resources (namespaced MRs default to
+      `ClusterProviderConfig/default`); keep it only where the right config is not that one,
+      with a `kind` that matches an object that exists
+- [ ] **Delete** `deletionPolicy` — `managementPolicies: ["*"]` is the default; set it only
+      for a non-default policy (e.g. `["Create","Observe","Update","LateInitialize"]` to
+      orphan on delete)
+- [ ] **Do not add** `namespace` to managed-resource metadata — it is propagated automatically
+- [ ] Update `apiVersion` in test assertions to the `.m.` group
+- [ ] XRD schema: `additionalProperties` for tag and label fields
+- [ ] XRD: `apiVersion: apiextensions.crossplane.io/v2`, `scope: Namespaced`, remove
+      `connectionSecretKeys`
+- [ ] Add `metadata.namespace` to example XRs
+- [ ] Remove `writeConnectionSecretsToNamespace` from the composition
+- [ ] **Never rename a function to add a language suffix** — the function name is the
+      published registry path

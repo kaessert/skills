@@ -10,17 +10,31 @@ references:
 
 Author and modify Crossplane configuration tests, in any language `up test generate` supports.
 
-## Before you report — always, even if you load nothing else
+## Binding rules — they hold even if you open nothing else
 
-The full rules are `control-plane-project-charter` §4 and §8 and the charter's `tdd.md`. These
-four are the ones reports break most often:
+These are the core of `control-plane-project-charter`, which this skill does not load for you;
+the charter has the reasons. Where the project's spec, work item or gate script decides
+otherwise, the project wins: say so in your report.
 
-1. **Name what ran and its exit code.** No command, no claim.
-2. **For every test you added or changed, name the code change that turns it red**, and say
-   whether you made that change and saw the test fail. If you did not, call the test unproven.
-3. **Name the layer you reached** — render, composition test, local control plane, cloud — and
-   never claim one you did not reach.
-4. **Comments and docs claim no more than the test checks.**
+1. **Never block on a question nobody can answer.** Decide from the project's spec and state
+   the assumption, or stop and report the open question (charter §1).
+2. **Never create a group, Space, control plane or cloud resource as a side effect** (§9).
+3. **Test first: watch each new test fail for the reason you intended**, then make it pass. A
+   broken test is not RED, even when it exits 1: a syntax error, a missing path, a run that
+   stops at `✗ Parsing tests`, a bug in the test's own logic (§3).
+4. **Backfilling a test for code that already works: mutate the implementation, never the
+   test's expected value.** See that test go red, then revert (charter `tdd.md`).
+5. **Managed resources carry `forProvider` only**, on the `.m.` API groups: no
+   `deletionPolicy`, `managementPolicies` or `metadata.namespace`, and a `providerConfigRef`
+   only when `ClusterProviderConfig/default` is not the right config (§5).
+6. **Name what ran and the command's own exit code.** After `| tail`, `$?` is `tail`'s: read
+   `${PIPESTATUS[0]}`, or redirect to a file and then read `$?`. No command, no claim (§4).
+7. **`No test files found` means nothing ran**, though `up test run` exits 0. A test program
+   that prints `items: []` contributes zero tests (§8).
+8. **For every test you added or changed, name the code change that turns it red**, and say
+   whether you saw it fail. If you did not, call the test unproven (§4).
+9. **Name the layer you reached** — render, composition test, local control plane, cloud — and
+   never claim one you did not reach. Comments and docs claim no more than the test checks (§4).
 
 ## Core Principle
 
@@ -234,7 +248,7 @@ must reference it explicitly. The training labs use `ClusterProviderConfig`; see
 This skill runs inline — you expand into the caller's conversation, share their
 working directory, and can ask. `control-plane-project-charter` §1 says what
 that means for asking questions, and §4 (`control-plane-project-charter`) what it
-means for your summary. Both apply in full, and are not repeated here.
+means for your summary. Both apply in full; only the binding rules above repeat them.
 
 **Load the charter before you start — this skill does not load it for you.** Load the
 `control-plane-project-charter` skill, or read its `SKILL.md`, which sits beside this skill's
@@ -260,20 +274,11 @@ container boundary (§7), and what a green run does and does not prove (§8).
 4. **Hand off to `verify-configuration`** once the suite is green — it builds and deploys,
    which is the gate, not the inner loop
 
-### Refactoring Plan
-1. Analyze `tests/` directory structure
-2. Identify duplication and consolidation opportunities
-3. Create `.agents/tasks/REFACTOR_TESTS.md` with prioritized items ([template](references/knowledge.md#refactoring-plan-template))
-4. DO NOT execute - inform user how to proceed
+### Refactoring
 
-### Refactoring Execution
-1. Check for `.agents/tasks/REFACTOR_TESTS.md`
-2. If missing: ask user to create plan first
-3. Execute ONLY the highest priority unchecked item
-4. **Hand off to `verify-configuration`** once the suite is green — it builds and deploys,
-   which is the gate, not the inner loop
-5. Mark item complete with date
-6. Report completion and next item
+Planning or executing a test refactor: follow
+[knowledge.md](references/knowledge.md#refactoring-workflow) — plan into
+`.agents/tasks/REFACTOR_TESTS.md` without executing, then execute one item at a time.
 
 ## References
 

@@ -510,3 +510,35 @@ After composition implementation, user should invoke `verify-configuration` to:
 If user wants to create tests before implementation:
 - Composition tests in `tests/`
 - E2E tests in `tests/e2etest-*/`
+
+---
+
+## After the final build: deploying it somewhere
+
+This skill stops at a built package; it does not deploy. But the command you will reach for
+next has a failure mode worth knowing before you run it, because nothing in the CLI points
+at it:
+
+```bash
+up ctx .                       # FIRST: does the context name a Space?
+up project run --timeout=20m   # ...then run, with the flag the answer implies
+```
+
+Which kind of dev control plane you get is decided by your **current `up` context**, not by a
+flag — a cloud one when the context is an Upbound Space, a local KIND one otherwise. On the
+**cloud** path `up project run` pushes to a **private** repository and then installs onto a
+control plane it gives no pull credential, so the second half fails on what the first half
+wrote, and it reports the 401 as `context deadline exceeded`. The default `--timeout` of `5m`
+is also short for a first run that pulls providers.
+
+**If the context is a Space, ask the user which they want** — do not choose for them, and do
+not silently fall back to `--local`. They connected to that Space deliberately, and a local
+KIND cluster is a different environment, not a transparent substitute. The three options are:
+supply pull access for the cloud control plane (ask where the pull secret is), `--public`
+(which **permanently publishes their package** — a disclosure decision, never a debugging
+step), or `--local` (side-loads, so the pull failure cannot occur, and still creates real
+cloud resources).
+
+Full diagnosis, the `kubectl describe` that actually names the error, and the
+kubeconfig-left-pointing-elsewhere trap: see the **verify-configuration** skill,
+*"When a run hangs on Waiting for package to be ready"*.

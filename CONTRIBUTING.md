@@ -109,6 +109,9 @@ CI also checks a handful of things the table cannot show:
 - Every script is mentioned in some `.md` in its skill, has a shebang, is executable, and carries an
   `SPDX-License-Identifier` header.
 - Links resolve, are relative, and do not point outside the skill's own directory.
+- A section several skills carry word for word — today the `## Binding rules` block of the
+  authoring skills — is identical in every copy. An agent that loads one skill never sees the
+  others, so the rules are duplicated on purpose; edit every copy in the same change.
 - No private hostname, RFC1918 address, private key, or JWT-shaped string appears in any tracked file.
   A redacted transcript containing a `10.x` address will trip this; quote it differently or add a case
   to `hack/denylist/strings-allow.txt`.

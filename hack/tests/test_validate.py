@@ -274,6 +274,33 @@ class TestReadmeCheck(CheckCase):
         self.assertFinding(validate.check_readme(), "needs the markers")
 
 
+class TestSharedCheck(CheckCase):
+    RULES = "## Binding rules\n\n1. **Test first.**\n2. **Name what ran.**\n"
+
+    def skill(self, name: str, rules: str, after: str = "## Next\n\nMore.\n") -> str:
+        return GOOD_SKILL.replace("demo-skill", name) + "\n" + rules + "\n" + after
+
+    def test_identical_copies_are_clean(self):
+        self.build({"skills/one/SKILL.md": self.skill("one", self.RULES),
+                    "skills/two/SKILL.md": self.skill("two", self.RULES, after="")})
+        self.assertClean(validate.check_shared())
+
+    def test_a_diverging_copy_is_caught(self):
+        drifted = self.RULES.replace("Name what ran", "Name what you ran")
+        self.build({"skills/one/SKILL.md": self.skill("one", self.RULES),
+                    "skills/two/SKILL.md": self.skill("two", self.RULES),
+                    "skills/three/SKILL.md": self.skill("three", drifted)})
+        findings = list(validate.check_shared())
+        self.assertEqual(len(findings), 1, findings)
+        self.assertFinding(findings, "differs from skills/one/SKILL.md")
+        self.assertIn("three", str(findings[0]))
+
+    def test_a_skill_without_the_section_is_ignored(self):
+        self.build({"skills/one/SKILL.md": self.skill("one", self.RULES),
+                    "skills/demo-skill/SKILL.md": GOOD_SKILL})
+        self.assertClean(validate.check_shared())
+
+
 class TestHygieneCheck(CheckCase):
     REAL = "hack/denylist/strings.txt"
 

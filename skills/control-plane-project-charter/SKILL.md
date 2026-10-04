@@ -147,7 +147,7 @@ catch the absence of the implementation.
    |---|---|
    | `no actual resource found` for the resource you are about to compose | valid RED |
    | a field mismatch naming the exact field you are adding | valid RED |
-   | a syntax error, an unresolved import, a missing `compositionPath`, a run that stops at `✗ Parsing tests` | **not** RED — the test is broken, not the code. Fix it before writing any implementation |
+   | a syntax error, an unresolved import, a missing `compositionPath`, a run that stops at `✗ Parsing tests`, a bug in the test's own logic | **not** RED, even though it exits 1 — the test is broken, not the code. Fix it before writing any implementation |
    | passes immediately | **not** RED — the assertion is vacuous, or the behaviour already exists |
 
    Record the failure text. It goes in your report as the evidence that the test bites.
@@ -156,7 +156,7 @@ catch the absence of the implementation.
 
 3. **REFACTOR** with the suite green, then add the next failing assertion and repeat.
 
-**Detail:** [`charter/tdd.md`](references/charter/tdd.md) — the two-tier inner loop (every `up test run` pays a full build, so use a fast tier for crashes), and how to backfill tests for code that already works by proving each one can fail.
+**Detail:** [`charter/tdd.md`](references/charter/tdd.md) — the two-tier inner loop (every `up test run` pays a full build, so use a fast tier for crashes), and how to backfill tests for code that already works by proving each one can fail: mutate the implementation, never the test's expected value.
 
 ## 4. Report the effect, not the intent
 

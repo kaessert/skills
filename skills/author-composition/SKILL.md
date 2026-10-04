@@ -11,17 +11,31 @@ references:
 Author and modify Crossplane composition functions, in any language `up function generate`
 supports.
 
-## Before you report — always, even if you load nothing else
+## Binding rules — they hold even if you open nothing else
 
-The full rules are `control-plane-project-charter` §4 and §8 and the charter's `tdd.md`. These
-four are the ones reports break most often:
+These are the core of `control-plane-project-charter`, which this skill does not load for you;
+the charter has the reasons. Where the project's spec, work item or gate script decides
+otherwise, the project wins: say so in your report.
 
-1. **Name what ran and its exit code.** No command, no claim.
-2. **For every test you added or changed, name the code change that turns it red**, and say
-   whether you made that change and saw the test fail. If you did not, call the test unproven.
-3. **Name the layer you reached** — render, composition test, local control plane, cloud — and
-   never claim one you did not reach.
-4. **Comments and docs claim no more than the test checks.**
+1. **Never block on a question nobody can answer.** Decide from the project's spec and state
+   the assumption, or stop and report the open question (charter §1).
+2. **Never create a group, Space, control plane or cloud resource as a side effect** (§9).
+3. **Test first: watch each new test fail for the reason you intended**, then make it pass. A
+   broken test is not RED, even when it exits 1: a syntax error, a missing path, a run that
+   stops at `✗ Parsing tests`, a bug in the test's own logic (§3).
+4. **Backfilling a test for code that already works: mutate the implementation, never the
+   test's expected value.** See that test go red, then revert (charter `tdd.md`).
+5. **Managed resources carry `forProvider` only**, on the `.m.` API groups: no
+   `deletionPolicy`, `managementPolicies` or `metadata.namespace`, and a `providerConfigRef`
+   only when `ClusterProviderConfig/default` is not the right config (§5).
+6. **Name what ran and the command's own exit code.** After `| tail`, `$?` is `tail`'s: read
+   `${PIPESTATUS[0]}`, or redirect to a file and then read `$?`. No command, no claim (§4).
+7. **`No test files found` means nothing ran**, though `up test run` exits 0. A test program
+   that prints `items: []` contributes zero tests (§8).
+8. **For every test you added or changed, name the code change that turns it red**, and say
+   whether you saw it fail. If you did not, call the test unproven (§4).
+9. **Name the layer you reached** — render, composition test, local control plane, cloud — and
+   never claim one you did not reach. Comments and docs claim no more than the test checks (§4).
 
 ## Core principle
 
@@ -311,28 +325,11 @@ compilation — are in the matching `languages/` file.
 | Provider-validity checks on emitted resources | Running the suite and deploying → `verify-configuration` |
 | The RED/GREEN authoring loop | Live cloud runs → `e2e-test-configuration` |
 
-## v2 migration checklist
+## v2 migration
 
-Language-independent:
-
-- [ ] Every provider import/apiVersion switched to the namespaced `.m.` group — the exact
-      spelling differs per language, see the `languages/` file
-- [ ] Add the language's XR-parsing bootstrap where it is required
-- [ ] **Delete** `providerConfigRef` from managed resources (namespaced MRs default to
-      `ClusterProviderConfig/default`); keep it only where the right config is not that one,
-      with a `kind` that matches an object that exists
-- [ ] **Delete** `deletionPolicy` — `managementPolicies: ["*"]` is the default; set it only
-      for a non-default policy (e.g. `["Create","Observe","Update","LateInitialize"]` to
-      orphan on delete)
-- [ ] **Do not add** `namespace` to managed-resource metadata — it is propagated automatically
-- [ ] Update `apiVersion` in test assertions to the `.m.` group
-- [ ] XRD schema: `additionalProperties` for tag and label fields
-- [ ] XRD: `apiVersion: apiextensions.crossplane.io/v2`, `scope: Namespaced`, remove
-      `connectionSecretKeys`
-- [ ] Add `metadata.namespace` to example XRs
-- [ ] Remove `writeConnectionSecretsToNamespace` from the composition
-- [ ] **Never rename a function to add a language suffix** — the function name is the
-      published registry path
+Migrating a function to v2 is its own piece of work (`plan-v2-migration`). The
+language-independent checklist is in
+[knowledge.md](references/knowledge.md#v2-migration-checklist).
 
 ## Success criteria
 

@@ -10,24 +10,38 @@ references:
 
 Scaffold and modify Crossplane configuration packages. This skill handles structure, XRDs, dependencies, and building - NOT composition implementation.
 
-## Before you report — always, even if you load nothing else
+## Binding rules — they hold even if you open nothing else
 
-The full rules are `control-plane-project-charter` §4 and §8 and the charter's `tdd.md`. These
-four are the ones reports break most often:
+These are the core of `control-plane-project-charter`, which this skill does not load for you;
+the charter has the reasons. Where the project's spec, work item or gate script decides
+otherwise, the project wins: say so in your report.
 
-1. **Name what ran and its exit code.** No command, no claim.
-2. **For every test you added or changed, name the code change that turns it red**, and say
-   whether you made that change and saw the test fail. If you did not, call the test unproven.
-3. **Name the layer you reached** — render, composition test, local control plane, cloud — and
-   never claim one you did not reach.
-4. **Comments and docs claim no more than the test checks.**
+1. **Never block on a question nobody can answer.** Decide from the project's spec and state
+   the assumption, or stop and report the open question (charter §1).
+2. **Never create a group, Space, control plane or cloud resource as a side effect** (§9).
+3. **Test first: watch each new test fail for the reason you intended**, then make it pass. A
+   broken test is not RED, even when it exits 1: a syntax error, a missing path, a run that
+   stops at `✗ Parsing tests`, a bug in the test's own logic (§3).
+4. **Backfilling a test for code that already works: mutate the implementation, never the
+   test's expected value.** See that test go red, then revert (charter `tdd.md`).
+5. **Managed resources carry `forProvider` only**, on the `.m.` API groups: no
+   `deletionPolicy`, `managementPolicies` or `metadata.namespace`, and a `providerConfigRef`
+   only when `ClusterProviderConfig/default` is not the right config (§5).
+6. **Name what ran and the command's own exit code.** After `| tail`, `$?` is `tail`'s: read
+   `${PIPESTATUS[0]}`, or redirect to a file and then read `$?`. No command, no claim (§4).
+7. **`No test files found` means nothing ran**, though `up test run` exits 0. A test program
+   that prints `items: []` contributes zero tests (§8).
+8. **For every test you added or changed, name the code change that turns it red**, and say
+   whether you saw it fail. If you did not, call the test unproven (§4).
+9. **Name the layer you reached** — render, composition test, local control plane, cloud — and
+   never claim one you did not reach. Comments and docs claim no more than the test checks (§4).
 
 ## Phase 0: You run inline, and you are bound by the charter
 
 This skill runs inline — you expand into the caller's conversation, share their
 working directory, and can ask. `control-plane-project-charter` §1 says what
 that means for asking questions, and §4 (`control-plane-project-charter`) what it
-means for your summary. Both apply in full, and are not repeated here.
+means for your summary. Both apply in full; only the binding rules above repeat them.
 
 **Load the charter before you start — this skill does not load it for you.** Load the
 `control-plane-project-charter` skill, or read its `SKILL.md`, which sits beside this skill's
@@ -235,33 +249,11 @@ equivalent.
 
 ### After the final build: deploying it somewhere
 
-This skill stops at a built package; it does not deploy. But the command you will reach for
-next has a failure mode worth knowing before you run it, because nothing in the CLI points
-at it:
-
-```bash
-up ctx .                       # FIRST: does the context name a Space?
-up project run --timeout=20m   # ...then run, with the flag the answer implies
-```
-
-Which kind of dev control plane you get is decided by your **current `up` context**, not by a
-flag — a cloud one when the context is an Upbound Space, a local KIND one otherwise. On the
-**cloud** path `up project run` pushes to a **private** repository and then installs onto a
-control plane it gives no pull credential, so the second half fails on what the first half
-wrote, and it reports the 401 as `context deadline exceeded`. The default `--timeout` of `5m`
-is also short for a first run that pulls providers.
-
-**If the context is a Space, ask the user which they want** — do not choose for them, and do
-not silently fall back to `--local`. They connected to that Space deliberately, and a local
-KIND cluster is a different environment, not a transparent substitute. The three options are:
-supply pull access for the cloud control plane (ask where the pull secret is), `--public`
-(which **permanently publishes their package** — a disclosure decision, never a debugging
-step), or `--local` (side-loads, so the pull failure cannot occur, and still creates real
-cloud resources).
-
-Full diagnosis, the `kubectl describe` that actually names the error, and the
-kubeconfig-left-pointing-elsewhere trap: see the **verify-configuration** skill,
-*"When a run hangs on Waiting for package to be ready"*.
+This skill stops at a built package. Before `up project run`, read
+[knowledge.md](references/knowledge.md#after-the-final-build-deploying-it-somewhere): which
+control plane you get depends on the current `up` context, and on a Space the default run
+fails on a pull it cannot make. If the context is a Space, ask the user which run they want:
+`--public` publishes their package.
 
 ### Never run `up xrd generate` over an XRD that already exists
 

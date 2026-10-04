@@ -37,6 +37,10 @@ git checkout -- <the file you mutated>
 up test run "tests/*"     # expect: green again
 ```
 
+**Mutate the implementation, never the test's expected value.** Changing the expected value
+turns any test red, including one that asserts nothing the code does, so it proves only that
+the comparison runs. The mutation has to be the regression the test exists to catch.
+
 Report which mutation you used and which tests it turned red. *"Moving the lifecycle block
 below the versioning guard turned test 3 red and left the other three green"* is a coverage
 claim with evidence behind it. *"Coverage: complete"* is not.

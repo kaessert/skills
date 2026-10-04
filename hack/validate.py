@@ -430,6 +430,41 @@ PLACEHOLDER_RE = re.compile(
     r"INSERT [A-Z ]+|<[a-z-]+@[a-z.-]+>|TODO|FIXME|XXX|example\.com", re.IGNORECASE
 )
 
+# Sections that several skills carry word for word, because an agent that loads
+# one skill never sees the others. Edit every copy in the same change.
+SHARED_SECTIONS = ("## Binding rules",)
+
+
+def _section(text: str, heading: str) -> tuple[int, str] | None:
+    """The section under `heading` up to the next `#`/`##` heading, with its line."""
+    lines = text.splitlines()
+    for start, line in enumerate(lines):
+        if line.startswith(heading):
+            end = next((i for i in range(start + 1, len(lines))
+                        if re.match(r"#{1,2} ", lines[i])), len(lines))
+            return start + 1, "\n".join(lines[start:end]).rstrip()
+    return None
+
+
+def check_shared() -> Iterator[Finding]:
+    """A section several skills share is identical in every copy."""
+    for heading in SHARED_SECTIONS:
+        copies: dict[Path, tuple[int, str]] = {}
+        for skill in skill_dirs():
+            md = skill / "SKILL.md"
+            if md.is_file() and (found := _section(read(md), heading)):
+                copies[md] = found
+        texts = [text for _, text in copies.values()]
+        if len(set(texts)) < 2:
+            continue
+        # The majority is the reference, so one drifted copy is the one reported.
+        majority = max(texts, key=texts.count)
+        reference = next(md for md, (_, text) in copies.items() if text == majority)
+        for md, (line, text) in copies.items():
+            if text != majority:
+                yield Finding(md, f"{heading!r} differs from {rel(reference)}; the copies "
+                                  f"must stay identical", line=line)
+
 
 def check_governance() -> Iterator[Finding]:
     """The governance files name a real contact, not a placeholder."""
@@ -675,6 +710,7 @@ CHECKS: dict[str, Callable[[], Iterable[Finding]]] = {
     "hygiene": check_hygiene,
     "secrets": check_secrets,
     "governance": check_governance,
+    "shared": check_shared,
 }
 
 

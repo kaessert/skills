@@ -11,6 +11,7 @@ The object model, patterns, and mistakes that apply to Crossplane configuration 
   - [Parameterized Test Matrix](#parameterized-test-matrix)
   - [Sequential Testing with observedResources](#sequential-testing-with-observedresources)
 - [Common Mistakes](#common-mistakes)
+- [Refactoring workflow](#refactoring-workflow)
 - [Refactoring Plan Template](#refactoring-plan-template)
 
 ---
@@ -182,6 +183,24 @@ Language-neutral mistakes. (KCL import-syntax and Python dump-mode mistakes live
 ✅ Always `skipDelete: false`.
 
 ---
+
+## Refactoring workflow
+
+### Planning
+
+1. Analyze `tests/` directory structure
+2. Identify duplication and consolidation opportunities
+3. Create `.agents/tasks/REFACTOR_TESTS.md` with prioritized items ([template](#refactoring-plan-template))
+4. DO NOT execute - inform user how to proceed
+
+### Executing
+1. Check for `.agents/tasks/REFACTOR_TESTS.md`
+2. If missing: ask user to create plan first
+3. Execute ONLY the highest priority unchecked item
+4. **Hand off to `verify-configuration`** once the suite is green — it builds and deploys,
+   which is the gate, not the inner loop
+5. Mark item complete with date
+6. Report completion and next item
 
 ## Refactoring Plan Template
 
