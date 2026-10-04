@@ -59,6 +59,10 @@ LINK_RE = re.compile(
 )
 BACKTICK_PATH_RE = re.compile(r"`((?:references|scripts)/[^`\s]+)`")
 FENCE_RE = re.compile(r"^(```+|~~~+).*?^\1", re.MULTILINE | re.DOTALL)
+# A bare ../-relative .md path, such as a detection table's `-> ../../languages/kcl.md`.
+# Not one inside a markdown link's parentheses: those are the documentation examples
+# that fences exist to exempt.
+FENCED_PATH_RE = re.compile(r"(?<![\w(/.-])((?:\.\./)+[\w.-]+(?:/[\w.-]+)*\.md)\b")
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 
 BINARY_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".gz", ".zip"}
@@ -108,6 +112,11 @@ def skill_dirs() -> list[Path]:
 def prose(text: str) -> str:
     """Drop fenced blocks so documentation examples are not link-checked."""
     return FENCE_RE.sub("", text)
+
+
+def fenced(text: str) -> str:
+    """Only the fenced blocks: what prose() drops."""
+    return "\n".join(m.group(0) for m in FENCE_RE.finditer(text))
 
 
 def git_lines(*args: str) -> list[str] | None:
@@ -231,16 +240,19 @@ def check_links() -> Iterator[Finding]:
         linked: set[str] = set()
         for doc in sorted(skill.rglob("*.md")):
             try:
-                text = prose(read(doc))
+                raw = read(doc)
             except OSError as exc:
                 yield Finding(doc, f"cannot be read: {exc}")
                 continue
+            text = prose(raw)
 
             # Markdown links resolve from the document, as markdown says. A
             # backticked bare path in prose means the skill root, which is how a
-            # reader takes it.
+            # reader takes it. A ../ path in a fence resolves from the document too:
+            # fences exempt example links, not paths a reader is told to follow.
             targets = [(t, doc.parent) for t in set(LINK_RE.findall(text))]
             targets += [(t, skill) for t in set(BACKTICK_PATH_RE.findall(text))]
+            targets += [(t, doc.parent) for t in set(FENCED_PATH_RE.findall(fenced(raw)))]
 
             for target, base in sorted(targets):
                 if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", target) or target.startswith("#"):

@@ -159,6 +159,23 @@ class TestLinksCheck(CheckCase):
         findings = validate.check_links()
         self.assertFalse([f for f in findings if "does not exist" in f], findings)
 
+    def test_relative_path_in_a_fence_must_resolve(self):
+        """A detection table in a fence pointed at ../../languages/, which does not exist.
+
+        Fences are skipped for markdown links, so nothing caught it. A bare
+        ../ path in a fence is still one a reader follows.
+        """
+        self.build({"skills/demo-skill/SKILL.md": GOOD_SKILL +
+                    "\n```\nfunctions/*/*.k  → KCL → ../../languages/kcl.md\n```\n"})
+        self.assertFinding(validate.check_links(), "../../languages/kcl.md")
+
+    def test_relative_path_in_a_fence_that_resolves_is_clean(self):
+        self.build({
+            "skills/demo-skill/SKILL.md": GOOD_SKILL + "\n- [a](references/a.md) — read when\n",
+            "skills/demo-skill/references/a.md": "# A\n\n```\nsee ../SKILL.md\n```\n",
+        })
+        self.assertClean(validate.check_links())
+
     def test_external_links_are_ignored(self):
         self.build({"skills/demo-skill/SKILL.md":
                     GOOD_SKILL + "\n[docs](https://docs.upbound.io/) and [#a](#anchor)\n"})
