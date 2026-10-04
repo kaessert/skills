@@ -1,8 +1,9 @@
 # Go
 
-Go is supported by the CLI for both composition functions and tests, but this plugin ships
-**no Go templates**. That is a gap, not a prohibition: scaffold with the CLI, then apply the
-charter.
+Go is supported by the CLI for both composition functions and tests. This reference ships a
+verified **test** template and the reproduced test pitfalls in [`go/tests.md`](go/tests.md);
+it ships **no function templates** yet. That is a gap, not a prohibition: scaffold the
+function with the CLI, then apply the charter.
 
 The language-agnostic rules — the TDD loop, what a v2 managed resource needs, what a green
 run proves, reporting discipline — are in [`control-plane-project-charter`](../../SKILL.md) and apply
@@ -11,8 +12,9 @@ unchanged.
 | | |
 |---|---|
 | Scaffold a function | `up function generate <n> --language go` |
-| Scaffold a test | `up test generate <n> --language go` (or `--language go-templating`; add `--e2e`) |
+| Scaffold a test | `up test generate <n> --language go` (add `--e2e`) — then read [`go/tests.md`](go/tests.md) |
 | Compile | `go build ./...` |
+| Before committing | `gofmt -l .` (prints nothing), `go vet ./...`, `go mod tidy` in every function and test module |
 
 ## What is different about Go
 
@@ -57,11 +59,13 @@ that object model, because it shows the objects with no language in the way.
 
 Namespaced APIs reach Go as plain `apiVersion` strings: `s3.aws.m.upbound.io/v1beta1`.
 
-## Choosing Go
+## Choosing the test language
 
-**Prefer YAML tests unless the project already commits to Go.** The test language is
-independent of the function language, so a Go-function project can perfectly well have YAML
-tests, and those have templates here. Pick Go tests when the project's team already maintains
-Go, or when the test needs real programmatic generation.
+**Go functions get Go tests**, unless the project already has tests in another language —
+then match those ([`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch)). The tests
+build their expectations from the same generated models the function uses, so a misspelt
+field fails to compile instead of failing a render. The template, the model import paths and
+the failure modes are in [`go/tests.md`](go/tests.md).
 
-If you do write Go here, the useful contribution is to add the templates this file is missing.
+go-templating tests (`*.gotmpl`) are a different language with their own reference:
+[`go-templating.md`](go-templating.md).
