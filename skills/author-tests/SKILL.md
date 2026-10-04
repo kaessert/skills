@@ -67,20 +67,26 @@ and deploys and is not an inner loop.
 
 ## Step 1: Detect the Test Language (do this first)
 
-**The test language is NOT necessarily the composition language.** A Python composition project can (and often does) use raw YAML tests - `configuration-aws-ctp` is exactly this: Python functions, YAML tests. Detect the *test* language from the `tests/` directory, then fall back to project language, then ask.
+**Existing tests decide; otherwise the composition language does.** Detect the *test* language from the `tests/` directory first — a project may already mix languages (`configuration-aws-ctp` is Python functions with YAML tests), and new tests match what is there. With no tests yet, write them in the composition language whenever `up` supports it as a test language, and fall back to YAML only when it does not. The full rule and its reasons: `control-plane-project-charter` §10.
 
 ```
 Inspect tests/ (skip empty projects):
   tests/*/**.k                         → KCL      → ../../languages/kcl.md
   tests/*/test/__main__.py, main.py    → Python   → ../../languages/python.md
   tests/*/*.yaml, no other test source → YAML     → ../../languages/yaml.md
-  tests/*/*.go, *.gotmpl               → Go       → ../../languages/go.md
+  tests/*/go.mod + main.go             → Go       → ../../languages/go/tests.md
+  tests/*/*.gotmpl (every file)        → go-templating → ../../languages/go-templating.md
 
 No tests yet? Pick the language:
   1. Match existing test style if any test exists anywhere
-  2. Else default to the project's composition language (functions/*.py → python, functions/**/*.k → kcl)
-  3. Else default to YAML (simplest, no toolchain coupling)
-  4. When ambiguous, ask the user
+  2. Else the composition language - every language `up function generate` produces is a
+     test language too:
+       functions/**/*.k        → kcl
+       functions/*/main.py | */function/fn.py → python
+       functions/*/*.go        → go
+       functions/*/*.gotmpl    → go-templating
+  3. Else YAML: TypeScript functions (no CLI test language), or no embedded function at all
+  4. Functions in more than one language and no tests yet: ask the user
 ```
 
 Scaffold in the chosen language:
@@ -91,6 +97,7 @@ Scaffold in the chosen language:
 | Python | `up test generate <name> --language python` | `up test generate <name> --e2e --language python` |
 | YAML | `up test generate <name> --language yaml` | `up test generate <name> --e2e --language yaml` |
 | Go | `up test generate <name> --language go` | `up test generate <name> --e2e --language go` |
+| go-templating | `up test generate <name> --language go-templating` | `up test generate <name> --e2e --language go-templating` |
 
 > **Python tests: set up the venv before you write one.** `up test generate --language python`
 > creates a `pyproject.toml` in the new test directory; installing it is what makes
@@ -105,9 +112,9 @@ Scaffold in the chosen language:
 > after generating a new test directory. Details in
 > `languages/python.md` (`control-plane-project-charter` `languages/python.md`).
 
-> **New projects:** `up project init` takes `--test-language` **separately** from `--language` (functions), confirming the two are independent axes (e.g. Go functions + Python tests). If you initialize a project, set the test language deliberately.
+> **New projects:** `up project init` takes `--test-language` **separately** from `--language` (functions). Pass the same value to both (`--language go --test-language go`). It does not accept `yaml`; YAML tests are scaffolded per test with `up test generate --language yaml`.
 
-> **Go / go-templating:** supported by `up test generate` and use the identical object model and rules below, but this skill ships no Go templates yet. Scaffold with the CLI, then apply the agnostic rules from [knowledge.md](references/knowledge.md). Prefer YAML tests unless the project already commits to Go.
+> **Go / go-templating:** same object model and rules as every other language. Read the verified templates and the reproduced failure modes before writing one: `languages/go/tests.md` (Go programs that print the tests; commit `go.mod`/`go.sum`; an empty `items` list passes silently) and `languages/go-templating.md` (a misspelt key renders `<no value>` silently; every file in the test dir must be a template) in `control-plane-project-charter`.
 
 ## Decision Tree
 

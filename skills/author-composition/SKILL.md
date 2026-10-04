@@ -62,7 +62,11 @@ functions/*/*.k                            → KCL         → ../../languages/k
 functions/*/main.py | */function/fn.py     → Python      → ../../languages/python.md
 functions/*/*.ts                           → TypeScript  → ../../languages/typescript.md
 functions/*/*.go                           → Go          → ../../languages/go.md
+functions/*/*.gotmpl                       → go-templating → ../../languages/go-templating.md
 ```
+
+New tests follow the function language unless the project already has tests in another one
+(`control-plane-project-charter` §10).
 
 No functions yet? Take the language from `upbound.yaml`, else from an existing function
 anywhere in the project, else ask — this is a decision, not a discoverable fact.

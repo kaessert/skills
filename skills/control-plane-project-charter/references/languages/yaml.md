@@ -15,7 +15,9 @@ file only tells you how YAML expresses it.
 
 ## Why YAML
 
-YAML tests are the simplest and most decoupled option - no imports, no toolchain, no model generation. **The test language is independent of the composition language:** a Python or KCL composition project can (and often does) use raw YAML tests. `configuration-aws-ctp` is Python functions with YAML tests. Prefer YAML when you want tests that read like the rendered output and don't need programmatic generation.
+YAML tests are the simplest option - no imports, no toolchain, no model generation - and they show the test object model with no language in the way, which is why the other language references point here for it.
+
+**YAML is the fallback test language, not the default.** New tests use the composition language whenever `up` supports it as a test language (`kcl`, `python`, `go`, `go-templating`); write YAML tests when the functions are TypeScript (no CLI test language), when the project has no embedded function, or when the project's existing tests are already YAML - `configuration-aws-ctp` is Python functions with YAML tests, and new tests there stay YAML. The rule: `control-plane-project-charter` §10.
 
 Key differences from KCL/Python:
 - **No imports.** Namespacing lives directly in the `apiVersion` string (e.g. `s3.aws.m.upbound.io/v1beta1`, `kubernetes.m.crossplane.io/v1alpha1`, `helm.m.crossplane.io/v1beta1`).

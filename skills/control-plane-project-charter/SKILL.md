@@ -98,7 +98,7 @@ skill's default and why.
 | Available provider families | `upbound.yaml` `spec.dependsOn` |
 | Example XR shape | `examples/*/*.yaml` — one directory per XR kind, the file named for the XR. **Not** always `example.yaml` |
 | Composition language | `functions/*/` contents — see [`languages/`](references/languages/) |
-| Test language | `tests/*/` contents — **independent of the composition language** |
+| Test language | `tests/*/` contents — may differ from the composition language; with no tests yet, §10 picks it |
 | Provider field names, types and constraints | the generated models under `.up/` |
 | Current Space / group / control plane | `up ctx . --short` |
 
@@ -335,9 +335,22 @@ A group, a Space, a control plane, or a published package is the user's decision
 
 ## 10. Language dispatch
 
-The composition language and the test language are **independent axes** — `up project init`
-takes `--language` and `--test-language` separately, and a Python-function project commonly
-uses YAML tests. Detect each from its own directory, then read the matching file:
+Detect the composition language from `functions/` and the test language from `tests/`, then
+read the matching file. They are separate axes — `up project init` takes `--language` and
+`--test-language` separately, and an existing project may mix them.
+
+**Choosing the test language for new tests:**
+
+1. Tests already exist in the project → write new ones in the same language.
+2. Otherwise use the **composition language**, whenever `up` supports it as a test language:
+   `kcl`, `python`, `go`, `go-templating` — every language `up function generate` produces.
+   One toolchain and one set of idioms per project, the people who maintain the function can
+   maintain its tests, and typed languages check expectations against the same models the
+   function is built on. When initializing, pass both:
+   `up project init <n> --language go --test-language go`.
+3. Otherwise **YAML** — the fallback for TypeScript functions (the CLI has no TS test
+   language) and projects with no embedded function. `up project init` does not accept
+   `--test-language yaml`; scaffold YAML tests with `up test generate <n> --language yaml`.
 
 | Detected | Read |
 |---|---|
@@ -345,6 +358,7 @@ uses YAML tests. Detect each from its own directory, then read the matching file
 | `functions/*/{main.py,function/fn.py}`, `tests/*/{main.py,test/__main__.py}` | [`languages/python.md`](references/languages/python.md) |
 | `functions/*/*.ts` | [`languages/typescript.md`](references/languages/typescript.md) — the CLI has no TS builder yet, so these projects are hand-built; its header says what to do instead |
 | `tests/*/*.yaml` with no other test source | [`languages/yaml.md`](references/languages/yaml.md) |
-| `functions/*/*.go`, `tests/*/*.go` | [`languages/go.md`](references/languages/go.md) |
+| `functions/*/*.go`, `tests/*/go.mod` | [`languages/go.md`](references/languages/go.md); tests: [`languages/go/tests.md`](references/languages/go/tests.md) |
+| `functions/*/*.gotmpl`, `tests/*/*.gotmpl` (every file in the dir) | [`languages/go-templating.md`](references/languages/go-templating.md) |
 
 **Detail:** [`charter/generators.md`](references/charter/generators.md) — the accepted `--language` slugs, what each generator actually emits (`up project init` produces a **v1** project; `up test generate` prepends `test-`; `up composition generate` wires only auto-ready), and why the XRD is the one file you author by hand.

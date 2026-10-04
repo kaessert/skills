@@ -10,30 +10,35 @@ deliberately absent from these files. Read the charter first.
 |---|---|---|---|
 | KCL | yes | yes | [`kcl.md`](kcl.md) + [`kcl/`](kcl/) |
 | Python | yes | yes | [`python.md`](python.md) + [`python/`](python/) |
-| TypeScript | yes, but hand-built — the CLI has no TS builder yet | use YAML or KCL tests | [`typescript.md`](typescript.md) |
-| YAML | n/a | yes | [`yaml.md`](yaml.md) |
-| Go | CLI only, no templates | CLI only, no templates | [`go.md`](go.md) |
+| TypeScript | yes, but hand-built — the CLI has no TS builder yet | YAML (the fallback) | [`typescript.md`](typescript.md) |
+| YAML | n/a | yes — the fallback test language | [`yaml.md`](yaml.md) |
+| Go | CLI only, no templates | yes, verified template | [`go.md`](go.md) + [`go/`](go/) |
+| go-templating | CLI only, no templates | yes, verified template | [`go-templating.md`](go-templating.md) |
 
 ## Detecting which one to read
 
-**The composition language and the test language are independent axes.** `up project init`
-takes `--language` and `--test-language` separately, and a Python-function project commonly
-ships YAML tests. Detect each from its own directory:
+The composition language and the test language are separate axes — `up project init` takes
+`--language` and `--test-language` separately, and an existing project may mix them. Detect
+each from its own directory:
 
 ```
 functions/*/*.k                          → kcl.md
 functions/*/main.py | function/fn.py     → python.md
 functions/*/*.ts                         → typescript.md (hand-built; see its header)
 functions/*/*.go                         → go.md
+functions/*/*.gotmpl                     → go-templating.md
 
 tests/*/*.k                              → kcl.md
 tests/*/main.py | test/__main__.py       → python.md
 tests/*/test.yaml (and no other source)  → yaml.md
-tests/*/*.go | *.gotmpl                  → go.md
+tests/*/go.mod                           → go/tests.md
+tests/*/*.gotmpl (every file in the dir) → go-templating.md
 ```
 
-No tests yet? Match an existing test anywhere in the project; else follow the composition
-language; else default to YAML — it is the simplest and has no toolchain coupling.
+No tests yet? Match an existing test anywhere in the project; else write them in the
+composition language (every language `up function generate` produces is also a test
+language); else YAML — the fallback for TypeScript functions and projects with no embedded
+function. The reasons are in [`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch).
 
 ## Adding a language
 

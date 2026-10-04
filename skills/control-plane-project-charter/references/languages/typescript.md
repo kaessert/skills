@@ -22,7 +22,7 @@ TypeScript composition functions, for projects that already use them.
 > |---|---|
 > | The function | hand-maintained. Copy the layout in Part 2 — `main.ts` (gRPC bootstrap, don't edit) + `function.ts` (your logic) + `package.json` + `tsconfig.json` |
 > | Building it | `npm install && npm run build` produces `dist/`, then package and push the image yourself. `up project build` will not do it for you |
-> | Tests | write them in **YAML** ([`yaml.md`](yaml.md)) or **KCL** ([`kcl.md`](kcl.md)). The test language is independent of the function language, both are fully supported, and they assert against the rendered output regardless of what produced it |
+> | Tests | write them in **YAML** ([`yaml.md`](yaml.md)) — the fallback test language, since the CLI has no TypeScript one ([`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch)). KCL ([`kcl.md`](kcl.md)) also works; both are fully supported, and they assert against the rendered output regardless of what produced it |
 > | Everything else | unchanged — the v2 rules, the namespaced APIs, the TDD loop all apply exactly as they do to a KCL or Python function |
 >
 > Treat a missing CLI path as a manual step, not a blocker. Say in your summary which steps
