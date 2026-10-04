@@ -24,9 +24,10 @@ otherwise, the project wins: say so in your report.
    stops at `✗ Parsing tests`, a bug in the test's own logic (§3).
 4. **Backfilling a test for code that already works: mutate the implementation, never the
    test's expected value.** See that test go red, then revert (charter `tdd.md`).
-5. **Managed resources carry `forProvider` only**, on the `.m.` API groups: no
-   `deletionPolicy`, `managementPolicies` or `metadata.namespace`, and a `providerConfigRef`
-   only when `ClusterProviderConfig/default` is not the right config (§5).
+5. **Managed resources carry `forProvider` only**, on the `.m.` API groups, unless the
+   project's spec or API sets more: no `deletionPolicy`, `managementPolicies` or
+   `metadata.namespace`; omit `providerConfigRef` if and only if
+   `ClusterProviderConfig/default` exists and is the right one (§5).
 6. **Name what ran and the command's own exit code.** After `| tail`, `$?` is `tail`'s: read
    `${PIPESTATUS[0]}`, or redirect to a file and then read `$?`. No command, no claim (§4).
 7. **`No test files found` means nothing ran**, though `up test run` exits 0. A test program
