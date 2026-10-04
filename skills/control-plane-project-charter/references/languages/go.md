@@ -13,6 +13,7 @@ unchanged.
 |---|---|
 | Scaffold a function | `up function generate <n> --language go` |
 | Scaffold a test | `up test generate <n> --language go` (add `--e2e`) — then read [`go/tests.md`](go/tests.md) |
+| Run a test | `up test run tests/test-<n>` runs `go run .` with the test dir as CWD; the program must print `items: [<CompositionTest>…]`. `items: []` is zero tests, and a run with zero tests prints `No test files found` and exits 0 — nothing ran |
 | Compile | `go vet ./...` or `go build -o /dev/null ./...` — plain `go build ./...` in a single-package module (every generated function) writes the executable into the function directory, and it ends up committed |
 | Before committing | `gofmt -l .` (prints nothing), `go vet ./...`, `go mod tidy` in every function and test module |
 

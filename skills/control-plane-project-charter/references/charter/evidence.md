@@ -48,6 +48,11 @@ This is the one assertion that catches a resource nothing else names. Its order 
 renderer's and is not part of any published contract — a reordering upstream breaks the
 assertion loudly rather than letting a real surplus through, which is the safe direction.
 
+**That covers surplus resources, not absent fields.** `assertResources` has no absence
+operator, so "this field is not set" cannot be asserted in a composition test, and searching
+the CLI for one is wasted time. Assert it in a unit test on the function's desired state, in
+the function's own language, or confirm it once in `render.log` and report it as not asserted.
+
 **A generated name is safe to hardcode here**, even though §5 warns those names are not stable
 across re-creations. That warning is about a live control plane, where the XR's uid is real.
 A render has no live XR, so the renderer synthesizes a *deterministic* uid — measured

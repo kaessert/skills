@@ -23,7 +23,10 @@ hold the checklists.
   reserved prefixes, create-only fields) (§6).
 
 **Reporting**
-- Name what ran and its exit code. No command, no claim (§4).
+- Name what ran and its exit code — the command's own, not that of a `| tail` after it
+  (`${PIPESTATUS[0]}`, or redirect to a file and read `$?`). No command, no claim (§4).
+- `up test run` printing `No test files found` means nothing ran, though it exits 0. A test
+  program that prints `items: []` contributes zero tests (§8).
 - For every new test, name the code change that turns it red, and say whether you saw it
   fail. Otherwise call the test unproven (§4, §8).
 - Name the layer you reached — render, composition test, local control plane, cloud — and

@@ -147,7 +147,7 @@ catch the absence of the implementation.
    |---|---|
    | `no actual resource found` for the resource you are about to compose | valid RED |
    | a field mismatch naming the exact field you are adding | valid RED |
-   | a syntax error, an unresolved import, a missing `compositionPath` | **not** RED — the test is broken, not the code. Fix it before writing any implementation |
+   | a syntax error, an unresolved import, a missing `compositionPath`, a run that stops at `✗ Parsing tests` | **not** RED — the test is broken, not the code. Fix it before writing any implementation |
    | passes immediately | **not** RED — the assertion is vacuous, or the behaviour already exists |
 
    Record the failure text. It goes in your report as the evidence that the test bites.
@@ -168,7 +168,10 @@ the same: asserting what the change was *meant* to do instead of reading back wh
 
 Before writing any summary:
 
-1. **Name what you actually ran**, and what its exit code was.
+1. **Name what you actually ran**, and what its exit code was — the command's own. After
+   `up test run … | tail -20`, `$?` is `tail`'s, not `up`'s. Redirect, then read `$?`
+   (`up test run "tests/*" > /tmp/t.log 2>&1; echo "exit=$?"`), or read `${PIPESTATUS[0]}`
+   straight after the pipe in bash.
 2. **Re-read the evidence you are about to paste** and check it does not contradict your
    verdict.
 3. **Distinguish the layers.** A render is not an install; an install is not a provider
@@ -277,6 +280,7 @@ Silently skipping is not.
 | Green thing | What it actually proves |
 |---|---|
 | `up project build` | the package was assembled. For KCL and single-file Python it does not import, type-check, or execute anything — a function with an `AttributeError` on its normal path builds cleanly. **Go is different**: the build runs `go mod tidy` and a real compile, so a Go function that does not compile fails here. The Python SDK builder runs `hatch build` + `pip install`, so packaging and dependency errors fail too, but `fn.py` is still never imported. Either way, a clean build never proves the function *runs*. |
+| `up test run` printing `No test files found` | **nothing ran.** No test was collected, and it exits 0 anyway — that is not a pass. A test directory that emits no `CompositionTest`, such as a Go test program printing `items: []`, contributes zero tests; next to real tests it just drops out of the count. Report "no tests ran". |
 | A composition test suite | the assertions you wrote held against the render. `assertResources` is **partial and positive for objects**: it ignores composed resources it does not list, and within a resource it checks only the fields you name, at every depth. **Lists are the exception** — an asserted list must match the rendered one exactly in length *and* order, or you get `lengths of slices don't match`. A short list assertion is not a weak assertion; it is a failing one. |
 | A render | the function produced objects. Not that the API server accepts them, and not that the provider does. |
 | `Ready=True` | the provider reconciled *something*. Read back the field you meant, from the live object, not from the input manifest. |

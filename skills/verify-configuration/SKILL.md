@@ -86,7 +86,9 @@ Run `up project build`. If fails → report error and EXIT.
 
 ### Phase 2: Composition Tests
 
-Run `up test run tests/test-*`. If any fail → report failures and EXIT.
+Run `up test run tests/test-*`. If any fail → report failures and EXIT. If it prints
+`No test files found`, no test ran, though it exits 0 — report that, never a pass
+(`control-plane-project-charter` §8).
 
 ### Phase 2b: Read the render, don't just trust the exit code
 
