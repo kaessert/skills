@@ -81,7 +81,8 @@ functions/*/*.gotmpl                       → go-templating → ../../languages
 ```
 
 New tests follow the function language unless the project already has tests in another one
-(`control-plane-project-charter` §10).
+(`control-plane-project-charter` §10: existing tests decide, else the composition language,
+else YAML).
 
 No functions yet? Take the language from `upbound.yaml`, else from an existing function
 anywhere in the project, else ask — this is a decision, not a discoverable fact.
@@ -89,7 +90,7 @@ anywhere in the project, else ask — this is a decision, not a discoverable fac
 **Then detect the generation**, which governs more of the guidance than the language does:
 
 ```
-apis/*/definition.yaml: apiextensions.crossplane.io/v2  → v2: charter §5 applies
+apis/*/definition.yaml: apiextensions.crossplane.io/v2  → v2: charter §5 (.m. groups, forProvider only) applies
                                                   /v1  → v1: it does NOT
 ```
 
@@ -105,7 +106,8 @@ import formula, and the bootstrap, all of which are wrong by default if you gues
 
 ## Phase 2: Discover — do not ask
 
-`control-plane-project-charter` §2 has the general table.
+`control-plane-project-charter` §2 (discover from the project, do not interview) has the
+general table.
 These are the composition-specific additions:
 
 | What you need | How to get it — no question required |
@@ -117,8 +119,9 @@ These are the composition-specific additions:
 
 `$SCRIPTS` is this skill's [`scripts/`](scripts/) directory (`scripts/probe_project.py`,
 `scripts/setup_venv.py`, `scripts/run_function.py`), `<author-composition>/scripts`,
-where `<author-composition>` is this skill's absolute path. A wrong path makes every call die
-with a bare "No such file". Resolve it once, and check it:
+where `<author-composition>` is this skill's directory — the directory containing this
+SKILL.md — as an absolute path. A wrong path makes every call die with a bare "No such
+file". Resolve it once, and check it:
 
 ```bash
 SCRIPTS=<author-composition>/scripts
@@ -167,7 +170,7 @@ See [knowledge.md](references/knowledge.md) for each design question in full. In
    never reads A's status. Plumbing the value yourself forces a second reconcile and a
    readiness branch you then have to test.
 4. **List fields.** *One element → one resource* is a decision you justify, not a default —
-   `control-plane-project-charter` §6.
+   `control-plane-project-charter` §6 (the provider schema is a lower bound).
 5. **Conditional resources** — which use `ready OR exists`, and where each conditional
    belongs relative to the existing guard clauses (knowledge.md: the guard-clause chain).
 6. **Flexible maps** — does the XRD use `additionalProperties` for tags and labels? Fixed
@@ -177,8 +180,8 @@ See [knowledge.md](references/knowledge.md) for each design question in full. In
 ## Phase 4: RED — write the failing test before the implementation
 
 **Not optional, and it comes before any function code.**
-`control-plane-project-charter` §3 owns the
-loop; this is the composition author's half of it.
+`control-plane-project-charter` §3 (RED → GREEN → REFACTOR) owns the loop; this is the
+composition author's half of it.
 
 The design you just settled already fixes what the function must emit — the keys, the Kinds,
 the fields. Write that as an assertion **now**, while it states intent, rather than
@@ -215,8 +218,7 @@ The language file has the bootstrap and the syntax. Language-independent, in ord
    `struct_to_dict`; skipping it fails *silently* on current Up CLI versions).
 2. Create managed resources with **`forProvider` only** — no `providerConfigRef` (unless the
    right config is not `ClusterProviderConfig/default`), no `managementPolicies`, no
-   `metadata.namespace`
-   (`control-plane-project-charter` §5).
+   `metadata.namespace` (`control-plane-project-charter` §5: Crossplane v2 fills in the rest).
 3. Convert flexible maps to the language's plain map type before assigning them.
 4. Extract connection details by **composition key**, not by resource name.
 5. Mark any ProviderConfig ready **after** writing the resource, never before.
@@ -239,7 +241,8 @@ green thing is not evidence; this is the checklist.
 `forProvider`-only are *Crossplane* correctness — they say nothing about whether the
 provider will accept the resource. Read the generated model's own constraints, then ask the
 structural question the models cannot answer
-(`control-plane-project-charter` §6).
+(`control-plane-project-charter` §6: the provider schema is a lower bound, not the
+constraint set).
 Write the result in your summary: which Kinds you checked, what the schema required, and
 which API-level rule you could not confirm.
 
@@ -251,10 +254,10 @@ lifecycle task, both with a fully green composition suite:
 | `rule.id` optional in the generated model but **required** by the AWS provider | the XRD left it optional, the render succeeded, AWS rejected the resource |
 | a rule with neither `filter` nor `prefix` | S3 rejects it with `MalformedXML`; nothing emitted a fallback filter |
 
-**2. Grep your own function** with the two checks in
-`control-plane-project-charter` §5, and judge
-each hit rather than counting them. Legitimate hits: a `namespace` on a Secret or ConfigMap you
-compose yourself, and a `providerConfigRef` where the right config is not
+**2. Grep your own function** for `providerConfigRef`, `managementPolicies` and `namespace`
+— the two greps in the charter's `charter/v2-resources.md` (§5) — and judge each hit rather
+than counting them. Legitimate hits: a `namespace` on a Secret or ConfigMap you compose
+yourself, and a `providerConfigRef` where the right config is not
 `ClusterProviderConfig/default` — in which case `kind` must name an object that exists.
 
 **3. The suite is not done until it satisfies all three rules:**

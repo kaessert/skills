@@ -63,7 +63,7 @@ So this skill has two layers:
 ## The TDD loop — this skill owns the RED step
 
 The canonical loop lives in
-`control-plane-project-charter` §3: write the
+`control-plane-project-charter` §3 (RED → GREEN → REFACTOR): write the
 test, run it, read the failure, then implement. It is not repeated here — read it, including
 the table of which failures count as RED and the deliberate-mutation technique for backfill.
 
@@ -102,10 +102,12 @@ requirement on a file — dependencies in `upbound.yaml`, a frozen XRD surface, 
   handles it, not that the API server accepts it. A pipeline function missing from `dependsOn`
   already fails every render (`unknown function`).
 - **The rest is outside this suite.** `up project build` does not validate `examples/`, and it
-  accepted an MRAP without its API dependency (up v0.55.0). `check_xrd_schema.py` (`author-configuration-package`)
-  checks XRD design, not a frozen surface. Where the project has a gate script, such checks
-  belong there, beside the build and the test run (charter §2, `verify-configuration`). Where
-  it has none, report which requirements no automated check covers.
+  accepted an MRAP without its API dependency (up v0.55.0).
+  `<author-configuration-package>/scripts/check_xrd_schema.py` checks XRD design, not a frozen
+  surface; `<author-configuration-package>` is the directory containing that skill's SKILL.md,
+  beside this skill's directory. Where the project has a gate script, such checks belong there,
+  beside the build and the test run (charter §2: the project's gate wins; `verify-configuration`).
+  Where it has none, report which requirements no automated check covers.
 - **Never turn a test program into a linter.** A test dir that checks repo files, exits
   non-zero on a mismatch and prints `items: []` adds zero tests. Passing, it drops out of the
   count (alone: `No test files found`, exit 0); failing, it stops at `✗ Parsing tests`, which
@@ -154,6 +156,9 @@ Scaffold in the chosen language:
 > python3 <author-composition>/scripts/setup_venv.py --project <root>
 > ```
 >
+> `<author-composition>` is the directory containing that skill's SKILL.md, beside this skill's
+> directory.
+>
 > It installs every function *and* test directory from the project's own pins, so run it again
 > after generating a new test directory. Details in
 > `languages/python.md` (`control-plane-project-charter` `languages/python.md`).
@@ -199,7 +204,7 @@ EXECUTE REFACTORING:
 **E2E provider credentials and the `crossplane` block** (track a channel, or pin a *current*
 version): [knowledge.md](references/knowledge.md#provider-credentials-e2e-extraresources).
 
-**CRITICAL**: always use the `.m.` API groups in tests. The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See `control-plane-project-charter` §5. How the `.m.` is written differs per language — the import path in KCL, Python and Go, the `apiVersion` string in YAML; see the per-language reference.
+**CRITICAL**: always use the `.m.` API groups in tests. The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See `control-plane-project-charter` §5 (what a v2 composed resource needs). How the `.m.` is written differs per language — the import path in KCL, Python and Go, the `apiVersion` string in YAML; see the per-language reference.
 
 **A composed managed resource should carry no `providerConfigRef`** unless the right config is
 not `ClusterProviderConfig/default` (`control-plane-project-charter` §5) — the API server
@@ -246,9 +251,10 @@ must reference it explicitly. The training labs use `ClusterProviderConfig`; see
 ## Phase 0: You run inline, and you are bound by the charter
 
 This skill runs inline — you expand into the caller's conversation, share their
-working directory, and can ask. `control-plane-project-charter` §1 says what
-that means for asking questions, and §4 (`control-plane-project-charter`) what it
-means for your summary. Both apply in full; only the binding rules above repeat them.
+working directory, and can ask. `control-plane-project-charter` §1 (when nobody can answer,
+never block) says what that means for asking questions, and §4 (report the effect, not the
+intent) what it means for your summary. Both apply in full; only the binding rules above
+repeat them.
 
 **Load the charter before you start — this skill does not load it for you.** Load the
 `control-plane-project-charter` skill, or read its `SKILL.md`, which sits beside this skill's

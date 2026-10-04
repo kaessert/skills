@@ -212,6 +212,9 @@ python3 <author-configuration-package>/scripts/check_xrd_schema.py \
   apis/*/definition.yaml
 ```
 
+`<author-configuration-package>` is the directory containing that skill's SKILL.md, beside the
+charter's own directory.
+
 Collisions, allowlist casing, group stutter, enum casing, missing descriptions, unbounded lists and printer columns Crossplane already appends are all greppable out of the YAML, before any cluster is involved. The script's `ACRONYMS` table applies to the **Kind only**: trim it to the acronyms this API actually uses, and add entries only with the expansion written beside them. Field casing needs no table, because the title-case rule makes any all-caps run a defect on its own.
 
 Booleans, bare strings and group stutter print as `REVIEW`, not `FAIL`. A check that fails every boolean gets disabled, and each of these is a judgement: whether `gatewayName` restates this object or names another one is not something a prefix match can decide.

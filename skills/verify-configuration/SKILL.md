@@ -34,8 +34,8 @@ creating infrastructure as a side effect (§9).
 
 - **The project has its own gate** — a script or make target that builds and runs the
   tests. Run it instead of the steps it covers, and report its command, exit code and output
-  (`control-plane-project-charter` §4). The project's decision wins over this skill's steps
-  (§2).
+  (`control-plane-project-charter` §4: report the effect, not the intent). The project's
+  decision wins over this skill's steps (§2: the project's own decisions win).
 - **Upbound Cloud is ruled out** — by the project or the user. Use `--local` throughout and
   skip the Space-context checks and the push-target decision. A local run that fits in your
   shell's timeout runs in the foreground, with no monitoring loop.
@@ -139,7 +139,7 @@ Options:
 2. **Execute sequentially:** For each test, hand this brief to a sub-agent and wait for its
    result. Do not load `e2e-test-configuration` into your own context while you can start a
    sub-agent; only if your harness has none, follow the brief yourself
-   (`control-plane-project-charter` §1):
+   (`control-plane-project-charter` §1: delegate with whatever your harness supports):
    ```text
    Run E2E test: <name>. Load the `e2e-test-configuration` skill for <name>. Return PASSED with summary or FAILED with analysis.
    ```
@@ -156,8 +156,8 @@ Phase 3. **Never type `up project run` into Bash without working through this ph
 
 **Wait for the run inside your turn.** `up project run` takes several minutes. Run it in the
 background only if your harness tells you when it exits, and then wait for that; otherwise run
-it in the foreground (`control-plane-project-charter` §1). Never end your turn with the run
-still in flight: in many agents the jobs a session started die with it, leaving a half-created
+it in the foreground (`control-plane-project-charter` §1: never detach a run yourself).
+Never end your turn with the run still in flight: in many agents the jobs a session started die with it, leaving a half-created
 KIND cluster and no result. Observed in a headless session: the run was killed at
 "Building functions..." and the cluster `up-<project>` had to be deleted by hand.
 

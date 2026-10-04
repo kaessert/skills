@@ -39,9 +39,10 @@ otherwise, the project wins: say so in your report.
 ## Phase 0: You run inline, and you are bound by the charter
 
 This skill runs inline — you expand into the caller's conversation, share their
-working directory, and can ask. `control-plane-project-charter` §1 says what
-that means for asking questions, and §4 (`control-plane-project-charter`) what it
-means for your summary. Both apply in full; only the binding rules above repeat them.
+working directory, and can ask. `control-plane-project-charter` §1 (when nobody can answer,
+never block) says what that means for asking questions, and §4 (report the effect, not the
+intent) what it means for your summary. Both apply in full; only the binding rules above
+repeat them.
 
 **Load the charter before you start — this skill does not load it for you.** Load the
 `control-plane-project-charter` skill, or read its `SKILL.md`, which sits beside this skill's
@@ -207,7 +208,9 @@ interpreter. The fast tier also cannot run without it.
 
 It is not needed to *build*, since the function runs in a container, which is exactly why it
 gets deferred and then never done. Do it at step 5. `$SCRIPTS` is
-`<author-composition>/scripts`, the `author-composition` skill's scripts directory; see
+`<author-composition>/scripts`, the `author-composition` skill's scripts directory. A
+`<skill-name>` in a path is that skill's directory — the directory containing its SKILL.md —
+which sits beside this skill's directory. See
 `languages/python.md` (`control-plane-project-charter` `languages/python.md`) for the details and the by-hand
 equivalent.
 
@@ -373,6 +376,9 @@ ones before the first build:
 python3 <author-configuration-package>/scripts/check_xrd_schema.py \
   apis/*/definition.yaml
 ```
+
+`<author-configuration-package>` is this skill's directory: the directory containing this
+SKILL.md.
 
 Exit `0` is clean, `10` is at least one finding, and `2` means it extracted nothing — a corpus
 error, not a pass. `FAIL` lines are defects; `REVIEW` lines (booleans, bare strings) are calls
