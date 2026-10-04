@@ -59,7 +59,7 @@ a reference to a namespaced ProviderConfig nothing creates. See
 [`control-plane-project-charter` §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
 
 **Solution**: delete it, along with `managementPolicies = ["*"]` and any `metadata.namespace`
-on managed resources.
+on managed resources — unless the project's spec or API sets them (charter §5).
 
 ### Pitfall 6: Unsafe Optional Field Access
 

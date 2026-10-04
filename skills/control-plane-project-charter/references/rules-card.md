@@ -23,9 +23,9 @@ It is a reminder, not a replacement: the reasons and the evidence are in the cha
   test is not RED, even when it exits 1 — that includes a bug in the test's own logic (§3).
 - Backfilling a test for working code: mutate the implementation, never the test's expected
   value, see the test go red, then revert (§3).
-- Managed resources carry `forProvider` only. No `deletionPolicy`, no `managementPolicies`,
-  no `metadata.namespace`; omit `providerConfigRef` if and only if
-  `ClusterProviderConfig/default` exists and is the right one (§5).
+- Managed resources carry `forProvider` only, unless the project's spec or API sets more. No
+  `deletionPolicy`, no `managementPolicies`, no `metadata.namespace`; omit `providerConfigRef`
+  if and only if `ClusterProviderConfig/default` exists and is the right one (§5).
 - Use the namespaced `.m.` API groups. Objects embedded in `forProvider`, such as a
   provider-kubernetes manifest, still need their own `metadata.namespace` (§5).
 - The provider schema is a lower bound: check the cloud API's own rules (name formats,
@@ -51,5 +51,9 @@ It is a reminder, not a replacement: the reasons and the evidence are in the cha
   seen failing. Check one yourself; mutating the expected value does not count (§3, §4).
 - The spec's requirements are met where they depart from skill defaults, and the departure is
   stated (§2).
+- Flag `providerConfigRef`, `managementPolicies` or MR `metadata.namespace` as removable unless
+  the project's spec or API sets them; flag `providerConfigRef.kind: ProviderConfig` as a bug
+  only when no namespaced `ProviderConfig` of that name exists in, or is created in, the XR's
+  namespace (§5).
 - The report names the layer reached — render, composition test, control plane, cloud — and
   claims nothing beyond it (§4, §8).

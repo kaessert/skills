@@ -902,9 +902,10 @@ npm run build
 
 ### Pitfall 2: Adding "Crossplane v2 required fields" that v2 already supplies
 
-Remove `providerConfigRef`, `managementPolicies` and managed-resource `metadata.namespace` —
-Crossplane v2 supplies all three, and `kind: 'ProviderConfig'` selects a namespaced
-ProviderConfig nothing creates, leaving the resource with no status conditions at all while
+Remove `providerConfigRef`, `managementPolicies` and managed-resource `metadata.namespace`
+unless the project's spec or API sets them — Crossplane v2 supplies all three by default.
+`kind: 'ProviderConfig'` selects a namespaced ProviderConfig; when no `ProviderConfig` of that
+name exists in the XR's namespace, the resource gets no status conditions at all while
 composition tests still pass. See
 [`control-plane-project-charter` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
 

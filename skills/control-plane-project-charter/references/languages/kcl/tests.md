@@ -57,13 +57,8 @@ _items = [
                         name: "<exact-generated-name>"
                     }
                     spec: {
-                        # v2 requires kind in providerConfigRef
-                        providerConfigRef: {
-                            kind: "ProviderConfig"
-                            name: "default"
-                        }
-                        # v2 uses managementPolicies
-                        managementPolicies: ["*"]
+                        # No providerConfigRef or managementPolicies: v2 defaults them.
+                        # Assert them only if the function sets them (charter §5).
                         forProvider: {
                             region: "us-west-2"
                             # Assert ALL critical fields
@@ -284,8 +279,6 @@ _test_basic = metav1alpha1.CompositionTest {
             <apiGroup>v1beta1.<Kind>{
                 metadata: { name: "<resource>-test" }
                 spec: {
-                    providerConfigRef: { kind: "ProviderConfig", name: "default" }
-                    managementPolicies: ["*"]
                     forProvider: { region: "us-west-2" }
                 }
             }

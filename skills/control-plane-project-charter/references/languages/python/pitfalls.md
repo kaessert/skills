@@ -15,7 +15,7 @@ Language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.
 | Several `resource.update(..., {"status": {...}})` calls | XR reports only the last field; `status.conditions` may vanish. Renders fine, tests green | `resource.update` clobbers nested keys (protobuf `Struct.update`). Write **one** call with all keys — Pattern 4b above |
 | `xr.spec.<obj>.get(...)` or `.attr` on an optional XRD object | `AttributeError` on half your inputs: `'Kms' object has no attribute 'get'`, or `'dict' object has no attribute 'enableKeyRotation'` | `default: {}` in the XRD generates `Optional[Kms] = {}` and Pydantic does not coerce defaults, so it is a `dict` when absent and a model when set. Normalise first; drop `default: {}` — Pattern 4c |
 | Only one example XR, which sets every optional field | The absent-field branch never renders, so it ships broken | Add a minimal XR (required fields only) as its own test case |
-| Setting `providerConfigRef` at all | Resource never reconciles on a live control plane; composition test still passes | Omit it — namespaced MRs default to `ClusterProviderConfig/default`. `kind="ProviderConfig"` points at a namespaced config nothing creates |
+| Setting a `providerConfigRef` the project does not ask for | Resource never reconciles on a live control plane; composition test still passes | Omit `providerConfigRef` if and only if `ClusterProviderConfig/default` exists and is the right one — namespaced MRs default to it. `kind="ProviderConfig"` needs a `ProviderConfig` of that name in, or created in, the XR's namespace (charter §5) |
 | Setting `metadata.namespace` on MRs | Harmless but misleading noise | Omit it — Crossplane propagates the XR's namespace to every composed resource |
 | Tags are a model, not a dict | Pydantic validation error downstream | The XRD used fixed `properties` instead of `additionalProperties` — fix the XRD (Pattern 10). `dict(tags) if tags else {}` works either way, but under the correct schema it is a no-op, not a fix |
 | Fixed XRD properties for tags | `Input should be a valid string [input_value=None]` | Use `additionalProperties: type: string` |
@@ -121,7 +121,7 @@ AssertionError: Expected ResourceGroup not found in composed resources
 | AWS import | `from models.io.upbound.aws.ec2...` | `from models.io.upbound.m.aws.ec2...` |
 | GCP import | `from models.io.upbound.gcp.compute...` | `from models.io.upbound.m.gcp.compute...` |
 | XR parse | `XKind(**req.observed.composite.resource)` | `XKind(**resource.struct_to_dict(...))` |
-| providerConfigRef | `{name: "default"}` | **remove it** — namespaced MRs default to `ClusterProviderConfig/default` |
+| providerConfigRef | `{name: "default"}` | **remove it** if and only if `ClusterProviderConfig/default` exists and is the right one — namespaced MRs default to it (charter §5) |
 | deletionPolicy | `deletionPolicy=rgv1beta1.Spec.DeletionPolicy.Delete` | **remove it** — `managementPolicies: ["*"]` is the default; only set it for a non-default policy such as `["Create","Observe","Update","LateInitialize"]` (orphan on delete) |
 | metadata | `ObjectMeta(name="rg-...")` | unchanged — namespace is propagated automatically, don't add it |
 | apiVersion in tests | `azure.upbound.io/v1beta1` | `azure.m.upbound.io/v1beta1` |

@@ -140,16 +140,16 @@ regenerate models.
 > conditions, which is easy to mistake for silence. Either way the composition suite passes,
 > and nothing fails until it is on a real control plane.
 
-**Omit `providerConfigRef` if and only if a `ClusterProviderConfig` named `default` exists and
-is the right one.** That is the common case. Otherwise set it — when the platform has several
-credentials, and also when it has a single credential whose `ClusterProviderConfig` is not named
-`default` (omitting the reference there leaves every resource inert). Then make `kind` match an
-object that exists:
+**Omit `providerConfigRef` if and only if `ClusterProviderConfig/default` exists and is the
+right one.** That is the common case. Otherwise set it — when the platform has several
+credentials, when it has a single credential whose `ClusterProviderConfig` is not named
+`default` (omitting the reference there leaves every resource inert), and when the project's
+spec or API sets one. Then make `kind` match an object that exists:
 
 | `kind` | Selects | When |
 |---|---|---|
 | `ClusterProviderConfig` | cluster-scoped config, shared by all namespaces | the v2 default; name it explicitly to pick a non-`default` one |
-| `ProviderConfig` | namespaced config in the resource's namespace | per-namespace credentials — **only if you also create that ProviderConfig**, in that namespace |
+| `ProviderConfig` | namespaced config in the resource's namespace | per-namespace credentials — **only if a `ProviderConfig` of that name exists in, or is created in, the XR's namespace** |
 
 Some languages make `kind` a *required* field when you construct a `providerConfigRef`
 object. That is a constraint on constructing the object, not a reason to construct it.
@@ -157,7 +157,7 @@ object. That is a constraint on constructing the object, not a reason to constru
 **Grep your own function before you report.** Two checks, because one regex cannot do both:
 
 ```bash
-# 1. The two fields that should never be hardcoded on a managed resource.
+# 1. The two fields that are not hardcoded on a managed resource unless the project sets them.
 grep -rnE 'providerConfigRef|managementPolicies' functions/
 
 # 2. An assignment to a namespace field — not the word "namespace", which appears in
@@ -168,5 +168,6 @@ grep -rnE '(metadata\.)?namespace\s*[:=]' functions/
 **"No output" is not the pass condition.** A well-commented function legitimately mentions
 these fields — the comment explaining why `namespace` is deliberately absent contains the word
 `namespace`. Judge each hit: a hardcoded value on a managed resource is a defect; a
-parameterised, deliberate opt-in is not. Note also that `grep -r` does not follow the `model`
+parameterised, deliberate opt-in, or a value the project's spec requires, is not (§5: these are
+defaults the project may override). Note also that `grep -r` does not follow the `model`
 symlink into the generated schemas — keep it that way, or the output is thousands of lines.

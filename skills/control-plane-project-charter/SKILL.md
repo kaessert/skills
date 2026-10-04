@@ -231,16 +231,24 @@ round-trip, most of this is permanent from the first version that ships, so it i
 
 ### Set `forProvider`, and stop
 
-Crossplane v2 fills in the rest. Adding "required v2 fields" is at best noise and at worst
-breaks the resource.
+Crossplane v2 fills in the rest. Adding "required v2 fields" the project does not ask for is at
+best noise and at worst breaks the resource.
 
-| Field | Do you set it? | Verified behaviour |
+| Field | Do you set it? (the default; the project may override) | Verified behaviour |
 |---|---|---|
 | `metadata.namespace` | **No** | **If the XR is namespaced**, Crossplane overwrites it with the XR's namespace (`if xr.GetNamespace() != "" { cd.SetNamespace(...) }`), so a function setting a *different* namespace is silently overridden, not merged with. A **cluster-scoped** XR is the exception — its composed resources keep the namespace the function sets, which is how a cluster XR targets one. (A namespaced XR composing a cluster-scoped kind is a hard error, not a namespace question.) |
-| `managementPolicies` | **No** | The namespaced MR spec carries `+kubebuilder:default={"*"}`, so the API server fills it in. Set it only for a genuinely different policy — e.g. `["Create","Observe","Update","LateInitialize"]` to orphan on delete, which for a namespaced MR is the *only* way to orphan: there is no `deletionPolicy` field on the namespaced spec at all. |
-| `providerConfigRef` | **No**, if `ClusterProviderConfig/default` exists and is the right one | The same struct, the same way: `+kubebuilder:default={"kind":"ClusterProviderConfig","name":"default"}`. |
+| `managementPolicies` | **No** | The namespaced MR spec carries `+kubebuilder:default={"*"}`, so the API server fills it in. Set it only for a genuinely different policy — e.g. `["Create","Observe","Update","LateInitialize"]` to orphan on delete, which for a namespaced MR is the *only* way to orphan: there is no `deletionPolicy` field on the namespaced spec at all — or when the project's API exposes it as a parameter. |
+| `providerConfigRef` | Omit it if and only if `ClusterProviderConfig/default` exists and is the right one | The same struct, the same way: `+kubebuilder:default={"kind":"ClusterProviderConfig","name":"default"}`. |
 | `metadata.name` | Only for a stable external name | Otherwise Crossplane generates `<prefix>-<sha256(xr-uid + composition-resource-name)[:12]>`, where the prefix comes from the `crossplane.io/composite` label, truncated to 63 chars. Deterministic for one XR instance, **not** across re-creations — and it falls back to a random 5-char suffix when the composition-resource-name annotation or the controller ownerRef is missing. Inside a *render* it is fully deterministic and safe to assert — see §8. |
 | `crossplane.io/composition-resource-name` | Never by hand | It comes from the key you store the resource under. |
+
+**These are defaults; the project may override them (§2).** When the project's spec or API
+sets `managementPolicies`, `providerConfigRef` or an MR's `metadata.namespace` — an XRD that
+exposes `managementPolicies` as a parameter, a spec that requires a per-XR `providerConfigRef`
+— set it as specified and say so in your report. A review flags these fields as removable
+**unless the project's spec or API sets them**, and flags
+`providerConfigRef.kind: ProviderConfig` as a bug only when no namespaced `ProviderConfig` of
+that name exists in, or is created in, the XR's namespace.
 
 **The table is about the composed resource's own metadata, not about objects inside
 `forProvider`.** A Kubernetes object embedded in a managed resource — the `manifest` of a
