@@ -41,16 +41,17 @@ So this skill has three layers, and you read all three:
 | Agnostic patterns | [knowledge.md](references/knowledge.md) | what each composition pattern *means*, the design questions, the failure modes |
 | Language syntax | `languages/` (`control-plane-project-charter` `languages`) | imports, layout, bootstrap, templates, per-language mistakes |
 
-**Read the charter first.** Nothing in it is repeated here; when this file and the charter
-disagree, the charter wins.
+**Load the charter before you start — this skill does not load it for you.** Load the
+`control-plane-project-charter` skill, or read its `SKILL.md`, which sits beside this skill's
+directory. Apart from the rules at the top of this file, nothing in it is repeated here; when
+this file and the charter disagree, the charter wins.
 
 ## Phase 0: You run inline, and you are bound by the charter
 
 This skill runs inline — you expand into the caller's conversation, share their
-working directory, and can ask. `control-plane-project-charter` §1
-says what that means for asking questions;
-§4 (`control-plane-project-charter`) says what it means for your
-summary. Both apply in full.
+working directory, and can ask. `control-plane-project-charter` §1 (when nobody can answer,
+never block) says what that means for asking questions; §4 (report the effect, not the
+intent) says what it means for your summary. Both apply in full.
 
 ## Phase 1: Detect the language *and the Crossplane generation* — do not ask
 

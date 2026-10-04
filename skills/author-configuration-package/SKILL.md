@@ -29,9 +29,10 @@ working directory, and can ask. `control-plane-project-charter` §1 says what
 that means for asking questions, and §4 (`control-plane-project-charter`) what it
 means for your summary. Both apply in full, and are not repeated here.
 
-**Read the whole charter before you start.** It also carries the TDD loop (§3), what a v2
-composed resource needs (§5), the container boundary (§7), and what a green run does and does
-not prove (§8).
+**Load the charter before you start — this skill does not load it for you.** Load the
+`control-plane-project-charter` skill, or read its `SKILL.md`, which sits beside this skill's
+directory. It also carries the TDD loop (§3), what a v2 composed resource needs (§5), the
+container boundary (§7), and what a green run does and does not prove (§8).
 
 ## Scope
 

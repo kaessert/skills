@@ -28,9 +28,11 @@ As a separate agent, your only output channel is prose: the caller cannot see yo
 or your resource tree. That is why §4 (`control-plane-project-charter`) — report the
 effect, not the intent — is binding on every summary you write, and it is not repeated here.
 
-**Read the whole charter before you start.** It also carries the TDD loop (§3), what a v2
-composed resource needs (§5), the container boundary (§7), what a green run does and does not
-prove (§8), and the rule against creating infrastructure as a side effect (§9).
+**Load the charter before you start — this skill does not load it for you.** Load the
+`control-plane-project-charter` skill, or read its `SKILL.md`, which sits beside this skill's
+directory. It also carries the TDD loop (§3), what a v2 composed resource needs (§5), the
+container boundary (§7), what a green run does and does not prove (§8), and the rule against
+creating infrastructure as a side effect (§9).
 
 ## Purpose
 

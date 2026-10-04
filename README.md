@@ -61,8 +61,11 @@ moves no files.
 The control-plane-project suite is eight skills that work together:
 `control-plane-project-charter` holds the shared rules and per-language references, and
 `author-composition`, `author-tests`, `author-configuration-package`, `verify-configuration`,
-`e2e-test-configuration`, `plan-v2-migration`, and `execute-v2-migration` each load it first.
-Install them together; copying one of them on its own leaves it without the charter.
+`e2e-test-configuration`, `plan-v2-migration`, and `execute-v2-migration` reference it.
+Loading a task skill does not load the charter: each one tells the agent to load it as well,
+and agents skip that step. In one unattended pipeline, builders loaded it in 6 of 11 runs and
+reviewers in none of 10. Install them together; copying one of them on its own leaves it
+without the charter.
 
 On first run the `upbound-hub` skill downloads a credential helper from `storage.googleapis.com` and
 checks it against a published SHA-256. It asks once for your Hub API endpoint and saves it,
@@ -98,7 +101,7 @@ More questions it handles:
 | [`author-composition`](skills/author-composition/SKILL.md) | Use this skill when the user asks to create, extend, modify, or debug a Crossplane composition function in a control-plane project — in any language (KCL, Python, TypeScript, Go). |
 | [`author-configuration-package`](skills/author-configuration-package/SKILL.md) | Use this skill when user requests to create, scaffold, modify, or extend a Crossplane configuration package. |
 | [`author-tests`](skills/author-tests/SKILL.md) | Use this skill when user requests to implement a feature, write, create, author, modify, refactor or plan refactoring of Crossplane configuration tests (composition tests or E2E tests) in a control-plane project - in any language (KCL, Python, YAML, Go, go-templating). |
-| [`control-plane-project-charter`](skills/control-plane-project-charter/SKILL.md) | Shared rules and per-language references that the Upbound control-plane-project skills load first - agent behaviour, the test-first loop, what a v2 composed resource needs, the container boundary, what a green run proves, how to report, and the KCL, Python, TypeScript, Go and YAML references. |
+| [`control-plane-project-charter`](skills/control-plane-project-charter/SKILL.md) | Shared rules and per-language references for the Upbound control-plane-project skills - agent behaviour, the test-first loop, what a v2 composed resource needs, the container boundary, what a green run proves, how to report, and the KCL, Python, TypeScript, Go and YAML references. |
 | [`e2e-test-configuration`](skills/e2e-test-configuration/SKILL.md) | Use this skill when user requests to run E2E tests. |
 | [`execute-v2-migration`](skills/execute-v2-migration/SKILL.md) | Use this skill when user requests to execute or implement a Crossplane v2 migration plan. |
 | [`plan-v2-migration`](skills/plan-v2-migration/SKILL.md) | Use this skill when user requests to migrate, upgrade, or plan migration to Crossplane v2. |
