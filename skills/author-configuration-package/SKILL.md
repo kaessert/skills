@@ -291,7 +291,11 @@ cannot tell the two causes apart from the cluster. Nothing in the workflow promp
 and no check anywhere verifies that the ProviderConfig a composition implicitly depends on
 exists.
 
-Create it in Phase 8, matching the provider family you added in Phase 4:
+Create it in Phase 8, matching the provider family you added in Phase 4. The default is a
+`ClusterProviderConfig` named `default`, below. When the project's spec or API names another
+config — a namespaced `ProviderConfig` in the XR's namespace, a non-`default` name — create
+that one instead, so this example and the compositions' `providerConfigRef` name the same
+object (`control-plane-project-charter` §5: defaults the project may override).
 
 ```yaml
 # examples/providerconfig.yaml
@@ -318,7 +322,7 @@ Two things worth confirming rather than guessing:
   → `models.io.upbound.m.aws.clusterproviderconfig` = `aws.m.upbound.io`. (A `grep` for
   `Literal` in that module shows the credential `source` values, not the apiVersion.)
 - **`ClusterProviderConfig` (cluster-scoped) vs `ProviderConfig` (namespaced)** — use the
-  cluster-scoped one named `default` unless the platform genuinely has per-namespace
+  cluster-scoped one named `default` unless the project's spec or API calls for per-namespace
   credentials, and remember the generated E2E test creates a `ClusterProviderConfig` too.
 
 Also add the credential secret to the README's prerequisites, since it is not part of the
