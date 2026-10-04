@@ -84,7 +84,7 @@ functions/*/*.gotmpl                       → go-templating → go-templating.m
 
 New tests follow the function language unless the project already has tests in another one
 (`control-plane-project-charter` §10: existing tests decide, else the composition language,
-else YAML).
+else YAML). Only a test that emits a `CompositionTest` or `E2ETest` counts as existing.
 
 No functions yet? Take the language from `upbound.yaml`, else from an existing function
 anywhere in the project, else ask — this is a decision, not a discoverable fact.

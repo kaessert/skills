@@ -116,36 +116,38 @@ requirement on a file — dependencies in `upbound.yaml`, a frozen XRD surface, 
 
 ## Step 1: Detect the Test Language (do this first)
 
-**Existing tests decide; otherwise the composition language does.** Detect the *test* language from the `tests/` directory first — a project may already mix languages (`configuration-aws-ctp` is Python functions with YAML tests), and new tests match what is there. With no tests yet, write them in the composition language whenever `up` supports it as a test language, and fall back to YAML only when it does not. The full rule and its reasons: `control-plane-project-charter` §10.
+**Existing tests decide; otherwise the composition language does.** Only a test dir that produces a `CompositionTest` or `E2ETest` counts as an existing test. Detect the *test* language from the `tests/` directory first — a project may already mix languages (`configuration-aws-ctp` is Python functions with YAML tests), and new tests match what is there. With no tests yet, write them in the composition language whenever `up` supports it as a test language, and fall back to YAML only when it does not. The full rule and its reasons: `control-plane-project-charter` §10.
 
 The files named below are in the charter's `languages/` directory
 (`control-plane-project-charter/references/languages/`, beside this skill's directory).
 
 ```
-Inspect tests/ (skip empty projects):
+Inspect tests/ (skip empty projects) - new tests match the language found:
   tests/*/**.k                         → KCL           → kcl.md
   tests/*/test/__main__.py, main.py    → Python        → python.md
   tests/*/*.yaml, no other test source → YAML          → yaml.md
   tests/*/go.mod + main.go             → Go            → go/tests.md
   tests/*/*.gotmpl (every file)        → go-templating → go-templating.md
 
-No tests yet? Pick the language:
-  1. Match existing test style if any test exists anywhere
-  2. Else the composition language - every language `up function generate` produces is a
+  A dir that emits no CompositionTest/E2ETest (a Go program printing `items: []`,
+  a linter over repo files) is not a test: skip it, it does not set the language.
+
+No such test yet? Pick the language:
+  1. The composition language - every language `up function generate` produces is a
      test language too:
        functions/**/*.k        → kcl
        functions/*/main.py | */function/fn.py → python
        functions/*/*.go        → go
        functions/*/*.gotmpl    → go-templating
-  3. Else YAML: TypeScript functions (no CLI test language), or no embedded function at all
-  4. Functions in more than one language and no tests yet: ask the user
+  2. Else YAML: TypeScript functions (no CLI test language), or no embedded function at all
+  3. Functions in more than one language: ask the user
 ```
 
 Scaffold in the chosen language:
 
 | Language | Composition test | E2E test |
 |----------|------------------|----------|
-| KCL (default) | `up test generate <name> --language kcl` | `up test generate <name> --e2e --language kcl` |
+| KCL | `up test generate <name> --language kcl` | `up test generate <name> --e2e --language kcl` |
 | Python | `up test generate <name> --language python` | `up test generate <name> --e2e --language python` |
 | YAML | `up test generate <name> --language yaml` | `up test generate <name> --e2e --language yaml` |
 | Go | `up test generate <name> --language go` | `up test generate <name> --e2e --language go` |

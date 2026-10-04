@@ -101,7 +101,7 @@ skill's default and why.
 | Available provider families | `upbound.yaml` `spec.dependsOn` |
 | Example XR shape | `examples/*/*.yaml` — one directory per XR kind, the file named for the XR. **Not** always `example.yaml` |
 | Composition language | `functions/*/` contents — see [`languages/`](references/languages/) |
-| Test language | `tests/*/` contents — may differ from the composition language; with no tests yet, §10 picks it |
+| Test language | the `tests/*/` dirs that produce a `CompositionTest` or `E2ETest` — may differ from the composition language; with none yet, §10 picks it |
 | Provider field names, types and constraints | the generated models under `.up/` |
 | Current Space / group / control plane | `up ctx . --short` |
 
@@ -356,7 +356,10 @@ read the matching file. They are separate axes — `up project init` takes `--la
 
 **Choosing the test language for new tests:**
 
-1. Tests already exist in the project → write new ones in the same language.
+1. Tests already exist in the project → write new ones in the same language. Only a test dir
+   that produces a `CompositionTest` or `E2ETest` counts. A program that emits none — a Go
+   program printing `items: []`, a linter over repo files — is not a test (§8) and does not
+   set the language.
 2. Otherwise use the **composition language**, whenever `up` supports it as a test language:
    `kcl`, `python`, `go`, `go-templating` — every language `up function generate` produces.
    One toolchain and one set of idioms per project, the people who maintain the function can

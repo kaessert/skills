@@ -23,6 +23,9 @@ It is a reminder, not a replacement: the reasons and the evidence are in the cha
   test is not RED, even when it exits 1 — that includes a bug in the test's own logic (§3).
 - Backfilling a test for working code: mutate the implementation, never the test's expected
   value, see the test go red, then revert (§3).
+- New tests use the language of the existing `CompositionTest`/`E2ETest` dirs, else the
+  composition language, else YAML. A program printing `items: []` is no test and sets
+  nothing (§10).
 - Managed resources carry `forProvider` only, unless the project's spec or API sets more. No
   `deletionPolicy`, no `managementPolicies`, no `metadata.namespace`; omit `providerConfigRef`
   if and only if `ClusterProviderConfig/default` exists and is the right one (§5).

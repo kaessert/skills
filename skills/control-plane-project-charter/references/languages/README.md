@@ -35,10 +35,11 @@ tests/*/go.mod                           → go/tests.md
 tests/*/*.gotmpl (every file in the dir) → go-templating.md
 ```
 
-No tests yet? Match an existing test anywhere in the project; else write them in the
-composition language (every language `up function generate` produces is also a test
-language); else YAML — the fallback for TypeScript functions and projects with no embedded
-function. The reasons are in [`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch).
+Existing tests decide the language of new ones. Only a test dir that produces a
+`CompositionTest` or `E2ETest` counts; a program printing `items: []` does not. No tests
+yet? Write them in the composition language (every language `up function generate` produces
+is also a test language); else YAML — the fallback for TypeScript functions and projects with
+no embedded function. The reasons are in [`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch).
 
 ## Adding a language
 

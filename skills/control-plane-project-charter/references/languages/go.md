@@ -133,7 +133,9 @@ Namespaced APIs reach Go as plain `apiVersion` strings: `s3.aws.m.upbound.io/v1b
 ## Choosing the test language
 
 **Go functions get Go tests**, unless the project already has tests in another language —
-then match those ([`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch)). The tests
+then match those ([`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch)). Only a
+test that emits a `CompositionTest` or `E2ETest` counts: a Go program in `tests/` printing
+`items: []` neither makes the project's tests Go nor keeps them from being Go. The tests
 build their expectations from the same generated models the function uses, so a misspelt
 field fails to compile instead of failing a render. The template, the model import paths and
 the failure modes are in [`go/tests.md`](go/tests.md).
