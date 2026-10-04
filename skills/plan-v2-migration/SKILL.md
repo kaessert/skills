@@ -56,7 +56,7 @@ container boundary (§7), and what a green run does and does not prove (§8).
 | Resource kind | `XNetwork` | `Network` |
 | claimNames | Required section | Remove entirely |
 | deletionPolicy | `Delete \| Orphan` | `managementPolicies: ["*"]` |
-| providerConfigRef | `name: default` | `{kind: "ProviderConfig", name: "default"}` |
+| providerConfigRef | `name: default` | omitted if and only if `ClusterProviderConfig/default` exists and is the right one; otherwise `{kind, name}` naming an object that exists |
 | Secret namespace | Explicit | Removed (inferred) |
 | compositionSelector | `spec.compositionSelector` | `spec.crossplane.compositionSelector` |
 | Connection secrets | Built-in XR support | Manual Secret composition |

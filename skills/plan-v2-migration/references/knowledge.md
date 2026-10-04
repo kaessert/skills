@@ -114,13 +114,19 @@ managementPolicies:
 providerConfigRef.name = "default"
 ```
 
-**After (v2):**
+**After (v2):** omit `providerConfigRef` if and only if `ClusterProviderConfig/default`
+exists and is the right one — namespaced MRs default to it. Otherwise keep it, with a `kind`
+that names an object that exists:
 ```kcl
 providerConfigRef = {
-    kind = "ProviderConfig"  # REQUIRED
-    name = "default"
+    kind = "ClusterProviderConfig"  # or "ProviderConfig": a namespaced one in the XR's namespace
+    name = "team-a"
 }
 ```
+
+`kind = "ProviderConfig"` is a bug only when no namespaced `ProviderConfig` of that name exists
+in, or is created in, the XR's namespace. These are defaults the project may override
+(`control-plane-project-charter` §5): a spec that requires a per-XR `providerConfigRef` wins.
 
 ### 4. Namespace Field Removal
 
@@ -309,7 +315,7 @@ Write this template to `.agents/plans/CROSSPLANE_V2_MIGRATION.md`:
 
 - [ ] Update provider imports (aws → awsm, etc.)
 - [ ] Update XR type references (remove X-prefix)
-- [ ] Update providerConfigRef to include `kind`
+- [ ] providerConfigRef: omit it if and only if `ClusterProviderConfig/default` exists and is the right one; a kept one gets a `kind` naming an object that exists
 - [ ] Replace deletionPolicy with managementPolicies
 - [ ] Remove namespace from secret references
 - [ ] Implement manual Secret composition (if using connection secrets)
