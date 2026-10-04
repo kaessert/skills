@@ -12,7 +12,10 @@ references:
   - references/charter/v2-resources.md
   - references/charter/xrd-design.md
   - references/languages/README.md
+  - references/languages/go-templating.md
   - references/languages/go.md
+  - references/languages/go/functions.md
+  - references/languages/go/tests.md
   - references/languages/kcl.md
   - references/languages/kcl/patterns-logic.md
   - references/languages/kcl/patterns.md
@@ -362,7 +365,7 @@ read the matching file. They are separate axes — `up project init` takes `--la
 | `functions/*/{main.py,function/fn.py}`, `tests/*/{main.py,test/__main__.py}` | [`languages/python.md`](references/languages/python.md) |
 | `functions/*/*.ts` | [`languages/typescript.md`](references/languages/typescript.md) — the CLI has no TS builder yet, so these projects are hand-built; its header says what to do instead |
 | `tests/*/*.yaml` with no other test source | [`languages/yaml.md`](references/languages/yaml.md) |
-| `functions/*/*.go`, `tests/*/go.mod` | [`languages/go.md`](references/languages/go.md); tests: [`languages/go/tests.md`](references/languages/go/tests.md) |
+| `functions/*/*.go`, `tests/*/go.mod` | [`languages/go.md`](references/languages/go.md); functions: [`languages/go/functions.md`](references/languages/go/functions.md); tests: [`languages/go/tests.md`](references/languages/go/tests.md) |
 | `functions/*/*.gotmpl`, `tests/*/*.gotmpl` (every file in the dir) | [`languages/go-templating.md`](references/languages/go-templating.md) |
 
 **Detail:** [`charter/generators.md`](references/charter/generators.md) — the accepted `--language` slugs, what each generator actually emits (`up project init` produces a **v1** project; `up test generate` prepends `test-`; `up composition generate` wires only auto-ready), and why the XRD is the one file you author by hand.

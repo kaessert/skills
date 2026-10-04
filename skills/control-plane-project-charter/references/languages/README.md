@@ -12,7 +12,7 @@ deliberately absent from these files. Read the charter first.
 | Python | yes | yes | [`python.md`](python.md) + [`python/`](python/) |
 | TypeScript | yes, but hand-built — the CLI has no TS builder yet | YAML (the fallback) | [`typescript.md`](typescript.md) |
 | YAML | n/a | yes — the fallback test language | [`yaml.md`](yaml.md) |
-| Go | CLI only, no templates | yes, verified template | [`go.md`](go.md) + [`go/`](go/) |
+| Go | yes, verified template | yes, verified template | [`go.md`](go.md) + [`go/`](go/) |
 | go-templating | CLI only, no templates | yes, verified template | [`go-templating.md`](go-templating.md) |
 
 ## Detecting which one to read

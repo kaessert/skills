@@ -58,8 +58,8 @@ you write exactly the partial shape you mean (e.g. only `status`, or only `spec.
 
 ## Composition test template (`tests/test-<n>/main.go`)
 
-Three tests: one per input branch (with an absence guard on the composite) and one observed-state test that
-drives a status field. The status test asserts the bucket too: a test that asserts only the composite stays green
+Three tests for the function template in [`functions.md`](functions.md): one per input branch (with an
+absence guard on the composite) and one observed-state test that drives a status field. The status test asserts the bucket too: a test that asserts only the composite stays green
 if that branch stops composing anything. Adapt the helpers; keep the shape.
 
 ```go
