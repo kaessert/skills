@@ -102,8 +102,9 @@ it is a separate, deliberate piece of work (`plan-v2-migration`), not cleanup yo
 passing. `probe_project.py` reports the generation on its first line and recommends imports
 accordingly.
 
-**Then read that language file before writing a line.** It carries the layout detection, the
-import formula, and the bootstrap, all of which are wrong by default if you guess.
+**Then read that language file before writing a line.** It, or the detail file it links,
+carries the layout detection, the import formula, and the bootstrap, all of which are wrong by
+default if you guess.
 
 ## Phase 2: Discover — do not ask
 
@@ -117,6 +118,7 @@ These are the composition-specific additions:
 | Function layout + import prefix | the language file's detection recipe — for Python, `python3 "$SCRIPTS/probe_project.py" --project <root>` |
 | Exact import line and class names per Kind | same probe, with the Kinds named |
 | Field names and types on a managed resource | `python3 "$SCRIPTS/probe_project.py" --project <root> --fields <Kind>` — prints every `forProvider` field, flags list fields whose Upjet names are misleadingly **singular** (`attribute`, `globalSecondaryIndex`), and lists cross-resource `*Ref`/`*Selector` fields. For other languages, read the generated schema directly |
+| Go: import path, types, fields | `dev.upbound.io/models/io/upbound/m/<provider>/<service>/<version>` — the `.m.` tree; its non-`.m.` twin sits right beside it with the same file names. Read the `const (` block and `type <Kind>SpecForProvider struct` in `.up/go/models/…/<kind>.go`; `go.md` Part 2 |
 
 `$SCRIPTS` is this skill's [`scripts/`](scripts/) directory (`scripts/probe_project.py`,
 `scripts/setup_venv.py`, `scripts/run_function.py`), `<author-composition>/scripts`,
@@ -216,7 +218,8 @@ the RED→GREEN transition, not merely the final green.
 The language file has the bootstrap and the syntax. Language-independent, in order:
 
 1. Parse the observed XR using the language's required bootstrap (Python needs
-   `struct_to_dict`; skipping it fails *silently* on current Up CLI versions).
+   `struct_to_dict`; skipping it fails *silently* on current Up CLI versions. Go: the
+   generated models are not `runtime.Object`s, so convert through JSON, in and out).
 2. Create managed resources with **`forProvider` only** — no `providerConfigRef` (unless the
    right config is not `ClusterProviderConfig/default`), no `managementPolicies`, no
    `metadata.namespace` (`control-plane-project-charter` §5: Crossplane v2 fills in the rest).
@@ -229,7 +232,9 @@ The language file has the bootstrap and the syntax. Language-independent, in ord
 For iterating on a crash rather than an assertion, use the fast tier where the language
 offers one (Python: `run_function.py`, well under a second against `up test run`'s tens of
 seconds — it needs a venv with `crossplane-function-sdk-python`; run it once and it prints the
-exact recipe). It asserts nothing, so it supplements the loop and never replaces it.
+exact recipe). It asserts nothing, so it supplements the loop and never replaces it. Go's fast
+tier is `go test ./...` in `functions/<n>/`; the scaffold's `fn_test.go` is an empty table that
+passes with zero cases, so add one before you count it.
 
 ## Phase 6: REFACTOR and verify — coverage, not a green exit code
 

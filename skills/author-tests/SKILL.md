@@ -44,7 +44,7 @@ Every composition and E2E test - whether written in KCL, Python, YAML, Go, or go
 
 So this skill has two layers:
 - **Language-agnostic core** (this file + [knowledge.md](references/knowledge.md)): the object model, rules, patterns, and mistakes. Read these regardless of language.
-- **Per-language reference** (kcl.md (`control-plane-project-charter` `languages/kcl.md`), python.md (`control-plane-project-charter` `languages/python.md`), yaml.md (`control-plane-project-charter` `languages/yaml.md`)): syntax, scaffolding, templates, and language-specific mistakes.
+- **Per-language reference** (kcl.md (`control-plane-project-charter` `languages/kcl.md`), python.md (`control-plane-project-charter` `languages/python.md`), yaml.md (`control-plane-project-charter` `languages/yaml.md`), go/tests.md (`control-plane-project-charter` `languages/go/tests.md`)): syntax, scaffolding, templates, and language-specific mistakes.
 
 ## Scope
 
