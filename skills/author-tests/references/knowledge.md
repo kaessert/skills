@@ -171,7 +171,7 @@ Language-neutral mistakes. (KCL import-syntax and Python dump-mode mistakes live
 
 ### 6. Existence-only assertions
 ❌ Asserting a resource exists but none of its fields.
-✅ Assert every critical field - region, CIDRs, chart name/version/repo, and the `forProvider` config. Don't assert `providerConfigRef` or `managementPolicies`: they are API-server defaults the composition should not be setting, and `exclude_unset=True` keeps them out anyway.
+✅ Assert every critical field - region, CIDRs, chart name/version/repo, and the `forProvider` config. Don't assert `providerConfigRef` or `managementPolicies` unless the project's spec or API sets them: by default they are API-server defaults the composition does not set (`control-plane-project-charter` §5), and in Python `exclude_unset=True` keeps them out anyway.
 
 ### 7. A composed resource with no assertion at all
 `assertResources` is a *partial, positive* check: it verifies the resources you list and ignores every other resource the composition emits. Adding a managed resource to a function and re-running the suite therefore **passes without testing anything** - verified: a whole extra MR plus new `spec` fields left a 2-test suite at 2/2 PASS with assertions untouched.

@@ -210,17 +210,21 @@ version): [knowledge.md](references/knowledge.md#provider-credentials-e2e-extrar
 
 **CRITICAL**: always use the `.m.` API groups in tests. The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See `control-plane-project-charter` §5 (what a v2 composed resource needs). How the `.m.` is written differs per language — the import path in KCL, Python and Go, the `apiVersion` string in YAML; see the per-language reference.
 
-**A composed managed resource should carry no `providerConfigRef`** unless the right config is
-not `ClusterProviderConfig/default` (`control-plane-project-charter` §5) — the API server
-defaults it to `{kind: ClusterProviderConfig, name: default}`, which is the object the templates
-and generated E2E tests create. See
-`control-plane-project-charter` §5
-for the live-control-plane evidence that overriding it leaves the resource inert.
+**Omit `providerConfigRef` if and only if `ClusterProviderConfig/default` exists and is the
+right one** — the API server defaults an omitted one to
+`{kind: ClusterProviderConfig, name: default}`, the object the templates and generated E2E
+tests create. These are defaults the project may override (`control-plane-project-charter` §5):
+when its spec or API sets `providerConfigRef` or `managementPolicies`, assert them as
+specified (whether a render keeps a value equal to the model default depends on the language
+and SDK; see the language file).
+`kind: ProviderConfig` is a bug only when no namespaced `ProviderConfig` of that
+name exists in, or is created in, the XR's namespace — the resource then stays inert on a
+control plane while the tests pass.
 
 So in a test's `extraResources`, create a **`ClusterProviderConfig`** (cluster-scoped, no
-namespace) unless the project genuinely uses per-namespace credentials — in which case it
-creates a namespaced `ProviderConfig`, which does need `namespace: default`, and the function
-must reference it explicitly. The training labs use `ClusterProviderConfig`; see
+namespace) by default. When the project uses namespaced credentials, create the namespaced
+`ProviderConfig` the function references instead, in the XR's namespace (`namespace: default`).
+The training labs use `ClusterProviderConfig`; see
 [knowledge.md](references/knowledge.md#two-providerconfig-kinds-v2).
 
 ## Critical Rules (all languages)
