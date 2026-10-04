@@ -141,8 +141,9 @@ catch the absence of the implementation.
    up test run "tests/<t>"      # expect: FAIL
    ```
 
-   Run it directly. Do not route this through `verify-configuration`: that skill builds,
-   deploys and talks to a control plane, which is not an inner loop.
+   Run it directly. Do not route this through `verify-configuration`: that skill builds the
+   package and runs the whole suite, and can go on to E2E or a control plane, which is not an
+   inner loop.
 
    **A failure is only RED if it fails for the reason you intended.** Check the message:
 

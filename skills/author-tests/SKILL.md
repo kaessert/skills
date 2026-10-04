@@ -57,7 +57,7 @@ So this skill has two layers:
 - ✅ **Run the test you just wrote** — `up test run "tests/<t>"`, directly, as the RED/GREEN loop requires
 
 **This skill does NOT:**
-- ❌ Build and deploy the package, or run the whole suite as a gate (use `verify-configuration` — but *after* the loop below, never inside it)
+- ❌ Build the package, or run the whole suite as a gate (the project's own gate, else `verify-configuration` — but *after* the loop below, never inside it)
 - ❌ Execute E2E tests (use `e2e-test-configuration`)
 - ❌ Implement composition features (use `author-composition`)
 
@@ -78,8 +78,8 @@ fail. Three things make that assertion bite:
 | **Cover the minimal XR.** | Use the inline `xr` field with every optional property omitted. That is the shape a real user writes first, and the one the scaffold never generates. |
 
 Run it directly — `up test run "tests/<t>"` — not through `verify-configuration`, which builds
-and deploys and is not an inner loop. If it prints `No test files found`, **nothing ran**: it
-exits 0, and that is not a pass.
+the package and runs the whole suite, and is not an inner loop. If it prints
+`No test files found`, **nothing ran**: it exits 0, and that is not a pass.
 
 ### Asserting absence
 
@@ -237,7 +237,7 @@ The training labs use `ClusterProviderConfig`; see
 3. **Assert ALL critical fields** - not just resource existence
 4. **Match exact composed-resource names** - find them with `up composition render`
 5. **`namespace: default` on the XR** (v2). On the provider config only if the project actually uses the namespaced `ProviderConfig` kind — the default and the usual case is `ClusterProviderConfig`, which is cluster-scoped and takes no namespace
-6. **Run the test directly while authoring** (`up test run "tests/<t>"`); hand the built-and-deployed gate to `verify-configuration` once the suite is green
+6. **Run the test directly while authoring** (`up test run "tests/<t>"`); run the gate once the suite is green (Workflow Summary)
 
 ### NEVER DO:
 1. Hardcoded long-lived credentials in E2E tests (use web/injected identity, or a Secret sourced from an env var)
@@ -280,15 +280,25 @@ container boundary (§7), and what a green run does and does not prove (§8).
    see Phase 0
 3. Generate scaffold: `up test generate <feature> --language <lang>` (add `--e2e` for E2E)
 4. Write test using the template from the matching per-language reference
-5. **Hand off to `verify-configuration`** once the suite is green — it builds and deploys,
-   which is the gate, not the inner loop
+5. **Run the gate once the suite is green** — see [The gate](#the-gate-after-the-loop)
 
 ### Modify Test
 1. Read existing test; match its language and style
 2. Understand current assertions
 3. Apply changes
-4. **Hand off to `verify-configuration`** once the suite is green — it builds and deploys,
-   which is the gate, not the inner loop
+4. **Run the gate once the suite is green** — see [The gate](#the-gate-after-the-loop)
+
+### The gate, after the loop
+
+- **The project defines its own gate** (a script or make target): run that, not
+  `verify-configuration` (charter §2: the project's own decisions win).
+- **Otherwise** hand off to `verify-configuration` for the build and the whole suite.
+- **No control plane or deploy allowed** (the project, the user or your instructions say so):
+  the gate is the build and the whole `up test run` — `verify-configuration` Phases 1–2, or
+  the project's gate — and nothing after it: no E2E, no `up project run` (charter §9: no
+  infrastructure as a side effect). Where only Upbound Cloud is ruled out,
+  `verify-configuration`'s "Local-only projects and projects with their own gate" says what
+  changes.
 
 ### Refactoring
 
@@ -310,4 +320,5 @@ Test authoring is complete when:
 - ✅ Test content follows the agnostic rules + the matching per-language reference
 - ✅ All critical fields asserted (not just existence)
 - ✅ The new assertion was observed to FAIL before the implementation existed, and to pass after
-- ✅ `verify-configuration` run once the suite is green, and it passes
+- ✅ The gate passed once the suite was green — the project's own gate if it has one, else
+  `verify-configuration`, without a deploy where none is allowed (see The gate, after the loop)
