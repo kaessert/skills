@@ -285,7 +285,9 @@ up composition render apis/{resource}/composition.yaml examples/{example}.yaml -
 Verify output contains:
 - Namespaced APIs (.m. in apiVersion)
 - Managed resource `spec` contains **only** `forProvider` — no `providerConfigRef`,
-  no `managementPolicies`, no `metadata.namespace`. Crossplane v2 supplies all three.
+  no `managementPolicies`, no `metadata.namespace` — unless the project's spec or API sets
+  them (a migrated `managementPolicies` parameter, a kept non-`default` `providerConfigRef`).
+  By default Crossplane v2 supplies all three (`control-plane-project-charter` §5).
 
 **8.4: E2E tests (with single user confirmation)**
 
@@ -350,7 +352,8 @@ Tell skill: "Migrate this function from v1 to v2"
   non-`default` config: the platform set it deliberately, and
   deleting it silently repoints those resources at the default account. Never add a `kind`
   field to a reference you are keeping without checking the object exists — see below
-- REMOVE managementPolicies and any deletionPolicy on managed resources
+- REMOVE any deletionPolicy on managed resources; REMOVE managementPolicies unless the XRD
+  exposes it as a parameter, which the function then passes through
 - REMOVE metadata.namespace from managed resources
 - Remove namespace from secret refs
 - Connection secret manual composition (if applicable)
@@ -384,11 +387,14 @@ Tell skill: "Update this test for v2 migration"
 - XR kind updates (remove X-prefix)
 - Add namespace to XR metadata
 - Update assertions:
-  - Do NOT assert providerConfigRef or managementPolicies — they are defaulted
-    by the API server and are absent from the rendered composition output
+  - Do NOT assert providerConfigRef or managementPolicies unless the function sets
+    them (a kept providerConfigRef, a managementPolicies parameter) — otherwise they are
+    defaulted by the API server and absent from the rendered composition output
   - Remove namespace from secret refs
   - Add Secret resource (if connection secrets)
-- E2E only: ProviderConfig namespaced API + namespace, Crossplane version pin
+- E2E only: the ProviderConfig the function references, on the `.m.` API (a
+  `ClusterProviderConfig` takes no namespace; a namespaced `ProviderConfig` goes in the XR's
+  namespace), Crossplane version pin
 }
 
 **SUCCESS CRITERIA:**
@@ -611,15 +617,17 @@ _items += [ec2v1beta2.VPC {
   E2E tests actually create.
 - **Do not add `metadata.namespace`.** It propagates from the XR automatically.
 
-> **Migrating `providerConfigRef.kind = "ProviderConfig"` is an active defect, not a
-> no-op.** `ProviderConfig` is the *namespaced* kind; nothing in a generated project
-> creates one. A managed resource pointing at it gets **no status conditions and no
-> events at all** — it is inert, with nothing to debug. Composition tests pass either
-> way, so this only ever surfaces on a live control plane. Verified with two otherwise
+> **Migrating `providerConfigRef.kind = "ProviderConfig"` is a defect, not a no-op, when no
+> namespaced `ProviderConfig` of that name exists in, or is created in, the XR's namespace.**
+> `ProviderConfig` is the *namespaced* kind; nothing in a generated project creates one. A
+> managed resource pointing at a missing one gets **no status conditions and no events at
+> all** — it is inert, with nothing to debug. Composition tests pass either way, so this
+> only ever surfaces on a live control plane. Verified with two otherwise
 > identical namespaced `Bucket`s.
 
-Add `providerConfigRef` back only for a genuinely multi-credential platform, and then
-with a `kind` that matches an object the platform actually creates.
+Omit `providerConfigRef` if and only if `ClusterProviderConfig/default` exists and is the
+right one; otherwise keep or add it, with a `kind` that matches an object the platform
+actually creates. A project spec that requires one wins (`control-plane-project-charter` §5).
 </example>
 
 ### Example 4: Example YAML Migration
