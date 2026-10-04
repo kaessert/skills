@@ -39,7 +39,7 @@ Every test - in any language - produces one of two objects under `apiVersion: me
 | Field | Meaning |
 |-------|---------|
 | `metadata.name` | Test name |
-| `spec.crossplane` | `autoUpgrade.channel: Stable\|Rapid`, optionally `version: <current>` (see SKILL.md rule) |
+| `spec.crossplane` | `autoUpgrade.channel: Stable\|Rapid`, optionally `version: <current>` (see [Common Mistakes 2](#2-stale-or-missing-crossplane-block-e2e)) |
 | `spec.defaultConditions` | Conditions every manifest must reach. Default `["Ready"]`; add `"Synced"` only when you specifically want to gate on sync |
 | `spec.manifests` | Resources under test (≥1 required) - typically the XR(s) |
 | `spec.extraResources` | Prerequisites applied first: the `ProviderConfig` the XR references, and any credential `Secret` |
@@ -63,6 +63,12 @@ The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" an
 ### Provider credentials (E2E `extraResources`)
 
 Prefer Upbound-injected / web identity over static Secrets.
+
+| Provider | ProviderConfig API Group | Web-identity field |
+|----------|--------------------------|--------------------|
+| AWS | `aws.m.upbound.io/v1beta1` | `webIdentity.roleARN` |
+| Azure | `azure.m.upbound.io/v1beta1` | `webIdentity.clientID` |
+| GCP | `gcp.m.upbound.io/v1beta1` | `federation.providerID` + `serviceAccount` |
 
 **AWS** - web identity:
 ```yaml
@@ -147,7 +153,8 @@ Language-neutral mistakes. (KCL import-syntax and Python dump-mode mistakes live
 
 ### 2. Stale or missing crossplane block (E2E)
 ❌ Copying a pinned `version:` from an old example (rots immediately).
-✅ Track a channel (`autoUpgrade.channel: Stable`), or pin a **current** version deliberately.
+✅ Track a channel (`autoUpgrade.channel: Stable` or `Rapid`, no pinned version) — recommended, what real configs use, and a fine default.
+✅ Or pin a **current** UXP version deliberately when you need determinism: `version: <current>` plus `autoUpgrade.channel`.
 
 ### 3. Guessed composed-resource names
 ❌ `name: test-vpc` (a guess).

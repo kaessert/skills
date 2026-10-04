@@ -63,7 +63,39 @@ fail. Three things make that assertion bite:
 | **Cover the minimal XR.** | Use the inline `xr` field with every optional property omitted. That is the shape a real user writes first, and the one the scaffold never generates. |
 
 Run it directly — `up test run "tests/<t>"` — not through `verify-configuration`, which builds
-and deploys and is not an inner loop.
+and deploys and is not an inner loop. If it prints `No test files found`, **nothing ran**: it
+exits 0, and that is not a pass.
+
+### Asserting absence
+
+`assertResources` cannot assert that something is absent — it has no absence operator, so do
+not search the CLI for one.
+
+| Must be absent | How |
+|---|---|
+| A composed **resource** | Assert the composite's `spec.crossplane.resourceRefs` as the exact list from `render.log`. Lists match exactly, so a surplus resource fails it. The templates in the charter's `languages/go/tests.md` and `languages/go-templating.md` show this guard; detail in its `charter/evidence.md` |
+| A **field** | Not expressible in a composition test. Use a unit test on the function's desired state, in the function's own language (Go: `go test ./...` in `functions/<n>/`), or confirm it once in `render.log` and report it as not asserted |
+
+## Checking what is not a render
+
+`up test run` evaluates `CompositionTest` and `E2ETest` objects and nothing else. For a
+requirement on a file — dependencies in `upbound.yaml`, a frozen XRD surface, `examples/`, a
+`ManagedResourceActivationPolicy` — sort it:
+
+- **What a render reaches, cover with a render.** XRD defaults reach the render through
+  `xrdPath` (charter §2), so assert the defaulted values on the composite. Render a shipped
+  example with `xrPath: examples/<kind>/<file>.yaml` plus `xrdPath`: that proves the function
+  handles it, not that the API server accepts it. A pipeline function missing from `dependsOn`
+  already fails every render (`unknown function`).
+- **The rest is outside this suite.** `up project build` does not validate `examples/`, and it
+  accepted an MRAP without its API dependency (up v0.55.0). `check_xrd_schema.py` (`author-configuration-package`)
+  checks XRD design, not a frozen surface. Where the project has a gate script, such checks
+  belong there, beside the build and the test run (charter §2, `verify-configuration`). Where
+  it has none, report which requirements no automated check covers.
+- **Never turn a test program into a linter.** A test dir that checks repo files, exits
+  non-zero on a mismatch and prints `items: []` adds zero tests. Passing, it drops out of the
+  count (alone: `No test files found`, exit 0); failing, it stops at `✗ Parsing tests`, which
+  is a broken test, not RED.
 
 ## Step 1: Detect the Test Language (do this first)
 
@@ -150,15 +182,10 @@ EXECUTE REFACTORING:
 
 **E2E timeout is sized to what you provision, not a fixed number.** A couple of Azure resources may be fine at ~900s; a real EKS cluster + add-ons needs 3600-5400s. Under-sizing causes false failures. Set `cleanupTimeoutSeconds` proportionally.
 
-### Provider Credentials (E2E)
+**E2E provider credentials and the `crossplane` block** (track a channel, or pin a *current*
+version): [knowledge.md](references/knowledge.md#provider-credentials-e2e-extraresources).
 
-| Provider | ProviderConfig API Group | Web-identity field |
-|----------|--------------------------|--------------------|
-| AWS | `aws.m.upbound.io/v1beta1` | `webIdentity.roleARN` |
-| Azure | `azure.m.upbound.io/v1beta1` | `webIdentity.clientID` |
-| GCP | `gcp.m.upbound.io/v1beta1` | `federation.providerID` + `serviceAccount` |
-
-**CRITICAL**: always use the `.m.` API groups in tests. The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See `control-plane-project-charter` §5.
+**CRITICAL**: always use the `.m.` API groups in tests. The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See `control-plane-project-charter` §5. How the `.m.` is written differs per language — the import path in KCL, Python and Go, the `apiVersion` string in YAML; see the per-language reference.
 
 **A composed managed resource should carry no `providerConfigRef`** unless the right config is
 not `ClusterProviderConfig/default` (`control-plane-project-charter` §5) — the API server
@@ -189,20 +216,6 @@ must reference it explicitly. The training labs use `ClusterProviderConfig`; see
 3. `timeoutSeconds < 60` for composition tests
 4. Under-sized E2E timeouts (see sizing note above)
 5. Assert resource existence only, with no field assertions
-
-### Crossplane version in E2E tests
-
-Set the `crossplane` block one of two valid ways:
-- **Track a channel** (recommended, and what real configs use): `autoUpgrade.channel: Stable` (or `Rapid`), no pinned version.
-- **Pin a version** when you need determinism: `version: <current UXP version>` + `autoUpgrade.channel`.
-
-Do NOT hard-code a stale pinned version copied from an example - if you pin, use a current one. A channel-only block is a fine and common default.
-
-### Namespaced APIs (`.m.`) - expressed differently per language
-
-Everything in tests uses the **namespaced** API surface (`aws.m.upbound.io`, `kubernetes.m.crossplane.io`, `helm.m.crossplane.io`, ...). How you write that depends on the language:
-- **KCL / Python**: via the imported model path (the `m` in the import). See kcl.md (`control-plane-project-charter` `languages/kcl.md`) / python.md (`control-plane-project-charter` `languages/python.md`).
-- **YAML**: directly in the `apiVersion` string (e.g. `s3.aws.m.upbound.io/v1beta1`). No imports. See yaml.md (`control-plane-project-charter` `languages/yaml.md`).
 
 ## Test Organization
 
