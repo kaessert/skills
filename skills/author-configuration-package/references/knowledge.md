@@ -77,6 +77,10 @@ spec:
 
 ### Composition Skeleton Template
 
+The shape `up composition generate` produces (`mode: Pipeline` with an auto-ready step), for
+reading. Generate it rather than copying this (SKILL.md: use the generators for everything
+but the XRD).
+
 ```yaml
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
@@ -293,7 +297,8 @@ ls .cache/  # Should show downloaded provider schemas
 | Go | For complex logic, function-sdk-go |
 | Python | For complex logic, function-sdk-python |
 
-**Create composition skeleton** - use template from Templates section.
+**Generate the composition:** `up composition generate apis/{resource}/definition.yaml`. The
+Composition Skeleton Template above shows what it produces; do not write it by hand.
 
 **CRITICAL:** Only include `function-auto-ready` at this stage. The function reference will be added by `up function generate`.
 

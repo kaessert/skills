@@ -54,8 +54,8 @@ container boundary (§7), and what a green run does and does not prove (§8).
 
 **This skill DOES:**
 - ✅ Create/modify project structure (apis/, examples/, scripts/)
-- ✅ Generate XRDs via interactive wizard
-- ✅ Create composition pipeline skeletons
+- ✅ Write XRDs by hand, with the field list from the spec or the field wizard below
+- ✅ Generate composition pipeline skeletons
 - ✅ Manage dependencies (providers, functions)
 - ✅ Run `up function generate` for function scaffolding
 - ✅ Create example manifests
@@ -66,24 +66,28 @@ container boundary (§7), and what a green run does and does not prove (§8).
 - ❌ Create tests → Use `author-tests`
 - ❌ Run verification → Use `verify-configuration`
 
-## Prefer the CLI generators over hand-writing YAML
+## Use the CLI generators for everything but the XRD
 
-`up` generates XRDs, compositions, and examples from each other. **Use them.** Hand-writing an
-XRD's OpenAPI schema and a composition by hand is the slowest and most error-prone path, and it is
-what produces `mode: Resources`, `apiVersion: v1`, claim-based `X<Kind>` names, and schemas that
-reject the user's own example.
+**Use the generators for compositions, functions, tests and examples; write the XRD
+yourself.** A composition or a function layout written by hand is what produces
+`mode: Resources`, `apiVersion: v1` and a pipeline the CLI did not wire. The XRD is the one
+exception: an example carries values, never constraints, so an XRD inferred from one loses
+every `required:`, `default:`, open-ended map and `status` field you meant to have
+(`control-plane-project-charter` §5: write the XRD yourself).
 
 | Command | Input → Output |
 |---|---|
 | `up project init <name>` | interactive wizard → a whole working project (see below) |
 | `up example generate [<xrd>]` | wizard, or an XRD → `examples/<plural>/example.yaml` |
-| `up xrd generate <example.yaml>` | an example **XR** → `apis/<plural>/definition.yaml` + language models |
+| `up xrd generate <example.yaml>` | an example **XR** → an inferred `apis/<plural>/definition.yaml` + language models. **Not for the XRD you ship**: at most a read-only second opinion (below) |
 | `up composition generate <xrd\|xr>` | XRD or XR → `apis/<plural>/composition.yaml`, **and adds the required function packages as dependencies** |
 | `up function generate <name> [<pipeline-path>]` | → `functions/<name>/…`, and wires it into that composition's pipeline |
 | `up test generate <name> [--e2e]` | → `tests/test-<name>/…` (or `tests/e2etest-<name>/…`) |
 
 `up xrd generate` also accepts `--input rgd` (ResourceGraphDefinition) and `--input SimpleSchema`,
-and `--plural` for words it can't pluralize (`--plural postgreses`).
+and `--plural` for words it can't pluralize (`--plural postgreses`). Whatever the input, its
+output is a draft you review and then own like any XRD you wrote, and it never runs over an
+XRD that already exists (below).
 
 **The fastest correct route for a brand-new API is example-first:** write the XR you want users
 to write, then **write the XRD to match it** and generate the composition from it. Drafting the
@@ -243,11 +247,11 @@ equivalent.
 | Phase | Action | Key Command |
 |-------|--------|-------------|
 | 1-2 | Project/Resource info | Ask the user |
-| 3 | XRD schema wizard | Loop until user done, then `python3 <author-configuration-package>/scripts/check_xrd_schema.py apis/*/definition.yaml` |
+| 3 | Write the XRD | Field list from the spec or the field wizard, then `python3 <author-configuration-package>/scripts/check_xrd_schema.py apis/*/definition.yaml` |
 | 4 | Dependencies | `up dep update-cache` |
-| 5 | Composition + language | Create skeleton |
+| 5 | Composition + language | `up composition generate apis/{resource}/definition.yaml` |
 | 6 | First build | `up project build` |
-| 7 | Function generation | `up function generate {resource} apis/{resource}/composition.yaml --language kcl` |
+| 7 | Function generation | `up function generate {resource} apis/{resource}/composition.yaml --language <lang>` |
 | 8 | Examples | Create simple + complete, **plus `examples/providerconfig.yaml`** |
 | 9 | Final build | `up project build` |
 
@@ -341,7 +345,7 @@ kubectl apply -f examples/providerconfig.yaml
 | apiVersion | `apiextensions.crossplane.io/v2` |
 | scope | `Namespaced` |
 
-**Kind naming (new vs migration).** For a **new** config, name the XRD Kind exactly as the user's XR (e.g. `Network`) — **no `X` prefix and no `claimNames`** (those are the v1 claim model). `up`'s XRD wizard may scaffold the legacy claim-based `X<Kind>` + `claimNames: <Kind>`; for a new namespaced XR, switch it to the intended Kind and drop `claimNames`. **When migrating an existing v1 config, keeping the `X`-prefixed Kind is fine** — don't force-rename existing XRs.
+**Kind naming (new vs migration).** For a **new** config, name the XRD Kind exactly as the user's XR (e.g. `Network`) — **no `X` prefix and no `claimNames`** (those are the v1 claim model). An XRD from a template or an older project may use the legacy claim-based `X<Kind>` + `claimNames: <Kind>` (`up project init` templates are v1); for a new namespaced XR, switch it to the intended Kind and drop `claimNames`. **When migrating an existing v1 config, keeping the `X`-prefixed Kind is fine** — don't force-rename existing XRs.
 
 ### Provider Options by Cloud
 
@@ -355,9 +359,9 @@ kubectl apply -f examples/providerconfig.yaml
 
 > **Pitfall — external pipeline functions must be declared dependencies.** Your project's own **embedded** functions (built from `functions/`) are wired automatically. But an **external** function `functionRef` (e.g. `crossplane-contrib-function-auto-ready`, `function-patch-and-transform`) that isn't in `upbound.yaml` `dependsOn` and cached (`up dep update-cache`) makes `up test run`'s render fail with `unknown function … is it listed in the render input?`. **Fix by declaring the dependency — do not delete the pipeline step.** (`up test run` *does* render declared external functions — verified.)
 
-## Interactive Wizard (Phase 3)
+## Field wizard (Phase 3): you write the XRD, the wizard collects its fields
 
-Ask in a loop until user says done:
+With no spec to read the fields from, ask in a loop until user says done:
 
 1. Field name (e.g., region, cidr)
 2. Field type (string, integer, boolean, array, object)
@@ -366,7 +370,7 @@ Ask in a loop until user says done:
 5. Default value (optional)
 6. Add another field? (yes/no)
 
-Build OpenAPIv3 schema as you go.
+Write the OpenAPIv3 schema into `apis/<plural>/definition.yaml` as you go, by hand.
 
 **Add reasonable validation — but keep the draft valid.** Sensible enhancements are encouraged (accurate types, `required`, descriptions, a CIDR `pattern`, well-scoped `enum`s/defaults). The one rule: any constraint must still **accept the values in the user's XR draft** — never add validation that rejects the user's own example (e.g. a lowercase `location` enum that accepts only `westeurope` and rejects the draft's `West Europe`). If a reasonable constraint would conflict with a draft value, normalize the value or relax the constraint — or ask.
 
@@ -430,7 +434,7 @@ See [knowledge.md](references/knowledge.md) for:
 
 Skill succeeds when:
 - ✅ Project structure created
-- ✅ XRD with user-defined schema
+- ✅ XRD written by hand, with the schema the user or spec defined
 - ✅ First build generates models (`.up/kcl/models/` exists)
 - ✅ `up function generate` creates function structure
 - ✅ Final build succeeds (`.uppkg` created)
