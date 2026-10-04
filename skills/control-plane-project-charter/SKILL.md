@@ -57,7 +57,7 @@ or the worked example behind a rule.
 | [`charter/container.md`](references/charter/container.md) | which languages are containerized, and what crosses the boundary (§7) |
 | [`charter/evidence.md`](references/charter/evidence.md) | reading a render, how `assertResources` matches, making a suite exhaustive (§8) |
 | [`charter/generators.md`](references/charter/generators.md) | the `--language` slugs, and what each CLI generator actually emits (§10) |
-| [`rules-card.md`](references/rules-card.md) | the charter on one screen, for an orchestrator to paste into agent instructions |
+| [`rules-card.md`](references/rules-card.md) | the charter on one screen, plus a reviewer variant, for an orchestrator to paste into agent prompts — loading a skill does not load this charter |
 
 ---
 

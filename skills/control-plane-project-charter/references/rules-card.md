@@ -1,9 +1,15 @@
 # Rules card
 
-The charter on one screen, for an orchestrator to paste into an agent's instructions when
-loading the full skills on every short session costs too much. It is a reminder, not a
-replacement: the reasons and the evidence are in the charter (`../SKILL.md`), and the skills
-hold the checklists.
+The charter on one screen, for an orchestrator to paste into an agent's instructions. Loading
+a skill does not load the charter, and agents often skip it, so pasting is the reliable route.
+Paste the card — between the two `---` lines below — into prompts for agents that build, and the
+reviewer variant into prompts for agents that review. Section numbers (§N) are the charter's.
+It is a reminder, not a replacement: the reasons and the evidence are in the charter
+(`../SKILL.md`), and the skills hold the checklists.
+
+---
+
+**If this card conflicts with the project's spec, the spec wins; say so.**
 
 **Asking and deciding**
 - Discover from the project before asking. When nobody can answer, never block: decide from
@@ -13,7 +19,10 @@ hold the checklists.
 - Never create a group, Space, control plane or cloud resource as a side effect (§9).
 
 **Building**
-- Test first: watch every new test fail for the right reason before making it pass (§3).
+- Test first: watch every new test fail for the right reason before making it pass. A broken
+  test is not RED, even when it exits 1 — that includes a bug in the test's own logic (§3).
+- Backfilling a test for working code: mutate the implementation, never the test's expected
+  value, see the test go red, then revert (§3).
 - Managed resources carry `forProvider` only. No `deletionPolicy`, no `managementPolicies`,
   no `metadata.namespace`; omit `providerConfigRef` if and only if
   `ClusterProviderConfig/default` exists and is the right one (§5).
@@ -32,3 +41,15 @@ hold the checklists.
 - Name the layer you reached — render, composition test, local control plane, cloud — and
   never claim one you did not reach (§4, §8).
 - Comments and docs claim no more than the test checks (§4).
+
+---
+
+**Reviewer variant.** If this conflicts with the project's spec, the spec wins; say so.
+- Re-run the gate yourself and read its output. `No test files found`, or a test program
+  printing `items: []`, is zero tests: no vacuous green counts as a pass (§8).
+- For each new test, the report names the implementation change that turns it red, and it was
+  seen failing. Check one yourself; mutating the expected value does not count (§3, §4).
+- The spec's requirements are met where they depart from skill defaults, and the departure is
+  stated (§2).
+- The report names the layer reached — render, composition test, control plane, cloud — and
+  claims nothing beyond it (§4, §8).

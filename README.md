@@ -67,6 +67,12 @@ and agents skip that step. In one unattended pipeline, builders loaded it in 6 o
 reviewers in none of 10. Install them together; copying one of them on its own leaves it
 without the charter.
 
+**Orchestrators: paste the rules card into agent prompts.**
+[`rules-card.md`](skills/control-plane-project-charter/references/rules-card.md) is the
+charter on one screen, with a reviewer variant. In a pipeline of unattended agents it is the
+one part of the charter that is sure to be read; the authoring skills carry the same rules
+inline, but only for an agent that loads them.
+
 On first run the `upbound-hub` skill downloads a credential helper from `storage.googleapis.com` and
 checks it against a published SHA-256. It asks once for your Hub API endpoint and saves it,
 so there is nothing to set up in advance.
