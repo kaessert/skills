@@ -110,7 +110,7 @@ items:
       spec:
         forProvider:
           versioningConfiguration:
-          - status: Enabled
+            status: Enabled
 {{- end }}
 {{- end }}
 ```
@@ -126,6 +126,7 @@ which is language-agnostic. Observed-state tests add `observedResources` to a ca
 | Misspell a case key (`$case.versionin`) | **silently renders `<no value>`** into the manifest. In the reproduction the XR got `versioning: <no value>`, the function read it as false, and the test passed for the wrong reason. Guard keys with `hasKey` + `fail` as above, and never let `<no value>` reach a manifest |
 | Template syntax error / unknown function | the **whole run** fails at generation (`failed to parse templates`) |
 | A non-template file in the test directory | the run fails: `No test files found` |
+| Expectation with the wrong shape (a list where the API has an object) | **passes** if the function writes the same wrong shape: assertions compare test against render, never against the CRD. Check field shapes in the provider's CRD (or the generated models) before writing them into a template |
 | Expectation indented one level off | the assertion silently moves to another field or object; read the rendered manifest back if a test passes that should not |
 
 **Indentation is the other trap.** A value that is itself a structure is safest as `{{ toJson $v }}` on one

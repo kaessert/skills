@@ -43,8 +43,11 @@ Consequences:
 The cluster-scoped `…/io/upbound/aws/s3/…` models exist next to the `.m.` ones; importing them in a v2 project
 is the same mistake as in any other language (charter §5).
 
-**Use typed models for composed-resource expectations** — a misspelt `forProvider` field does not compile,
-which is the main thing Go buys you over YAML. Every model field is a pointer with `omitempty`, so only what you
+**Use typed models for composed-resource expectations** — a misspelt or mis-shaped `forProvider` field does not
+compile, which is the main thing Go buys you over YAML. A real case from writing the template below: the function
+and a map-based expectation both wrote `versioningConfiguration` as a list, the shape of the old cluster-scoped
+API. Function and test agreed, so the test passed — but in the namespaced `v1beta1` API it is an object, and only
+schema validation caught it. With the typed `BucketVersioning` model the list does not compile. Every model field is a pointer with `omitempty`, so only what you
 set is serialised and the assertion stays partial. Use plain maps for the XR fixture, `observedResources`
 and expectations on the composite: those are `map[string]interface{}` in the test model anyway, and a map lets
 you write exactly the partial shape you mean (e.g. only `status`, or only `spec.crossplane.resourceRefs`).
@@ -52,7 +55,8 @@ you write exactly the partial shape you mean (e.g. only `status`, or only `spec.
 ## Composition test template (`tests/test-<n>/main.go`)
 
 Three tests: one per input branch (with an absence guard on the composite) and one observed-state test that
-drives a status field. Adapt the helpers; keep the shape.
+drives a status field. The status test asserts the bucket too: a test that asserts only the composite stays green
+if that branch stops composing anything. Adapt the helpers; keep the shape.
 
 ```go
 // Package main generates the composition tests for Bucket.
@@ -88,16 +92,7 @@ func main() {
 		),
 		compositionTest("versioning-enabled", inlineXR(map[string]any{"region": "eu-central-1", "versioning": true}), nil,
 			bucket("eu-central-1"),
-			map[string]any{
-				"apiVersion": "s3.aws.m.upbound.io/v1beta1",
-				"kind":       "BucketVersioning",
-				"metadata":   crn("versioning"),
-				"spec": map[string]any{"forProvider": map[string]any{
-					"region":                  "eu-central-1",
-					"bucketSelector":          map[string]any{"matchControllerRef": true},
-					"versioningConfiguration": []any{map[string]any{"status": "Enabled"}},
-				}},
-			},
+			versioning("eu-central-1"),
 		),
 		compositionTest("status-from-observed-bucket", inlineXR(map[string]any{"region": "eu-central-1"}),
 			[]any{map[string]any{
@@ -110,6 +105,7 @@ func main() {
 				"spec":   map[string]any{"forProvider": map[string]any{"region": "eu-central-1"}},
 				"status": map[string]any{"atProvider": map[string]any{"arn": "arn:aws:s3:::example"}},
 			}},
+			bucket("eu-central-1"), // a status-only test would stay green if this branch stopped composing the bucket
 			composite(map[string]any{"status": map[string]any{"bucketArn": "arn:aws:s3:::example"}}),
 		),
 	}
@@ -129,15 +125,32 @@ func bucket(region string) s3v1beta1.Bucket {
 	return s3v1beta1.Bucket{
 		APIVersion: ptr.To(s3v1beta1.BucketAPIVersions3AwsMUpboundIoV1Beta1),
 		Kind:       ptr.To(s3v1beta1.BucketKindBucket),
-		Metadata:   &metav1.ObjectMeta{Annotations: &map[string]string{"crossplane.io/composition-resource-name": "bucket"}},
+		Metadata:   crn("bucket"),
 		Spec: &s3v1beta1.BucketSpec{
 			ForProvider: &s3v1beta1.BucketSpecForProvider{Region: ptr.To(region)},
 		},
 	}
 }
 
-func crn(name string) map[string]any {
-	return map[string]any{"annotations": map[string]any{"crossplane.io/composition-resource-name": name}}
+// versioning uses the typed model: had the expectation been written as a list (the old, cluster-scoped shape),
+// it would not compile - in the namespaced v1beta1 API versioningConfiguration is an object.
+func versioning(region string) s3v1beta1.BucketVersioning {
+	return s3v1beta1.BucketVersioning{
+		APIVersion: ptr.To(s3v1beta1.BucketVersioningAPIVersions3AwsMUpboundIoV1Beta1),
+		Kind:       ptr.To(s3v1beta1.BucketVersioningKindBucketVersioning),
+		Metadata:   crn("versioning"),
+		Spec: &s3v1beta1.BucketVersioningSpec{
+			ForProvider: &s3v1beta1.BucketVersioningSpecForProvider{
+				Region:                  ptr.To(region),
+				BucketSelector:          &s3v1beta1.BucketVersioningSpecForProviderBucketSelector{MatchControllerRef: ptr.To(true)},
+				VersioningConfiguration: &s3v1beta1.BucketVersioningSpecForProviderVersioningConfiguration{Status: ptr.To("Enabled")},
+			},
+		},
+	}
+}
+
+func crn(name string) *metav1.ObjectMeta {
+	return &metav1.ObjectMeta{Annotations: &map[string]string{"crossplane.io/composition-resource-name": name}}
 }
 
 func inlineXR(spec map[string]any) map[string]any {
