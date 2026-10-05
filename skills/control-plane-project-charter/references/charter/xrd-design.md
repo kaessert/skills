@@ -219,6 +219,8 @@ Collisions, allowlist casing, group stutter, enum casing, missing descriptions, 
 
 Booleans, bare strings and group stutter print as `REVIEW`, not `FAIL`. A check that fails every boolean gets disabled, and each of these is a judgement: whether `gatewayName` restates this object or names another one is not something a prefix match can decide.
 
+On a frozen API (already shipped, or fixed by the project's spec), record each `FAIL` you may not fix under its rule class in `xrd-schema-exceptions.yaml`, with a reason, or read its state with `--report-only`. author-configuration-package's SKILL.md has the format.
+
 One trap sits underneath all of it: **a check whose corpus is empty reports every schema clean.** Assert the corpus size before trusting the verdict, and exit non-zero on extraction failure with a different code than on a finding. The script exits `0` clean, `10` on a finding and `2` when it extracted nothing, so a caller can tell a pass from a silence.
 
 What the check does not look at, deliberately: **kind stutter** (`repositoryClass` is a good name and `repositoryName` is not, the difference is semantic, and a check firing on both pushes someone to break the good one); which fields are **identity fields** needing `self == oldSelf`; and whether a `pattern` matches what the backend actually enforces. Those stay review judgements.

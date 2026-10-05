@@ -424,11 +424,26 @@ error, not a pass. `FAIL` lines are defects; `REVIEW` lines (booleans, bare stri
 for you to make. The `ACRONYMS` table applies to the **Kind** only; trim it to the acronyms this API uses.
 
 An enum whose values mirror an upstream API verbatim (`aurora-postgresql`) fails the casing
-rule by design. When that is a deliberate decision, record it in `xrd-schema-exceptions.yaml`
-at the project root, one entry per field with a mandatory `reason` (format in the script's
-docstring); the script reads it from the working directory, prints those findings as
-`EXCEPTED`, and can then serve as a gate. A skeleton XRD has too few fields to count as an
-extraction, so pass `--min-corpus` until the API has grown.
+rule by design, and a **frozen API** (already shipped, or fixed by the project's spec) reports
+FAILs you may not fix. Record each deliberate one in `xrd-schema-exceptions.yaml` at the
+project root, under its rule class, with a mandatory `reason`:
+
+```yaml
+enumCasing:
+  - field: spec.parameters.engine   # the path the FAIL prints, minus file and [version]
+    reason: AWS RDS engine names, passed through verbatim
+maxItems:
+  - field: status.subnetIds
+    reason: frozen API, shipped without a bound
+```
+
+Classes keyed by field path: `enumCasing`, `description`, `listType`, `maxItems`,
+`lowerCamel`, `fieldCasing`; by name: `kindAcronym` (the Kind), `printerColumn` (`READY`),
+`collision` (the spellings as printed). `uniqueItems` has none: the API server rejects the CRD.
+The script reads the file from the working directory, prints those findings as `EXCEPTED`,
+reports an entry that matches nothing for REVIEW, and can then serve as a gate. To read a
+frozen API's state without gating, pass `--report-only` (exit 0 despite findings). A skeleton
+XRD has too few fields to count as an extraction, so pass `--min-corpus` until the API has grown.
 
 ## Post-Scaffolding Hand-off
 
@@ -455,13 +470,8 @@ After the final build, report what ran and what it printed, not a checklist
 
 ## Templates & Detailed Instructions
 
-See [knowledge.md](references/knowledge.md) for:
-- Complete XRD template (v2, Namespaced)
-- upbound.yaml template
-- .gitignore template
-- Composition skeleton template
-- Detailed phase instructions
-- Common pitfalls and solutions
+See [knowledge.md](references/knowledge.md) for the XRD, `upbound.yaml`, `.gitignore` and
+composition templates, detailed phase instructions, and common pitfalls.
 
 ## Success Criteria
 
