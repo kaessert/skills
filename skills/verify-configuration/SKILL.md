@@ -10,25 +10,13 @@ references:
 
 Verify Crossplane configuration packages are ready for commit.
 
-## Phase 0: Know how you were started, and you are bound by the charter
+## Mode, and the charter
 
-This skill is written for a separate agent (a forked sub-agent) — one that does not see the
-caller's conversation, and for which **asking a question ends the turn**. If you were handed
-a brief as a separate agent, that is you: act on the brief you were given, discover the rest
-from the project, and do the work. If you were loaded into the user's conversation instead —
-your harness has no sub-agents, or the user invoked you directly — you are inline and may ask
-when a decision is genuinely undetermined. `control-plane-project-charter` §1 says what each
-means.
-
-As a separate agent, your only output channel is prose: the caller cannot see your exit codes, your `render.log`,
-or your resource tree. That is why §4 (`control-plane-project-charter`) — report the
-effect, not the intent — is binding on every summary you write, and it is not repeated here.
-
-**Load the charter before you start — this skill does not load it for you.** Load the
-`control-plane-project-charter` skill, or read its `SKILL.md`, which sits beside this skill's
-directory. It also carries the TDD loop (§3), what a v2 composed resource needs (§5), the
-container boundary (§7), what a green run does and does not prove (§8), and the rule against
-creating infrastructure as a side effect (§9).
+**Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
+the spec and state the assumption, or stop and report. Started as a separate agent, you are
+unattended, and prose is your only output channel: `control-plane-project-charter` §4 (report
+the effect, not the intent) binds every summary. Load the charter before you start, or read its
+`SKILL.md` beside this skill's directory: this skill does not load it.
 
 ## Local-only projects and projects with their own gate
 
@@ -213,7 +201,7 @@ If it *can* pull, run it on the Space — that is the environment they chose.
 **4. If the pre-flight says it will wedge, hand the decision back. Do not decide it
 yourself.** In particular do **not** "helpfully" fall back to `--local`: they connected to
 that Space on purpose, and a local KIND cluster is a *different environment*, not a
-transparent substitute. Put the choice to the user if you can ask (see Phase 0), and otherwise **report
+transparent substitute. Put the choice to the user if you are interactive (Mode), and otherwise **report
 these three options and their consequences to your caller and stop** — do not pick one.
 
 | Option | Command | What it costs them |

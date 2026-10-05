@@ -41,18 +41,12 @@ otherwise, the project wins: say so in your report.
     re-read the section you rely on in that step. Never quote from memory; if the re-read
     contradicts what you wrote, fix it first (charter §1).
 
-## Phase 0: You run inline, and you are bound by the charter
+## Mode, and the charter
 
-This skill runs inline — you expand into the caller's conversation, share their
-working directory, and can ask. `control-plane-project-charter` §1 (when nobody can answer,
-never block) says what that means for asking questions, and §4 (report the effect, not the
-intent) what it means for your summary. Both apply in full; only the binding rules above
-repeat them.
-
-**Load the charter before you start — this skill does not load it for you.** Load the
-`control-plane-project-charter` skill, or read its `SKILL.md`, which sits beside this skill's
-directory. It also carries the TDD loop (§3), what a v2 composed resource needs (§5), the
-container boundary (§7), and what a green run does and does not prove (§8).
+**Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
+the spec and state the assumption, or stop and report. Load `control-plane-project-charter`
+before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
+load it.
 
 ## Scope
 

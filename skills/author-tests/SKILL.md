@@ -42,6 +42,13 @@ otherwise, the project wins: say so in your report.
     re-read the section you rely on in that step. Never quote from memory; if the re-read
     contradicts what you wrote, fix it first (charter §1).
 
+## Mode, and the charter
+
+**Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
+the spec and state the assumption, or stop and report. Load `control-plane-project-charter`
+before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
+load it.
+
 ## Core Principle
 
 **A test's *meaning* is language-agnostic; only its *syntax* differs.**
@@ -281,26 +288,13 @@ The training labs use `ClusterProviderConfig`; see
   `--e2e`, so the composition gate is `up test run "tests/test-*"`; write it in the project README (charter §7)
 - Complex sequential dependencies
 
-## Phase 0: You run inline, and you are bound by the charter
-
-This skill runs inline — you expand into the caller's conversation, share their
-working directory, and can ask. `control-plane-project-charter` §1 (when nobody can answer,
-never block) says what that means for asking questions, and §4 (report the effect, not the
-intent) what it means for your summary. Both apply in full; only the binding rules above
-repeat them.
-
-**Load the charter before you start — this skill does not load it for you.** Load the
-`control-plane-project-charter` skill, or read its `SKILL.md`, which sits beside this skill's
-directory. It also carries the TDD loop (§3), what a v2 composed resource needs (§5), the
-container boundary (§7), and what a green run does and does not prove (§8).
-
 ## Workflow Summary
 
 ### New Test
 1. Detect/choose test language (Step 1)
 2. Determine feature/resources/variants from `args` and the project (`apis/*/definition.yaml`,
    `apis/*/composition.yaml`, the function source, the example XRs in `examples/*/*.yaml`) — do not ask;
-   see Phase 0
+   see Mode
 3. Generate scaffold: `up test generate <feature> --language <lang>` (add `--e2e` for E2E)
 4. Write test using the template from the matching per-language reference
 5. **Run the gate once the suite is green** — see [The gate](#the-gate-after-the-loop)

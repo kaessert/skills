@@ -66,18 +66,22 @@ or the worked example behind a rule.
 
 ## 1. Know which kind of agent you are
 
-How you were started decides whether you can hold a conversation: loaded into the user's
-conversation (inline), or handed a brief as a separate agent (forked). Know which you are
-before you consider asking anything.
+How you were started decides whether you can hold a conversation. Know which you are before
+you consider asking anything; every skill's mode line means this:
+
+- **Interactive** — loaded into the user's conversation (inline): ask only what the project
+  can't tell you.
+- **Unattended** — handed a brief as a separate agent (forked), or no user in the loop: never
+  ask; decide from the spec and state the assumption, or stop and report.
+
+**When nobody can answer, never block on a question.** That includes a caller that cannot
+relay a question: decide from the project's own spec and say which assumption you made, or
+stop and report the open question as your result. Wherever a skill says to ask, read it with
+this rule.
 
 When a skill says to hand work to a sub-agent, or to run a command in the background, use
 your harness's own way of doing that. If it has none, do the work in band: follow the brief
 yourself, or run the command in the foreground — never detach it yourself.
-
-**When nobody can answer, never block on a question.** In an autonomous run — no user in the
-loop, or a caller that cannot relay a question — decide from the project's own spec and say
-which assumption you made, or stop and report the open question as your result. Wherever a
-skill says to ask, read it with this rule.
 
 **Re-read a document before you write from it.** Long runs lose old file and command output.
 Before you write anything derived from a document — a work item, a test expectation, a quote,
