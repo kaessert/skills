@@ -23,7 +23,7 @@ SCRIPTS=<author-composition>/scripts
 | Scaffold a test | `up test generate <n> --language python` (add `--e2e`) — writes `tests/test-<n>/`; the CLI prepends `test-` itself, so do not pass it |
 | **Set up the venv — do this first** | `python3 "$SCRIPTS/setup_venv.py" --project <root>` — right after the first `up project build`, so imports resolve for whoever is reading along |
 | Probe the project | `python3 "$SCRIPTS/probe_project.py" --project <root>` |
-| Fast inner loop | `python3 "$SCRIPTS/run_function.py" --project <root> --minimal examples/<x>/example.yaml` — the only host-side step that needs a venv; see below |
+| Fast inner loop | `python3 "$SCRIPTS/run_function.py" --project <root> --minimal examples/<kind>/<xr-name>.yaml` — the only host-side step that needs a venv; see below |
 
 
 ## Host-side Python: set the venv up first

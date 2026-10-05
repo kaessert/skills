@@ -299,7 +299,7 @@ container boundary (§7), and what a green run does and does not prove (§8).
 ### New Test
 1. Detect/choose test language (Step 1)
 2. Determine feature/resources/variants from `args` and the project (`apis/*/definition.yaml`,
-   `apis/*/composition.yaml`, the function source, `examples/*/example.yaml`) — do not ask;
+   `apis/*/composition.yaml`, the function source, the example XRs in `examples/*/*.yaml`) — do not ask;
    see Phase 0
 3. Generate scaffold: `up test generate <feature> --language <lang>` (add `--e2e` for E2E)
 4. Write test using the template from the matching per-language reference

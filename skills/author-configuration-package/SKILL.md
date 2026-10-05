@@ -82,7 +82,7 @@ every `required:`, `default:`, open-ended map and `status` field you meant to ha
 | Command | Input → Output |
 |---|---|
 | `up project init <name>` | interactive wizard → a whole working project (see below) |
-| `up example generate [<xrd>]` | wizard, or an XRD → `examples/<plural>/example.yaml` |
+| `up example generate [<xrd>]` | wizard, or an XRD → `examples/<kind-lowercase>/<xr-name>.yaml`; the name defaults to the lowercase Kind (`examples/network/network.yaml`, up v0.55.0). Find the file; don't assume `example.yaml` |
 | `up xrd generate <example.yaml>` | an example **XR** → an inferred `apis/<plural>/definition.yaml` + language models. **Not for the XRD you ship**: at most a read-only second opinion (below) |
 | `up composition generate <xrd\|xr>` | XRD or XR → `apis/<plural>/composition.yaml`, **and adds the required function packages as dependencies** |
 | `up function generate <name> [<pipeline-path>]` | → `functions/<name>/…`, and wires it into that composition's pipeline. On an existing `functions/<name>` it prompts to overwrite and, without a TTY, cancels: wire the step by hand (charter `generators.md`) |
@@ -104,7 +104,7 @@ for the skeleton and the model-quality comparison.
 # --scope is REQUIRED for a non-interactive run (see below)
 up example generate --scope=namespace --name example --namespace default \
     --api-group platform.example.com --api-version v1alpha1 --kind StorageBucket
-#   -> examples/storagebucket/example.yaml   (singular!) with spec: {}
+#   -> examples/storagebucket/example.yaml   (lowercase Kind; file named by --name) with spec: {}
 # Fill in the spec so it is the API you want users to write, then:
 # Now WRITE apis/storagebuckets/definition.yaml yourself (`control-plane-project-charter` §5 has the
 # skeleton). Note the directory is plural even though examples/ is singular.
@@ -174,7 +174,8 @@ scaffolding from scratch. Two things to know:
   and fix any test `go.mod` that still names the template.
 
 Templates also leave behind `examples/example/example.yaml` (`kind: Example`, `spec: {}`) which is
-backed by no XRD. Delete it; the real example is `examples/<plural>/example.yaml`.
+backed by no XRD. Delete it; the real example is the file `up example generate` writes
+(`examples/<kind-lowercase>/<xr-name>.yaml`).
 
 ## Decision Tree
 

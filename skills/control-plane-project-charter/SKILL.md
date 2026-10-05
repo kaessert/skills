@@ -104,7 +104,7 @@ skill's default and why.
 | XR kind, group, version, spec schema | `apis/*/definition.yaml` |
 | Existing composition + `functionRef` | `apis/*/composition.yaml` |
 | Available provider families | `upbound.yaml` `spec.dependsOn` |
-| Example XR shape | `examples/*/*.yaml` — one directory per XR kind, the file named for the XR. **Not** always `example.yaml` |
+| Example XR shape | the file `up example generate` writes: `examples/<kind-lowercase>/<xr-name>.yaml`, the name defaulting to the lowercase Kind (`examples/network/network.yaml`, up v0.55.0). Find it; don't assume `example.yaml` |
 | Composition language | `functions/*/` contents — see [`languages/`](references/languages/) |
 | Test language | the `tests/*/` dirs that produce a `CompositionTest` or `E2ETest` — may differ from the composition language; with none yet, §10 picks it |
 | Provider field names, types and constraints | the generated models under `.up/` |

@@ -100,9 +100,9 @@ import (
 )
 
 const (
-	exampleXR = "../../examples/<kind>/example.yaml" // CWD is tests/e2etest-<n>/
-	namespace = "default"                            // the example XR's metadata.namespace
-	credsVar  = "UP_AWS_CREDENTIALS"                 // INI file contents; UP_ by convention
+	exampleXR = "../../examples/<kind>/<xr-name>.yaml" // CWD is tests/e2etest-<n>/; find the file
+	namespace = "default"                              // the example XR's metadata.namespace
+	credsVar  = "UP_AWS_CREDENTIALS"                   // INI file contents; UP_ by convention
 )
 
 func main() {
