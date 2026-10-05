@@ -3,9 +3,8 @@
 The charter on one screen, for an orchestrator to paste into an agent's instructions. Loading
 a skill does not load the charter, and agents often skip it, so pasting is the reliable route.
 Paste the card — between the two `---` lines below — into prompts for agents that build, and the
-reviewer variant into prompts for agents that review. Section numbers (§N) are the charter's.
-It is a reminder, not a replacement: the reasons and the evidence are in the charter
-(`../SKILL.md`), and the skills hold the checklists.
+reviewer variant into prompts for agents that review. Section numbers (§N) are the charter's
+(`../SKILL.md`), which holds the reasons; the skills hold the checklists.
 
 ---
 
@@ -16,7 +15,8 @@ It is a reminder, not a replacement: the reasons and the evidence are in the cha
   the project's spec and state the assumption, or stop and report the open question (§1, §2).
 - The project's own decisions — design document, work item, gate script — win over skill
   defaults. Say where you departed from a default and why (§2).
-- Never create a group, Space, control plane or cloud resource as a side effect (§9).
+- Never create a group, Space, control plane or cloud resource as a side effect; what you were
+  asked to run (an E2E test, a deploy) is not one. Never pass `--public` yourself (§9).
 - Long runs lose old output. Before you write anything derived from a document — a work item,
   a test expectation, a quote, a field value — re-read the section you rely on in that step.
   Never quote from memory; if the re-read contradicts what you wrote, fix it first (§1).
@@ -31,11 +31,12 @@ It is a reminder, not a replacement: the reasons and the evidence are in the cha
 - New tests use the language of the existing `CompositionTest`/`E2ETest` dirs, else the
   composition language, else YAML. A program printing `items: []` is no test and sets
   nothing (§10).
-- Managed resources carry `forProvider` only, unless the project's spec or API sets more. No
-  `deletionPolicy`, no `managementPolicies`, no `metadata.namespace`; omit `providerConfigRef`
-  if and only if `ClusterProviderConfig/default` exists and is the right one (§5).
-- Use the namespaced `.m.` API groups. Objects embedded in `forProvider`, such as a
-  provider-kubernetes manifest, still need their own `metadata.namespace` (§5).
+- In a v2 project, managed resources carry `forProvider` only, on the `.m.` API groups, unless
+  the project's spec or API sets more: no `deletionPolicy`, `managementPolicies` or
+  `metadata.namespace`; omit `providerConfigRef` if and only if `ClusterProviderConfig/default`
+  exists and is the right one. A v1 project keeps its v1 APIs; migrating it is separate work.
+  Objects embedded in `forProvider`, such as a provider-kubernetes manifest, still need their
+  own `metadata.namespace` (§5).
 - The provider schema is a lower bound: check the cloud API's own rules (name formats,
   reserved prefixes, create-only fields) (§6).
 - The composition gate is `up test run "tests/test-*"`: `up test run` runs every matched test
