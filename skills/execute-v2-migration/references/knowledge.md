@@ -11,6 +11,7 @@ Detailed instructions, templates, and examples for executing Crossplane v1 to v2
 - [Worked Examples](#worked-examples)
 - [Error Handling](#error-handling)
 - [Troubleshooting](#troubleshooting)
+- [Final Summary Template](#final-summary-template)
 
 ---
 
@@ -823,3 +824,31 @@ git branch -D migrate-to-v2
 1. Function creates Secret resource
 2. Secret patches connection data from MRs
 3. Test asserts Secret exists with expected keys
+
+---
+
+## Final Summary Template
+
+```markdown
+## Migration Complete
+
+**Project:** {project-name}
+**Branch:** migrate-to-v2
+
+**Updated:**
+- XRDs: {count} → v2 + Namespaced
+- Functions: {count} → namespaced APIs (.m.)
+- Tests: {count} → v2 compatible
+- Examples: {count} → namespaced + kind updates
+- Compositions: {count} → kind updates
+
+**Verification:**
+- Build: {status}
+- Composition Tests: {passed}/{total}
+- E2E Tests: {passed}/{total} | Skipped
+
+**Next Steps:**
+1. Review: `git diff main..migrate-to-v2`
+2. Commit: `git add . && git commit -m "Migrate to Crossplane v2"`
+3. PR: `gh pr create --title "Migrate to Crossplane v2"`
+```

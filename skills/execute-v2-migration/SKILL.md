@@ -151,31 +151,11 @@ Provide checklist of README updates. Offer to help if requested.
 
 ---
 
-## Final Summary Template
+## Final Summary
 
-```markdown
-## Migration Complete
-
-**Project:** {project-name}
-**Branch:** migrate-to-v2
-
-**Updated:**
-- XRDs: {count} → v2 + Namespaced
-- Functions: {count} → namespaced APIs (.m.)
-- Tests: {count} → v2 compatible
-- Examples: {count} → namespaced + kind updates
-- Compositions: {count} → kind updates
-
-**Verification:**
-- Build: {status}
-- Composition Tests: {passed}/{total}
-- E2E Tests: {passed}/{total} | Skipped
-
-**Next Steps:**
-1. Review: `git diff main..migrate-to-v2`
-2. Commit: `git add . && git commit -m "Migrate to Crossplane v2"`
-3. PR: `gh pr create --title "Migrate to Crossplane v2"`
-```
+End with the final summary in [knowledge.md](references/knowledge.md#final-summary-template):
+what was updated, the verification results as they ran (build, composition tests N/N, E2E
+or skipped), and the next steps.
 
 ---
 
@@ -243,7 +223,8 @@ Checks for you before you report, not a report format (`control-plane-project-ch
 
 ## References
 
-- [Detailed phase instructions](references/knowledge.md)
-- [Sub-agent prompts](references/knowledge.md#sub-agent-prompts)
-- [Worked examples](references/knowledge.md#worked-examples)
+- [knowledge.md](references/knowledge.md) — read at the start of each phase for its detailed
+  instructions; [sub-agent prompts](references/knowledge.md#sub-agent-prompts) before Phases 3, 6
+  and 8; [worked examples](references/knowledge.md#worked-examples) for the before/after of each
+  change; the final summary template at the end.
 - [Crossplane v2 Upgrade Guide](https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/)
