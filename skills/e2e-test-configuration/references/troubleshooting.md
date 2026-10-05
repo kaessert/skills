@@ -1,7 +1,8 @@
-# E2E troubleshooting and report templates
+# E2E troubleshooting
 
-Read when a run is stuck or has failed, and when writing the report. [SKILL.md](../SKILL.md) has the workflow;
-how to reach the control plane while it exists is in [local.md](local.md) or [space.md](space.md).
+Read when a run is stuck or has failed. [SKILL.md](../SKILL.md) has the workflow; how to reach the control
+plane while it exists is in [local.md](local.md) or [space.md](space.md); the report shapes are in
+[report-templates.md](report-templates.md).
 
 ## Resources under test
 
@@ -105,49 +106,3 @@ and report it as terminated.
 | Assert fails on `Ready` with `status: {}` | the resource never got a status: often a missing composed resource or a selector that matches nothing; rule out credentials first |
 | Function errors | composition code; reproduce with the composition tests |
 | Resources `Creating`, no errors | slow cloud API (normal), or an auth problem that has not surfaced yet |
-
-## Report templates
-
-### Pass
-
-```markdown
-## E2E test: PASSED
-
-**Test:** <test-name>  **Target:** <local kind | Space <space>/<group>>
-**Exit code:** 0 (`EXIT=0`)  **Duration:** <END - START> s, from the log
-**Control plane:** <project>-uptest-<test>
-
-### Evidence
-- <quoted assert line, e.g. `--- PASS: chainsaw/apply (79.15s)`>
-- <quoted `Cleanup summary: N deleted, 0 remaining`>
-- Provider state: <quoted read taken during the run | not verified at the provider>
-- Leftovers: <how checked, result | not checked, and why>
-```
-
-### Stuck or failed
-
-```markdown
-## E2E test: <FAILED | STUCK (terminated)>
-
-**Test:** <test-name>  **Target:** <target>
-**Exit code:** <N | none: terminated after <s> s>  **Phase:** <phase>
-**No progress for:** <s> s (threshold <s> s, from timeoutSeconds <N>)
-
-### Last output
-<quoted last lines>
-
-### Analysis
-<sub-agent output>
-
-### References
-- Test directory: `tests/<test>/`
-- Related file: `<file>`
-```
-
-### Several tests
-
-```text
-[1/3] e2etest-basic       PASSED  (EXIT=0, 412 s)
-[2/3] e2etest-secondary   FAILED  (EXIT=1, 1310 s)
-[3/3] e2etest-peering     not run (stopped after the first failure)
-```

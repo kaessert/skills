@@ -69,7 +69,7 @@ kubectl --kubeconfig "$KCFG" get managed -A
 
 `up` also writes a transient `/tmp/up-*.kubeconfig` during the run (observed); it goes with the cluster. If
 the run never got past the package install, check that first (`kubectl get pkgrev -o wide`, `kubectl describe
-configuration`) before tracing any managed resource, then use the brief in [knowledge.md](knowledge.md).
+configuration`) before tracing any managed resource, then use the brief in [troubleshooting.md](troubleshooting.md).
 
 ## Evidence and cleanup
 

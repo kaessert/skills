@@ -5,7 +5,8 @@ license: Apache-2.0
 references:
   - references/local.md
   - references/space.md
-  - references/knowledge.md
+  - references/troubleshooting.md
+  - references/report-templates.md
 ---
 
 # E2E Test Runner for Crossplane Configurations
@@ -185,7 +186,7 @@ yet; observed on `--local`, and the run passed). Target-specific ones are in the
 
 **Stuck** = no new log output for the threshold from Step 2. First check the resource is not still `Creating`
 (`crossplane beta trace`); slow cloud resources (NAT gateways, RDS) are normal. Otherwise investigate with the
-brief in [knowledge.md](references/knowledge.md): hand it to a sub-agent to keep your context small, or follow
+brief in [troubleshooting.md](references/troubleshooting.md): hand it to a sub-agent to keep your context small, or follow
 it yourself. The target's reference says how to reach the control plane while it exists. `up: error: context
 deadline exceeded` is not a diagnosis; report the underlying Configuration or Provider condition instead.
 
@@ -220,7 +221,7 @@ Then:
   `Failed`, `FAIL`. If any appears, either explain it or correct the verdict.
 - Never call anything "production-ready"; that is the caller's judgement.
 
-Shape (templates in [knowledge.md](references/knowledge.md)):
+Shape (templates in [report-templates.md](references/report-templates.md)):
 
 - **Pass:** 5–10 lines: test, target, exit code, duration from the log, resources, cleanup evidence.
 - **Stuck or failed:** 50–100 lines: test, phase, last output, analysis, proposed fixes.
@@ -245,5 +246,6 @@ Your scope is running and reporting. Fixes are the caller's.
 
 - [local.md](references/local.md): read before running with `--local`.
 - [space.md](references/space.md): read before running against a Space or Upbound Cloud.
-- [knowledge.md](references/knowledge.md): read when a run is stuck or failed (troubleshooting brief, failure
-  patterns, report templates).
+- [troubleshooting.md](references/troubleshooting.md): read when a run is stuck or failed (resources under
+  test, the stuck-investigation brief, failure patterns).
+- [report-templates.md](references/report-templates.md): read when writing the report.

@@ -120,7 +120,7 @@ cannot pull the package that was just pushed: a private repository with no pull 
 (common when `up profile list` shows the active profile as `disconnected`). Fix `spec.repository` or the
 Space's pull secret; retrying the test does not help.
 
-For the troubleshooting brief in [knowledge.md](knowledge.md), get the test control plane's kubeconfig while it
+For the troubleshooting brief in [troubleshooting.md](troubleshooting.md), get the test control plane's kubeconfig while it
 exists:
 
 ```bash
