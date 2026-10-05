@@ -5,7 +5,9 @@ Composition functions written in Go. The scaffold facts below were observed on `
 passes the three tests in [`tests.md`](tests.md) under `up test run`, and the mutant `if versioning` → `if
 true` turns `versioning-disabled` red. The unit-test template goes red under the same mutant.
 
-Imports and the `go.mod` wiring are in [`../go.md`](../go.md) Part 2. What a v2 managed resource needs is in
+Imports and the `go.mod` wiring are in [`../go.md`](../go.md) Part 2. The models are on disk under
+`.up/go/models/io/upbound/m/<provider>/<service>/<version>/<kind>.go` (no `dev.upbound.io` level). What a v2
+managed resource needs is in
 [`control-plane-project-charter` §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) and is not repeated here.
 
 ## The scaffold, and what to change in it
@@ -32,7 +34,8 @@ and history keeps it. Compile with `go vet ./...` or `go build -o /dev/null ./..
 | `request.GetDesiredComposedResources(req)` | `map[resource.Name]*resource.DesiredComposed`, what earlier steps composed. Add yours to it |
 | `response.SetDesiredComposedResources(rsp, desired)` | writes the map into `rsp`. Each key becomes `crossplane.io/composition-resource-name`. It sets keys and never removes one |
 | `request.GetObservedComposedResources(req)` | `map[resource.Name]resource.ObservedComposed`, keyed by composition resource name: `observed["bucket"].Resource.GetString("status.atProvider.arn")` |
-| `request.GetDesiredCompositeResource(req)` + `response.SetDesiredCompositeResource(rsp, dxr)` | XR status: `dxr.Resource.SetString("status.bucketArn", arn)` between the two |
+| `.Resource.GetAnnotations()["crossplane.io/external-name"]` | an annotation. Its key has dots, so the path `metadata.annotations.crossplane.io/…` fails with `no such field`; `GetStringObject("metadata.annotations")[key]` works too |
+| `request.GetDesiredCompositeResource(req)` + `response.SetDesiredCompositeResource(rsp, dxr)` | XR status: `dxr.Resource.SetString("status.bucketArn", arn)` between the two; lists and objects with `SetValue("status.subnetIds", []any{…})`. `composed.Unstructured` has the same `SetValue`; there is no `SetNestedField` |
 | `response.Fatal(rsp, err)`, then `return rsp, nil` | how a function reports an error: as a fatal result in the response, not as Go's `error` |
 | `response.ConditionTrue(rsp, typ, reason).TargetComposite()` | a condition on the XR |
 
@@ -268,6 +271,27 @@ for name, r := range rsp.GetDesired().GetResources() {
 }
 ```
 
+`GetDesired().GetResources()` is a `map[string]*fnv1.Resource`: index it with a `string`, not a
+`resource.Name`. A status branch needs observed composed state, which the template does not feed. Key
+`Observed.Resources` by composition resource name; the SDK uses that map key, not the annotation inside:
+
+```go
+req := &fnv1.RunFunctionRequest{Observed: &fnv1.State{
+	Composite: &fnv1.Resource{Resource: resource.MustStructJSON(tc.xr)},
+	Resources: map[string]*fnv1.Resource{
+		"bucket": {Resource: resource.MustStructJSON(`{"apiVersion":"s3.aws.m.upbound.io/v1beta1","kind":"Bucket","status":{"atProvider":{"arn":"arn:aws:s3:::example"}}}`)},
+	},
+}}
+// after RunFunction, as in the template:
+st, _ := rsp.GetDesired().GetComposite().GetResource().AsMap()["status"].(map[string]any)
+if st["bucketArn"] != "arn:aws:s3:::example" {
+	t.Errorf("status.bucketArn: got %v", st["bucketArn"])
+}
+if rsp.GetDesired().GetResources()["bucket"].GetReady() != fnv1.Ready_READY_UNSPECIFIED {
+	t.Error("bucket: Ready set, want unset")
+}
+```
+
 The unit test supplements `up test run`; it never replaces it. It does not run the composition pipeline,
 the XRD defaults, or the other functions.
 
@@ -279,5 +303,6 @@ the XRD defaults, or the other functions.
 | Leave the scaffold `fn_test.go` as it is | `go test` prints `ok`; zero cases ran |
 | `composed.From(model)` or `resource.AsStruct(x)` with a model or an `any` | compile or vet error: `does not implement runtime.Object (missing method DeepCopyObject)` |
 | Import the non-`.m.` model in a v2 project | compiles; the rendered resource carries the cluster-scoped `apiVersion` |
-| Guess a constant such as `BucketAPIVersions3AwsMUpboundIoV1Beta1` | the spelling changed between `up` versions; read the `const (` block at the top of the model file |
+| Guess a constant such as `BucketAPIVersions3AwsMUpboundIoV1Beta1` | the spelling varies per kind (`VPCApiVersion…`, `SubnetAPIVersion…`); read the `const (` block of that kind's file |
+| Pass a model constant as a `string` | `cannot use … (constant of string type …) as string value`: the constants are typed, use `string(c)` |
 | Delete the models `replace` as unused | the first model import fails: `unrecognized import path "dev.upbound.io/models"` |
