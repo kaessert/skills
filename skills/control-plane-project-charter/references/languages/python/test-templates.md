@@ -96,7 +96,9 @@ print(yaml.dump(output))
 
 ## E2E Test Template (`tests/e2etest-<n>/test/__main__.py`)
 
-The `E2ETest` spec has **no** `compositionPath`/`xrPath`/`xrdPath`. It uses `manifests` (resources under test) + `extraResources` (prerequisites: ProviderConfig and any credential Secret). Prefer web identity; the example below shows a static-Secret ProviderConfig for the case where a project requires one (credential Secrets use `stringData` - plain text, Kubernetes auto-base64-encodes).
+The fields, and which `credentials` block each target needs, are in author-tests' `e2e.md` reference.
+This template shows the Python syntax for the static-Secret (local control plane) case. `stringData` is plain
+text; Kubernetes base64-encodes it.
 
 ```python
 import os
@@ -121,11 +123,12 @@ azure_secret = corev1.Secret(
     stringData={"credentials": azure_creds},
 )
 
-# The ProviderConfig the XR references.
+# ClusterProviderConfig/default: cluster-scoped (no namespace), the default every composed MR
+# falls back to when it sets no providerConfigRef.
 provider_config = pcv1beta1.ClusterProviderConfig(
     apiVersion="azure.m.upbound.io/v1beta1",
     kind="ClusterProviderConfig",
-    metadata=k8s.ObjectMeta(name="azure-provider"),
+    metadata=k8s.ObjectMeta(name="default"),
     spec=pcv1beta1.Spec(
         credentials=pcv1beta1.Credentials(
             source="Secret",

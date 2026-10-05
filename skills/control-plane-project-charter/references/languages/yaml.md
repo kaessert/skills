@@ -198,16 +198,15 @@ spec:
   cleanupTimeoutSeconds: 1200
   extraResources:
   - apiVersion: aws.m.upbound.io/v1beta1
-    kind: ProviderConfig
+    kind: ClusterProviderConfig  # cluster-scoped: no namespace; composed MRs default to it
     metadata:
       name: default
-      namespace: default        # REQUIRED for v2
     spec:
       credentials:
-        source: Upbound         # web/injected identity, never static keys
+        source: Upbound         # web identity on a Space; the credentials per target: author-tests' e2e.md
         upbound:
           webIdentity:
-            roleARN: arn:aws:iam::123456789012:role/solutions-e2e-provider-aws
+            roleARN: arn:aws:iam::123456789012:role/e2e-provider-aws
   manifests:
   - apiVersion: aws.platform.upbound.io/v1alpha1
     kind: ControlPlane

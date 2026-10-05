@@ -76,14 +76,13 @@ _items = [
 items = _items
 ```
 
-## E2E Test (AWS)
+## E2E test
 
 ```kcl
 """
 E2E Test: <Feature Name>
 
-Validates <feature> with real AWS resources:
-- Resource lifecycle (create → ready → synced → delete)
+Validates <feature> with real AWS resources: create, Ready, delete.
 """
 
 import models.io.upbound.awsm.v1beta1 as awsmv1beta1
@@ -93,13 +92,8 @@ _items = [
     metav1alpha1.E2ETest{
         metadata.name: "e2etest-<resource>-<feature>"
         spec = {
-            # Track a channel (recommended). Pin a CURRENT version only if you
-            # need determinism - never copy a stale pinned version.
-            crossplane = {
-                autoUpgrade.channel = "Stable"
-            }
-
-            defaultConditions: ["Ready"]  # add "Synced" only if you gate on sync
+            crossplane = { autoUpgrade.channel = "Stable" }  # or a deliberately pinned current version
+            defaultConditions: ["Ready"]  # condition types; add "Synced" only to gate on sync
             timeoutSeconds: 1800          # size to the real resources
             cleanupTimeoutSeconds: 600
             skipDelete: False
@@ -108,85 +102,18 @@ _items = [
                 {
                     apiVersion: "aws.platform.upbound.io/v1alpha1"
                     kind: "<Kind>"
-                    metadata: {
-                        name: "e2e-test-<name>"
-                        namespace: "default"
-                    }
-                    spec: {
-                        region: "us-west-2"
-                        tags: {
-                            Environment: "e2e-test"
-                            TestName: "<test-name>"
-                            ManagedBy: "upbound-e2e"
-                        }
-                    }
-                }
-            ]
-
-            extraResources: [
-                {
-                    apiVersion: "aws.m.upbound.io/v1beta1"
-                    kind: "ProviderConfig"
-                    metadata: {
-                        name: "default"
-                        namespace: "default"  # REQUIRED for v2
-                    }
-                    spec: {
-                        credentials: {
-                            source: "Upbound"
-                            upbound: {
-                                webIdentity: {
-                                    roleARN: "arn:aws:iam::123456789012:role/provider-aws"
-                                }
-                            }
-                        }
-                    }
-                }
-            ]
-        }
-    }
-]
-items = _items
-```
-
-## E2E Test (Azure)
-
-Same shape as AWS; differences: Azure uses `location` (not `region`), and the ProviderConfig credential is `webIdentity.clientID`.
-
-```kcl
-import models.io.upbound.azurem.v1beta1 as azuremv1beta1
-import models.io.upbound.dev.meta.v1alpha1 as metav1alpha1
-
-_items = [
-    metav1alpha1.E2ETest{
-        metadata.name: "e2etest-<resource>-<feature>"
-        spec = {
-            crossplane = { autoUpgrade.channel = "Stable" }
-            defaultConditions: ["Ready"]
-            timeoutSeconds: 1800
-            cleanupTimeoutSeconds: 600
-            skipDelete: False
-            manifests: [
-                {
-                    apiVersion: "azure.platform.upbound.io/v1alpha1"
-                    kind: "<Kind>"
                     metadata: { name: "e2e-test-<name>", namespace: "default" }
-                    spec: {
-                        location: "eastus"  # Azure uses 'location'
-                        tags: { Environment: "e2e-test", ManagedBy: "upbound-e2e" }
-                    }
+                    spec: { region: "us-west-2", tags: { Environment: "e2e-test" } }
                 }
             ]
+
             extraResources: [
-                {
-                    apiVersion: "azure.m.upbound.io/v1beta1"
-                    kind: "ProviderConfig"
-                    metadata: { name: "default", namespace: "default" }
-                    spec: {
-                        credentials: {
-                            source: "Upbound"
-                            upbound: { webIdentity: { clientID: "00000000-0000-0000-0000-000000000000" } }
-                        }
+                # Cluster-scoped, so no metadata.namespace: the default every composed MR falls back to.
+                awsmv1beta1.ClusterProviderConfig{
+                    metadata.name: "default"
+                    spec.credentials: {
+                        source: "Upbound"
+                        upbound.webIdentity.roleARN: "arn:aws:iam::123456789012:role/<role>"
                     }
                 }
             ]
@@ -196,59 +123,14 @@ _items = [
 items = _items
 ```
 
-## E2E Test (GCP)
+Which `credentials` block a target needs (web identity on a Space, a `UP_*` Secret on a local
+control plane) is in author-tests' `e2e.md` reference. On another cloud only these change:
 
-GCP uses `labels` (not `tags`), needs `project`/`projectID`, and workload identity federation credentials.
-
-```kcl
-import models.io.upbound.gcpm.v1beta1 as gcpmv1beta1
-import models.io.upbound.dev.meta.v1alpha1 as metav1alpha1
-
-_items = [
-    metav1alpha1.E2ETest{
-        metadata.name: "e2etest-<resource>-<feature>"
-        spec = {
-            crossplane = { autoUpgrade.channel = "Stable" }
-            defaultConditions: ["Ready"]
-            timeoutSeconds: 1800
-            cleanupTimeoutSeconds: 600
-            skipDelete: False
-            manifests: [
-                {
-                    apiVersion: "gcp.platform.upbound.io/v1alpha1"
-                    kind: "<Kind>"
-                    metadata: { name: "e2e-test-<name>", namespace: "default" }
-                    spec: {
-                        region: "us-central1"
-                        project: "YOUR_GCP_PROJECT"
-                        labels: { environment: "e2e-test", managed-by: "upbound-e2e" }
-                    }
-                }
-            ]
-            extraResources: [
-                {
-                    apiVersion: "gcp.m.upbound.io/v1beta1"
-                    kind: "ProviderConfig"
-                    metadata: { name: "default", namespace: "default" }
-                    spec: {
-                        projectID: "YOUR_GCP_PROJECT"
-                        credentials: {
-                            source: "Upbound"
-                            upbound: {
-                                federation: {
-                                    providerID: "projects/NUMBER/locations/global/workloadIdentityPools/POOL/providers/PROVIDER"
-                                    serviceAccount: "SA@YOUR_GCP_PROJECT.iam.gserviceaccount.com"
-                                }
-                            }
-                        }
-                    }
-                }
-            ]
-        }
-    }
-]
-items = _items
-```
+| | Azure | GCP |
+|---|---|---|
+| Import | `models.io.upbound.azurem.v1beta1 as azuremv1beta1` | `models.io.upbound.gcpm.v1beta1 as gcpmv1beta1` |
+| `ClusterProviderConfig` web identity | `upbound.webIdentity.clientID` | `upbound.federation.{providerID, serviceAccount}`, plus `spec.projectID` |
+| Provider field names your XR usually mirrors | `location`, `tags` | `region`, `project`, `labels` (lowercase keys) |
 
 ## Pattern: Resource-Focused Bundle (KCL syntax)
 
