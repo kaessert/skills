@@ -42,30 +42,16 @@ otherwise, the project wins: say so in your report.
     re-read the section you rely on in that step. Never quote from memory; if the re-read
     contradicts what you wrote, fix it first (charter §1).
 
-## Core principle
-
-**A composition's *meaning* is language-agnostic; only its *syntax* differs.**
-
-Every composition function — KCL, Python, TypeScript, Go — receives the same
-`RunFunctionRequest` and returns the same `RunFunctionResponse`, and every managed resource
-it emits is the same Kubernetes object. The v2 rules, the failure modes, and the design
-questions are identical across languages. What changes is how you express them: KCL schemas,
-Python Pydantic models, TypeScript interfaces.
-
-So this skill has three layers, and you read all three:
-
-| Layer | File | What it holds |
-|---|---|---|
-| Charter | `control-plane-project-charter` | agent behaviour, the TDD loop, what v2 requires, the container boundary, reporting discipline. **Binding on every skill.** |
-| Agnostic patterns | [knowledge.md](references/knowledge.md) | what each composition pattern *means*, the design questions, the failure modes |
-| Language syntax | `languages/` (`control-plane-project-charter` `languages`) | imports, layout, bootstrap, templates, per-language mistakes |
-
 ## Mode, and the charter
 
 **Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
 the spec and state the assumption, or stop and report. Load `control-plane-project-charter`
 before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
 load it.
+
+A composition's *meaning* is language-agnostic; only its *syntax* differs. Read all three
+layers: the charter (the rules, binding on every skill), [knowledge.md](references/knowledge.md)
+(what each pattern means), and the charter's `languages/` file for your language (the syntax).
 
 ## Phase 1: Detect the language *and the Crossplane generation* — do not ask
 
@@ -115,43 +101,16 @@ These are the composition-specific additions:
 | What you need | How to get it — no question required |
 |---|---|
 | **Models missing entirely** (fresh clone) | `.up/` is gitignored and starts **empty**. Run `up dep update-cache`, then `up project build`. Nothing prompts for this and every model import fails until you do |
-| Function layout + import prefix | the language file's detection recipe — for Python, `python3 "$SCRIPTS/probe_project.py" --project <root>` |
-| Exact import line and class names per Kind | same probe, with the Kinds named |
-| Field names and types on a managed resource | `python3 "$SCRIPTS/probe_project.py" --project <root> --fields <Kind>` — prints every `forProvider` field, flags list fields whose Upjet names are misleadingly **singular** (`attribute`, `globalSecondaryIndex`), and lists cross-resource `*Ref`/`*Selector` fields. For other languages, read the generated schema directly |
+| Function layout + import prefix | the language file's detection recipe (Python: `probe_project.py`) |
+| Exact import line and class names per Kind | the language file; Python: the same probe, with the Kinds named |
+| Field names and types on a managed resource | read the generated schema directly. Python: `probe_project.py --fields <Kind>` prints every `forProvider` field, flags list fields whose Upjet names are misleadingly **singular** (`attribute`, `globalSecondaryIndex`), and lists cross-resource `*Ref`/`*Selector` fields |
 | Go: import path, types, fields | `dev.upbound.io/models/io/upbound/m/<provider>/<service>/<version>` — the `.m.` tree; its non-`.m.` twin sits right beside it with the same file names. Read the `const (` block and `type <Kind>SpecForProvider struct` in `.up/go/models/…/<kind>.go`; `go.md` Part 2 |
 
-`$SCRIPTS` is this skill's [`scripts/`](scripts/) directory (`scripts/probe_project.py`,
-`scripts/setup_venv.py`, `scripts/run_function.py`), `<author-composition>/scripts`,
-where `<author-composition>` is this skill's directory — the directory containing this
-SKILL.md — as an absolute path. A wrong path makes every call die with a bare "No such
-file". Resolve it once, and check it:
-
-```bash
-SCRIPTS=<author-composition>/scripts
-[ -f "$SCRIPTS/probe_project.py" ] || echo "probe_project.py not found — pass its path explicitly"
-```
-
-The scripts are Python-specific; the other languages read their generated types directly.
-
-**Python: set up the venv now, before Phase 3.**
-
-```bash
-python3 "$SCRIPTS/setup_venv.py" --project <root>     # ~11s, once
-```
-
-Do this as part of discovery, not when something breaks. It builds `.venv` from the project's
-own pins, installs the generated models **editable** so later `up project build` runs need no
-reinstall, and points VS Code at the interpreter.
-
-**The main reason is the person reading along.** They have the project open while you work,
-and without the venv every `from models.io...` and `from crossplane.function import ...` is
-underlined on correct code, with no go-to-definition into the generated models and no
-`forProvider` autocomplete. They cannot tell your errors from the environment's. Secondarily,
-the **fast tier** in Phase 5 cannot run at all without the SDK this installs, so the two-tier
-loop collapses to one and every iteration pays a full build.
-
-None of it is needed to reach green — the function runs in a container — which is exactly why
-it gets deferred and then never done. Run it now.
+**Python: before Phase 3, read the charter's `languages/python.md` and run what it says.** It
+uses this skill's [`scripts/`](scripts/) directory: `scripts/setup_venv.py` (the venv, ~11s,
+once, right after the first build), `scripts/probe_project.py` (layout, imports, fields) and
+`scripts/run_function.py` (the fast tier). The other languages read their generated types
+directly.
 
 **Never hand-derive an import path and never guess a provider field name.** Both are the
 single largest source of trial-and-error in this skill's history, and both are one command
@@ -231,11 +190,10 @@ The language file has the bootstrap and the syntax. Language-independent, in ord
    return — see the guard-clause chain in knowledge.md.
 
 For iterating on a crash rather than an assertion, use the fast tier where the language
-offers one (Python: `run_function.py`, well under a second against `up test run`'s tens of
-seconds — it needs a venv with `crossplane-function-sdk-python`; run it once and it prints the
-exact recipe). It asserts nothing, so it supplements the loop and never replaces it. Go's fast
-tier is `go test ./...` in `functions/<n>/`; the scaffold's `fn_test.go` is an empty table that
-passes with zero cases, so add one before you count it.
+offers one (Python: `run_function.py`, see `languages/python.md`). It asserts nothing, so it
+supplements the loop and never replaces it. Go's fast tier is `go test ./...` in
+`functions/<n>/`; the scaffold's `fn_test.go` is an empty table that passes with zero cases, so
+add one before you count it.
 
 ## Phase 6: REFACTOR and verify — coverage, not a green exit code
 
@@ -307,43 +265,15 @@ provider-assigned or is the identifier you set — are undiscoverable from CRDs 
 models, and `assertResources` is partial-positive so a *stray* annotation is never flagged.
 That class only fails on a live control plane. Check it there, or say it is unchecked.
 
-## Responding to the user
+## Reviewing, and the other skills
 
-**When shown function code:**
-1. Check the language's required bootstrap is present.
-2. Check imports resolve against the probe or the generated schemas, and that every provider
-   path is namespaced (`.m.`).
-3. Flag `providerConfigRef`, `managementPolicies` or MR `metadata.namespace` as removable
-   **unless the project's spec or API sets them** — e.g. the XRD exposes `managementPolicies`
-   as a parameter. Flag `providerConfigRef.kind: "ProviderConfig"` as a bug only when no
-   namespaced `ProviderConfig` of that name exists in, or is created in, the XR's namespace
-   (`control-plane-project-charter` §5).
-4. Check flexible maps are converted to a plain map type.
-5. Check the guard-clause order — does a return above the new resource gate it unintentionally?
-6. Check ProviderConfig readiness is marked *after* the resource is written.
-
-**When a test passes but the resource misbehaves on a control plane:**
-1. Read `render.log` — the test may never have asserted it.
-2. Look for a `providerConfigRef` whose `kind` and name match no object that exists.
-3. Check the guard-clause chain and readiness branches; neither is exercised locally.
-
-Language-specific error messages — Pydantic validation, KCL type errors, TypeScript
-compilation — are in the matching `languages/` file.
-
-## Skill boundaries
-
-| This skill | Elsewhere |
-|---|---|
-| Composition function structure, imports, patterns | Test authoring → `author-tests` |
-| v2 managed-resource rules in code | XRD design and scaffolding → `author-configuration-package` |
-| Provider-validity checks on emitted resources | Running the suite and deploying → `verify-configuration` |
-| The RED/GREEN authoring loop | Live cloud runs → `e2e-test-configuration` |
-
-## v2 migration
-
-Migrating a function to v2 is its own piece of work (`plan-v2-migration`). The
-language-independent checklist is in
-[knowledge.md](references/knowledge.md#v2-migration-checklist).
+- **Reviewing function code, or a test passes but the resource misbehaves on a control
+  plane:** work through the checklists in
+  [knowledge.md](references/knowledge.md#reviewing-function-code-and-a-green-test-with-a-misbehaving-resource).
+- **Elsewhere:** tests → `author-tests`; XRD design and scaffolding →
+  `author-configuration-package`; the gate and deploying → `verify-configuration`; live cloud
+  runs → `e2e-test-configuration`; migrating a function to v2 → `plan-v2-migration`, with the
+  language-independent checklist in [knowledge.md](references/knowledge.md#v2-migration-checklist).
 
 ## Success criteria
 
@@ -359,3 +289,12 @@ Checks for you before you report, not a report format (`control-plane-project-ch
 7. Provider-level constraints were checked, and the result — including "found nothing" —
    is in the summary
 8. The summary claims the layer that was actually reached, and no further
+
+## References
+
+- [knowledge.md](references/knowledge.md) — read in Phase 3 for each design question, and for
+  the review checklists and the v2 migration checklist.
+- [`scripts/`](scripts/) — Python only; the charter's `languages/python.md` says how to run
+  them.
+- The language files are the charter's, indexed by its `languages/README.md`; Phase 1 names
+  the one to read.

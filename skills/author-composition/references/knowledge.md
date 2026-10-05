@@ -253,6 +253,31 @@ applies, and adding it is a useful contribution.
 
 ---
 
+## Reviewing function code, and a green test with a misbehaving resource
+
+**When shown function code** — reviewing it, or checking your own before you report:
+1. Check the language's required bootstrap is present.
+2. Check imports resolve against the probe or the generated schemas, and that every provider
+   path is namespaced (`.m.`).
+3. Flag `providerConfigRef`, `managementPolicies` or MR `metadata.namespace` as removable
+   **unless the project's spec or API sets them** — e.g. the XRD exposes `managementPolicies`
+   as a parameter. Flag `providerConfigRef.kind: "ProviderConfig"` as a bug only when no
+   namespaced `ProviderConfig` of that name exists in, or is created in, the XR's namespace
+   (`control-plane-project-charter` §5).
+4. Check flexible maps are converted to a plain map type.
+5. Check the guard-clause order — does a return above the new resource gate it unintentionally?
+6. Check ProviderConfig readiness is marked *after* the resource is written.
+
+**When a test passes but the resource misbehaves on a control plane:**
+1. Read `render.log` — the test may never have asserted it.
+2. Look for a `providerConfigRef` whose `kind` and name match no object that exists.
+3. Check the guard-clause chain and readiness branches; neither is exercised locally.
+
+Language-specific error messages — Pydantic validation, KCL type errors, TypeScript
+compilation — are in the matching `languages/` file.
+
+---
+
 ## v2 migration checklist
 
 Language-independent:
