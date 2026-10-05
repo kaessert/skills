@@ -228,7 +228,7 @@ spec:
 ## Tips
 
 - **Document your intent in comments.** Real configs use leading comments to explain what each test proves and what it deliberately does NOT cover - do the same; it makes tests self-documenting.
-- **`E2ETest` cannot assert arbitrary status fields.** If a value only appears on `status`, assert reaching `Ready` and verify the status manually (or cover it in a composition test with `observedResources`).
+- **`E2ETest` cannot assert arbitrary status fields**, and `defaultConditions` takes condition types, not expressions. If a value only appears on `status`, cover it in a composition test with `observedResources` and report the e2e layer as Ready only (author-tests' `e2e.md` reference).
 
 ## Go / go-templating
 

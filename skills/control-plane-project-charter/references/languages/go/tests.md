@@ -231,8 +231,11 @@ are stable across runs; copy them, never derive them.
 ## E2E tests
 
 `up test generate <n> --e2e --language go` scaffolds the same program shape around an `E2ETest`, in
-`tests/e2etest-<n>/`. The rules in `e2e-test-configuration` apply. Go-specific: credentials and run ids come
-from `os.Getenv` directly (the program runs locally and sees every variable); name them `UP_*` anyway.
+`tests/e2etest-<n>/`. **Read author-tests' `e2e.md` reference before writing or changing one:** it has the Go
+E2ETest template, the field defaults (the Go scaffold writes `timeoutSeconds: 300` and no `crossplane` block),
+`defaultConditions` as condition types rather than expressions, and credentials per target. Running it is
+`e2e-test-configuration`'s job. Go-specific: credentials and run ids come from `os.Getenv` directly (the
+program runs locally and sees every variable); name them `UP_*` anyway.
 
 **A missing input exits non-zero, naming the variable**, so an E2E run stops at parse time instead of after a
 control plane and real resources exist. That is safe only because the composition gate never runs this program:
