@@ -298,21 +298,15 @@ Silently skipping is not.
 
 ## 7. The container boundary
 
-`up test run` first runs the test program of **every directory it matches**, before any test
-and whatever the flags (up v0.55.0):
+`up test run` runs the test program of every directory it matches before any test, with or
+without `--e2e` (up v0.55.0). **Go test programs run locally, with your full environment; KCL
+and Python programs run in a container that sees only `UP_*` variables and no `~/.aws`.** Name
+every test input `UP_*`, and run the composition gate as `up test run "tests/test-*"`: one e2e
+program that exits non-zero — on a missing input, say — fails a plain `tests/*` run at
+`✗ Parsing tests`. `no valid CompositionTests found` means the matched dirs produced no
+`CompositionTest` (e.g. `e2etest-*` without `--e2e`): a wrong glob, not a failing test.
 
-- **Where it runs depends on the language.** KCL and Python generate in a container that gets
-  only `UP_`-prefixed variables and no `~/.aws`. Go runs `go run .` on your machine, with your
-  full environment and real files. Name every test input `UP_*` anyway: it works in every
-  language.
-- **E2E programs run too, even without `--e2e`.** One non-zero exit fails the whole run at
-  `✗ Parsing tests`, so an e2e program that exits on a missing input breaks a plain
-  `up test run "tests/*"`. Run the composition gate as `up test run "tests/test-*"` and E2E as
-  `up test run "tests/e2etest-<n>" --e2e …`, and write both commands in the project README.
-- **`no valid CompositionTests found`** means the matched dirs produced no `CompositionTest`,
-  e.g. an `e2etest-*` dir run without `--e2e`. Wrong glob or missing flag, not a failing test.
-
-**Detail:** [`charter/container.md`](references/charter/container.md) — the per-language table, the `UP_` credential route, and the tighter second boundary around function rendering.
+**Detail:** [`charter/container.md`](references/charter/container.md) — the per-language table, the `UP_` credential route, the E2E command and the README note, and the tighter second boundary around function rendering.
 
 
 ## 8. A green run is not evidence
