@@ -3,7 +3,7 @@ name: author-configuration-package
 description: Use this skill when user requests to create, scaffold, modify, or extend a Crossplane configuration package. Handles project initialization, XRD creation/modification, composition setup, dependency management (including MRAPs and `up dep add --api`), function generation, building, and setting up the local development environment. Use immediately when user mentions creating/scaffolding/modifying/extending a configuration package, adding new resources to an existing package, installing or adding a provider ("add provider-aws-s3", "install the AWS provider", `up dep add`), or setting up the Python environment ("configure a venv", "my imports do not resolve", "set the VS Code interpreter"). Use this skill instead of manually creating project structures, XRDs, or running `up project init`/`up function generate` commands directly. This skill ensures correct build order, proper scaffolding, and prevents common initialization mistakes that manual setup lacks.
 license: Apache-2.0
 references:
-  - references/knowledge.md
+  - references/templates.md
   - references/providerconfig.md
   - references/mrap.md
   - references/project-templates.md
@@ -11,7 +11,9 @@ references:
 
 # Crossplane Configuration Package Authoring
 
-Scaffold and modify Crossplane configuration packages. This skill handles structure, XRDs, dependencies, and building - NOT composition implementation.
+Scaffold and modify Crossplane configuration packages — structure, XRDs, dependencies, the
+generated composition and function skeletons, examples and the build — in the order the CLI
+needs. Composition logic and tests are other skills' work.
 
 ## Binding rules — they hold even if you open nothing else
 
@@ -52,76 +54,94 @@ the spec and state the assumption, or stop and report. Load `control-plane-proje
 before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
 load it.
 
-## Scope
+Run the phases in order. The two builds bracket function generation: models come from the
+XRD and the dependencies (Phase 6), and the function is generated against them (Phase 7).
 
-**This skill DOES:**
-- Create/modify project structure (apis/, examples/, scripts/)
-- Write XRDs by hand, with the field list from the spec (or, interactive, the field wizard)
-- Generate composition pipeline skeletons
-- Manage dependencies (providers, functions)
-- Run `up function generate` for function scaffolding
-- Create example manifests
-- Build and validate project
+## Phase 1: Start or open the project
 
-**This skill does NOT:**
-- Write composition logic → Use `author-composition`
-- Create tests → Use `author-tests`
-- Run verification → Use `verify-configuration`
+`test -f upbound.yaml` tells you which. In an existing project, list its APIs
+(`apis/*/definition.yaml`): add a resource from Phase 2, or change one by reading it, editing
+it and rebuilding.
 
-## Use the CLI generators for everything but the XRD
-
-**Use the generators for compositions, functions, tests and examples; write the XRD
-yourself.** A composition or a function layout written by hand is what produces
-`mode: Resources`, `apiVersion: v1` and a pipeline the CLI did not wire. The XRD is the one
-exception: an example carries values, never constraints, so an XRD inferred from one loses
-every `required:`, `default:`, open-ended map and `status` field you meant to have
-(`control-plane-project-charter` §5: write the XRD yourself).
+**Use the CLI generators for everything but the XRD.** A composition or function layout
+written by hand is what produces `mode: Resources`, `apiVersion: v1` and a pipeline the CLI
+did not wire; the XRD is the one file you write (Phase 3).
 
 | Command | Input → Output |
 |---|---|
-| `up project init <name>` | interactive wizard → a whole working project (see below) |
+| `up project init <name>` | interactive wizard → a whole working project (below) |
 | `up example generate [<xrd>]` | wizard, or an XRD → `examples/<kind-lowercase>/<xr-name>.yaml`; the name defaults to the lowercase Kind (`examples/network/network.yaml`, up v0.55.0). Find the file; don't assume `example.yaml` |
-| `up xrd generate <example.yaml>` | an example **XR** → an inferred `apis/<plural>/definition.yaml` + language models. **Not for the XRD you ship**: at most a read-only second opinion (below) |
-| `up composition generate <xrd\|xr>` | XRD or XR → `apis/<plural>/composition.yaml`, **and adds the required function packages as dependencies** |
+| `up xrd generate <example.yaml>` | an example XR → an inferred `apis/<plural>/definition.yaml` + language models. Not for the XRD you ship (Phase 3) |
+| `up composition generate <xrd\|xr>` | XRD or XR → `apis/<plural>/composition.yaml`, and adds the required function packages as dependencies |
 | `up function generate <name> [<pipeline-path>]` | → `functions/<name>/…`, and wires it into that composition's pipeline. On an existing `functions/<name>` it prompts to overwrite and, without a TTY, cancels: wire the step by hand (charter `generators.md`) |
 | `up test generate <name> [--e2e]` | → `tests/test-<name>/…` (or `tests/e2etest-<name>/…`) |
 
-`up xrd generate` also accepts `--input rgd` (ResourceGraphDefinition) and `--input SimpleSchema`,
-and `--plural` for words it can't pluralize (`--plural postgreses`). Whatever the input, its
-output is a draft you review and then own like any XRD you wrote, and it never runs over an
-XRD that already exists (below).
+The generators disagree on pluralization — `examples/storagebucket/` vs
+`apis/storagebuckets/` — so read the path each command prints.
 
-**The fastest correct route for a brand-new API is example-first:** write the XR you want users
-to write, then **write the XRD to match it** and generate the composition from it. Drafting the
-example first is what keeps the schema honest; deriving the schema from it is what loses every
-`required:`, `default:` and `status` field you meant to have — see
-`control-plane-project-charter` §5
-for the skeleton and the model-quality comparison.
+**`up project init`.** Non-interactively: `up project init <name> --scratch` (or
+`--template <t> --language <lang> [--test-language <lang>]`). Starting from a language
+template instead of `--scratch`: read [project-templates.md](references/project-templates.md)
+first; its Python layout differs from what `up function generate` produces.
+
+- `--scratch` ignores `--language` (it logs `... for kcl` regardless). Harmless — the scratch
+  template has no functions — but don't read it as the project's language.
+- `up project init --directory .` fails with `directory is not empty` even when the directory
+  holds only `.git`. Init into a temporary directory and move the files across, dotfiles
+  included (up v0.55.0).
+- The scratch template leaves its own values behind: `upbound.yaml` `source`
+  (`github.com/upbound/project-template-scratch`), a placeholder `maintainer`,
+  `repository: xpkg.upbound.io/example/<name>`, and `module
+  github.com/upbound/project-template-scratch/tests/<dir>` in generated Go tests' `go.mod`.
+  **Set `repository`, `source` and `maintainer` before any generator runs** — `spec.repository`
+  names the embedded function in every `functionRef` (charter `generators.md`) — and fix any
+  test `go.mod` that still names the template.
+- Templates leave `examples/example/example.yaml` (`kind: Example`, `spec: {}`), backed by no
+  XRD. Delete it; the real example is the file `up example generate` writes.
+
+## Phase 2: Gather the project and resource information
+
+From the spec: project name, API group, cloud, organisation, maintainer; then the resource
+Kind, its plural and its version (`v1alpha1` for a new API, charter `xrd-design.md`).
+Interactive and not in the spec: ask, with the tables in
+[templates.md](references/templates.md#questions-for-a-new-project).
+
+## Phase 3: Write the XRD, and check its design
+
+**Write the XRD yourself** (charter §5 has the reason and the v2 skeleton). For a **new** XRD:
+
+| Field | Value |
+|---|---|
+| `apiVersion` | `apiextensions.crossplane.io/v2` |
+| `scope` | `Namespaced` |
+| version | `v1alpha1` |
+| `names.kind` | exactly the user's XR Kind (`Network`): no `X` prefix, no `claimNames` |
+
+An existing v1 project stays v1 until it is migrated deliberately (`plan-v2-migration`), and a
+migration keeps its existing Kind, `X` prefix included: renaming a Kind is a new API, and
+existing objects are not converted (charter `xrd-design.md`). Don't copy a template's XRD as a
+v2 starting point: the templates are v1.
+
+**The fastest correct route for a new API is example-first:** write the XR you want users to
+write, then write the XRD to match it, then generate the composition from it.
 
 ```bash
-# --scope is REQUIRED for a non-interactive run (see below)
+# --scope is required for a non-interactive run (below)
 up example generate --scope=namespace --name example --namespace default \
     --api-group platform.example.com --api-version v1alpha1 --kind StorageBucket
-#   -> examples/storagebucket/example.yaml   (lowercase Kind; file named by --name) with spec: {}
-# Fill in the spec so it is the API you want users to write, then:
-# Now WRITE apis/storagebuckets/definition.yaml yourself (`control-plane-project-charter` §5 has the
-# skeleton). Note the directory is plural even though examples/ is singular.
-up composition generate apis/storagebuckets/definition.yaml
-#   -> apis/storagebuckets/composition.yaml (mode: Pipeline + auto-ready step)
-#      and adds crossplane-contrib/function-auto-ready to upbound.yaml dependsOn
-up dep add 'xpkg.upbound.io/upbound/provider-aws-s3:>=v2.0.0'   # always a constraint (below)
+#   -> examples/storagebucket/example.yaml (spec: {}); fill in the spec users should write
+# Write apis/storagebuckets/definition.yaml yourself (plural directory).
+up composition generate apis/storagebuckets/definition.yaml                 # Phase 5
+up dep add 'xpkg.upbound.io/upbound/provider-aws-s3:>=v2.0.0'               # Phase 4
+up project build                                                            # Phase 6
 up function generate compose-bucket apis/storagebuckets/composition.yaml --language python
-#   -> functions/compose-bucket/ + inserts its pipeline step into the composition
-up project build
+up project build                                                            # Phase 9
 ```
 
-What this chain gets right, and what to watch:
-
-- **You control the XRD** — `apiVersion: apiextensions.crossplane.io/v2`, `scope: Namespaced`, no `claimNames`, and the `required:`/`default:`/`additionalProperties`/`status` that an inferred schema cannot express. Do not copy a template's XRD as a starting point: the templates are v1.
-- **The composition is `mode: Pipeline`** with an auto-ready step, and its function dependency is added to `upbound.yaml` for you. It is `crossplane-contrib/function-auto-ready`, at `'>=v0.0.0'`, even when the project already declares another auto-ready function, which then gets a step too (observed with up v0.55.0). **When the project declares its own function set, delete the duplicate step and its dependency, and say so.** Otherwise give the dependency a constraint (below).
-- ⚠️ **Build before generating the function.** The models are generated from whatever XRD is on disk, and `up function generate` wires them into the new function only once they exist under `.up/<language>/`. So `up project build` must come between writing the XRD and generating the function — which is what the Critical Build Order below already says.
-- ⚠️ **`up example generate` prompts for scope even when every other flag is supplied.** Without a TTY it prints `ERROR: ... could not open a new TTY`, then writes the file with the namespaced default and exits 0 — a confusing mix of error and success. **Always pass `--scope=namespace`** (or `--scope=cluster`).
-- ⚠️ **Write every open-ended map as `additionalProperties`**, never as fixed properties:
+- **`up example generate` prompts for scope even when every other flag is supplied.** Without
+  a TTY it prints `ERROR: ... could not open a new TTY`, then writes the file with the
+  namespaced default and exits 0. Always pass `--scope=namespace` (or `--scope=cluster`).
+- **Write every open-ended map as `additionalProperties`**, never as fixed properties:
 
   ```yaml
   tags:
@@ -132,171 +152,24 @@ What this chain gets right, and what to watch:
 
   Fixed `properties:` under a map generates one model field per key, so every key a user did
   not supply arrives as a null the typed model rejects (Python: `Input should be a valid
-  string [input_value=None]`). This is the single most common way a hand-written XRD goes
-  wrong, and it is also exactly what `up xrd generate` emits if you let it infer a map from an
-  example — one more reason to write the file yourself.
+  string [input_value=None]`). It is the most common way a hand-written XRD goes wrong, and
+  exactly what `up xrd generate` emits for a map inferred from an example.
+- **Never run `up xrd generate` over an XRD that already exists.** An example carries values,
+  not constraints, so regenerating silently drops `enum:`, `default:`,
+  `minimum:`/`maximum:`/`pattern:`, `description:` and the intended `required:`. Treat
+  `apis/*/definition.yaml` as hand-maintained source. `up xrd generate -o /tmp/xrd.yaml && diff`
+  is fine as a read-only second opinion; it also accepts `--input rgd`, `--input SimpleSchema`
+  and `--plural` (`--plural postgreses`), and its output is a draft you review and then own.
+- With no spec to read the fields from (interactive only), collect them with the field wizard
+  in [templates.md](references/templates.md#xrd-field-wizard), and keep every constraint you
+  add compatible with the user's draft XR.
 
-- ⚠️ **Re-run `up project build` after every XRD change.** The models under `.up/` are
-  generated *from* the XRD, so the moment you edit one they are stale. Measured: a
-  `status.probeField` added by hand is absent from the generated model until a rebuild, and
-  present immediately after. The build order below puts the first build *before* function
-  generation, so an XRD edit made after that step leaves you writing function code against a
-  model that predates it.
-
-  Also note the generators disagree on pluralization: `examples/storagebucket/` (singular) vs `apis/storagebuckets/` (plural). Read the path each command prints instead of assuming.
-
-### `up project init`
-
-Non-interactively: `up project init <name> --scratch` (or `--template <t> --language <lang>
-[--test-language <lang>]`). Starting from a language template (AWS Bucket, Azure Storage, GCP
-Storage, Kubernetes WebApp) instead of `--scratch`: read
-[project-templates.md](references/project-templates.md) first; its Python layout differs from
-what `up function generate` produces.
-
-- **`--scratch` ignores `--language`** (it logs `... for kcl` regardless). Harmless — the scratch
-  template contains no functions — but don't read it as the project's language.
-- **`up project init --directory .` fails with `directory is not empty`** even when the
-  directory holds only `.git`. Init into a temporary directory and move the files across,
-  dotfiles included (observed with up v0.55.0).
-- **The scratch template leaves its own values behind:** `upbound.yaml` `source`
-  (`github.com/upbound/project-template-scratch`), a placeholder `maintainer`,
-  `repository: xpkg.upbound.io/example/<name>`, and `module
-  github.com/upbound/project-template-scratch/tests/<dir>` in generated Go tests' `go.mod`.
-  Set `repository`, `source` and `maintainer` before any generator runs (build order step 0),
-  and fix any test `go.mod` that still names the template.
-
-Templates also leave behind `examples/example/example.yaml` (`kind: Example`, `spec: {}`) which is
-backed by no XRD. Delete it; the real example is the file `up example generate` writes
-(`examples/<kind-lowercase>/<xr-name>.yaml`).
-
-## Critical Build Order
-
-```bash
-# MUST follow this exact sequence
-0. Set upbound.yaml metadata  # spec.repository names the embedded function in every functionRef
-1. Create files + add dependencies
-2. up dep update-cache
-3. up project build           # FIRST - generates models
-   # Hand-edited the XRD after this? Run it again - the models come FROM the XRD
-4. up function generate ...   # Uses models from step 3
-5. Python only: setup_venv.py # BEFORE you write the function body
-6. up project build           # FINAL - builds with function
-```
-
-Step 5 is `python3 <author-composition>/scripts/setup_venv.py`, where `<author-composition>`
-is the directory containing that skill's SKILL.md, beside this skill's directory. Why it comes
-before the function body, and the by-hand equivalent: `control-plane-project-charter`
-`languages/python.md`.
-
-**NEVER:**
-- Run `up function generate` before first build
-- Skip `up dep update-cache`
-- Use provider v1.x (must be v2.x for models)
-- Use XRD apiVersion v1 (must be v2)
-- Use Cluster scope (must be Namespaced)
-- Use `mode: Resources` in a composition — **removed in Crossplane v2, only `mode: Pipeline` is valid.** `up test run`'s local render tolerates it, but the API server rejects it on admission. Every `up` scaffold emits `Pipeline`; don't hand-edit it to `Resources`.
-
-## Resolving Provider/Function Packages (marketplace discovery)
-
-`up dep add` needs a package **reference** (e.g. `xpkg.upbound.io/upbound/provider-azure-network`). When the user names a **cloud + resource** but not the ref (e.g. "compose an Azure ResourceGroup + VirtualNetwork"), resolve it before adding — do **not** guess a package name blindly.
-
-**Preferred — Upbound Marketplace MCP** (if one is configured for your agent). It uses your existing `up login` credentials:
-1. `search_packages` — filter by type (provider/function), cloud/family, and tier to find the package + exact `xpkg` ref.
-2. `get_package_version_resources` (or `..._groupkind_resources`) — get the **exact group/kind/version** you'll compose (e.g. `ResourceGroup` → `azure.m.upbound.io/v1beta1`), so the composition uses real Kinds from the start.
-3. `up dep add '<ref>:>=vX.Y.Z'`, then `up dep update-cache`. **Always pass a constraint** (the
-   form `up dep add --help` shows): a bare `<ref>` records `version: '>=v0.0.0'`, which accepts
-   any major (observed with up v0.55.0). To cap the major, set `version: ^vX.Y.Z` in `upbound.yaml`.
-
-**Fallback — web search and fetch** (no MCP): search for `site:marketplace.upbound.io <cloud> <service> provider` (functions: `... function`), or fetch a page like `https://marketplace.upbound.io/providers/upbound/provider-azure-network`, and read the ref + latest version off it. Marketplace *pages* list scope/description, not always exact Kinds — confirm Kinds from the generated models after the first build.
-
-**Base resources live in the family package.** `ResourceGroup`, `ProviderConfig`, and other cross-service basics ship in **`provider-family-<cloud>`** (e.g. `provider-family-azure`), **not** a service provider. Service providers (`provider-<cloud>-<service>`) **transitively depend on the family**, so adding one (e.g. `provider-azure-network`) pulls the family in automatically — but add `provider-family-<cloud>` explicitly when you compose a base resource (like `ResourceGroup`) directly.
-
-**Always:** prefer **v2+ Upbound Official families** (`provider-<cloud>-<service>`) over the monolithic `provider-<cloud>`; after the first build, verify the composed resources exist in the generated models under `.up/<language>/` and correct Kinds/API versions. When more than one package/family could fit, ask the user, listing the candidates rather than guessing.
-
-## Activating managed resources: ManagedResourceActivationPolicy (MRAP)
-
-Writing or changing an MRAP, or running `up dep add --api crossplane:<tag>`: read
-[mrap.md](references/mrap.md) first. The manifest must sit under `apis/`, or it is silently
-left out of the package, and `up project build` barely validates it (observed with up
-v0.55.0), so a green build proves nothing about it.
-
-## Quick Reference
-
-| Phase | Action | Key Command |
-|-------|--------|-------------|
-| 0 | New project, or modify existing | `up project init` (above); an existing project: add a resource from Phase 2, change one by reading it, editing, rebuilding |
-| 1-2 | Project/Resource info | From the spec; interactive, ask ([knowledge.md](references/knowledge.md#phase-1-project-information-new-projects)) |
-| 3 | Write the XRD | Field list from the spec or the field wizard, then `python3 <author-configuration-package>/scripts/check_xrd_schema.py apis/*/definition.yaml` |
-| 4 | Dependencies | `up dep update-cache` |
-| 5 | Composition + language | `up composition generate apis/{resource}/definition.yaml` |
-| 6 | First build | `up project build` |
-| 7 | Function generation | `up function generate {resource} apis/{resource}/composition.yaml --language <lang>` |
-| 8 | Examples | Create simple + complete, **plus `examples/providerconfig.yaml`** |
-| 9 | Final build | `up project build` |
-
-### After the final build: deploying it somewhere
-
-This skill stops at a built package. Before `up project run`, read
-[knowledge.md](references/knowledge.md#after-the-final-build-deploying-it-somewhere): which
-control plane you get depends on the current `up` context, and on a Space the default run
-fails on a pull it cannot make. If the context is a Space, ask the user which run they want:
-`--public` publishes their package.
-
-### Never run `up xrd generate` over an XRD that already exists
-
-An example carries values; it does not carry **constraints**. Regenerating over an XRD
-silently destroys everything that is not inferable from a single manifest:
-
-| Lost on regeneration | Why it cannot survive |
-|---|---|
-| `enum:` | an example shows one value, not the permitted set |
-| `default:` | indistinguishable from "the value this example happens to use" |
-| `minimum:` / `maximum:` / `pattern:` | no example implies a bound |
-| `description:` | never present in an example |
-| `required:` | inferred from what the example sets, not from intent |
-
-This is why the XRD is authored, not generated: the table above is the *permanent* gap
-between an example and a schema, not a one-off defect. Treat `apis/*/definition.yaml` as
-hand-maintained source and edit it directly. `up xrd generate -o /tmp/xrd.yaml && diff` is
-still fine as a read-only second opinion on a schema you already have.
-
-### Phase 8 also owns the ProviderConfig — every project needs one and `--scratch` gives you none
-
-Without one, every managed resource the project composes sits unauthenticated with **no
-conditions and no events**, while the build and the tests pass. Create
-`examples/providerconfig.yaml` in Phase 8, matching the provider family you added in Phase 4:
-by default a `ClusterProviderConfig` named `default`, unless the project's spec or API names
-another config (`control-plane-project-charter` §5). Read
-[providerconfig.md](references/providerconfig.md) before you write it: the manifest, its
-family-group apiVersion, and the credential secret the README must list.
-
-### XRD Defaults (ALWAYS use these)
-
-| Field | Value |
-|-------|-------|
-| apiVersion | `apiextensions.crossplane.io/v2` |
-| scope | `Namespaced` |
-
-**Kind naming (new vs migration).** For a **new** config, name the XRD Kind exactly as the user's XR (e.g. `Network`) — **no `X` prefix and no `claimNames`** (those are the v1 claim model). An XRD from a template or an older project may use the legacy claim-based `X<Kind>` + `claimNames: <Kind>` (`up project init` templates are v1); for a new namespaced XR, switch it to the intended Kind and drop `claimNames`. **When migrating an existing v1 config, keeping the `X`-prefixed Kind is fine** — don't force-rename existing XRs.
-
-### Dependency pitfalls
-
-Provider packages by cloud: [knowledge.md](references/knowledge.md#phase-4-dependencies).
-
-> **Pitfall — external pipeline functions must be declared dependencies.** Your project's own **embedded** functions (built from `functions/`) are wired automatically. But an **external** function `functionRef` (e.g. `crossplane-contrib-function-auto-ready`, `function-patch-and-transform`) that isn't in `upbound.yaml` `dependsOn` and cached (`up dep update-cache`) makes `up test run`'s render fail with `unknown function … is it listed in the render input?`. **Fix by declaring the dependency — do not delete a pipeline step the project needs.** (`up test run` *does* render declared external functions — verified.) The one step to delete is one outside the project's declared function set, such as the duplicate auto-ready step `up composition generate` adds: remove it together with its dependency.
-
-## Check the XRD design (Phase 3)
-
-With no spec to read the fields from (interactive only), collect them with the field wizard in
-[knowledge.md](references/knowledge.md#phase-3-xrd-schema-wizard), and keep every constraint
-you add compatible with the user's draft XR.
-
-**A field list is not the schema.** It cannot tell you that a
-field is `vpcId` while the Kind is `VPC`, that a repeated group prefix may or may not be stutter,
-that an unbounded array leaves no CEL budget, or that redefining `READY` prints the column twice.
-XRD versions must round-trip, so all of that is permanent from the first version that ships.
-`control-plane-project-charter`'s `charter/xrd-design.md` has the rules; run the mechanical ones
-before the first build:
+**A field list is not the schema.** It cannot tell you that a field is `vpcId` while the Kind
+is `VPC`, that a repeated group prefix may or may not be stutter, that an unbounded array
+leaves no CEL budget, or that redefining `READY` prints the column twice. XRD versions must
+round-trip, so all of that is permanent from the first version that ships.
+`control-plane-project-charter`'s `charter/xrd-design.md` has the rules; run the mechanical
+ones before the first build:
 
 ```bash
 python3 <author-configuration-package>/scripts/check_xrd_schema.py \
@@ -308,7 +181,8 @@ SKILL.md.
 
 Exit `0` is clean, `10` is at least one finding, and `2` means it extracted nothing — a corpus
 error, not a pass. `FAIL` lines are defects; `REVIEW` lines (booleans, bare strings) are calls
-for you to make. The `ACRONYMS` table applies to the **Kind** only; trim it to the acronyms this API uses.
+for you to make. The `ACRONYMS` table applies to the **Kind** only; trim it to the acronyms this
+API uses.
 
 An enum whose values mirror an upstream API verbatim (`aurora-postgresql`) fails the casing
 rule by design, and a **frozen API** (already shipped, or fixed by the project's spec) reports
@@ -332,35 +206,128 @@ reports an entry that matches nothing for REVIEW, and can then serve as a gate. 
 frozen API's state without gating, pass `--report-only` (exit 0 despite findings). A skeleton
 XRD has too few fields to count as an extraction, so pass `--min-corpus` until the API has grown.
 
-## Report
+## Phase 4: Add dependencies
 
-After the final build, report what ran and what it printed, not a checklist
-(`control-plane-project-charter` §4): the commands and exit codes, the layer reached
-(package build), and what you assumed. The template is in
-[knowledge.md](references/knowledge.md#post-scaffolding-hand-off).
+`up dep add` needs a package **reference** (`xpkg.upbound.io/upbound/provider-azure-network`).
+When the user names a cloud and a resource but not the ref, resolve it; do not guess a
+package name.
 
-## Success Criteria
+- **Upbound Marketplace MCP**, if one is configured (it uses your `up login` credentials):
+  `search_packages` (filter by type, cloud/family and tier) for the package and its `xpkg`
+  ref, then `get_package_version_resources` (or `..._groupkind_resources`) for the exact
+  group/kind/version you will compose (`ResourceGroup` → `azure.m.upbound.io/v1beta1`).
+- **Otherwise web search and fetch:** `site:marketplace.upbound.io <cloud> <service> provider`
+  (functions: `... function`), or a page such as
+  `https://marketplace.upbound.io/providers/upbound/provider-azure-network`, for the ref and
+  latest version. Pages list scope and description, not always exact Kinds — confirm Kinds
+  from the generated models after the first build.
+- **Always pass a constraint:** `up dep add '<ref>:>=vX.Y.Z'` (the form `up dep add --help`
+  shows). A bare `<ref>` records `version: '>=v0.0.0'`, which accepts any major (up v0.55.0).
+  To cap the major, set `version: ^vX.Y.Z` in `upbound.yaml`. Then `up dep update-cache`;
+  do not skip it.
+- **Prefer v2+ Upbound Official family providers** (`provider-<cloud>-<service>`) over the
+  monolithic `provider-<cloud>`. A new project needs v2.x: the `.m.` groups ship from v2.0.0.
+- **Base resources live in the family package.** `ResourceGroup`, `ProviderConfig` and other
+  cross-service basics ship in `provider-family-<cloud>`. Service providers depend on it
+  transitively, but add it explicitly when you compose a base resource directly.
+- When more than one package could fit, ask the user, listing the candidates.
+- **External pipeline functions must be declared dependencies.** Embedded functions (built
+  from `functions/`) are wired automatically. An external `functionRef`
+  (`crossplane-contrib-function-auto-ready`, `function-patch-and-transform`) missing from
+  `dependsOn` or the cache makes `up test run`'s render fail with `unknown function … is it
+  listed in the render input?`. Fix it by declaring the dependency, not by deleting a step the
+  project needs: declared external functions do render. The one step to delete is the
+  duplicate auto-ready step of Phase 5.
+
+Writing a ManagedResourceActivationPolicy, or running `up dep add --api crossplane:<tag>`:
+read [mrap.md](references/mrap.md) first. The manifest must sit under `apis/` or it is
+silently left out of the package, and `up project build` barely validates it.
+
+## Phase 5: Generate the composition
+
+`up composition generate apis/<plural>/definition.yaml` writes a `mode: Pipeline` composition
+with an auto-ready step, and adds `crossplane-contrib/function-auto-ready` at `'>=v0.0.0'` to
+`dependsOn` — even when the project already declares another auto-ready function, which then
+gets a step too (up v0.55.0). When the project declares its own function set, delete the
+duplicate step and its dependency, and say so; otherwise give the dependency a constraint.
+
+`mode: Resources` was removed in Crossplane v2: only `Pipeline` is valid. `up test run`'s
+local render tolerates `Resources`, but the API server rejects it on admission. Every `up`
+scaffold emits `Pipeline`; don't hand-edit it.
+
+## Phase 6: First build
+
+`up project build` generates the models from the XRD and the dependencies on disk; check the
+model tree under `.up/<language>/` exists and holds the Kinds and API versions you will
+compose. **Re-run it after every XRD change** — the models come from the XRD, so an edit
+leaves them stale (a `status` field added by hand is absent from the model until a rebuild).
+No `.m.` models: the provider is v1.x, or the cache was not updated.
+
+## Phase 7: Generate the function
+
+Only after the first build: `up function generate <name> apis/<plural>/composition.yaml
+--language <lang>`. It wires the models into the function only once they exist under
+`.up/<language>/`. Check its step comes before the auto-ready step in the pipeline.
+
+Python, before you write the function body: run
+`python3 <author-composition>/scripts/setup_venv.py`, where `<author-composition>` is the
+directory containing that skill's SKILL.md, beside this skill's directory (why it comes first:
+the charter's `languages/python.md`).
+
+## Phase 8: Examples and the ProviderConfig
+
+Write the example XRs under `examples/<kind-lowercase>/<xr-name>.yaml` — a minimal one with
+the required fields only, and a complete one
+([templates.md](references/templates.md#example-xrs)).
+
+**Every project needs a ProviderConfig, and `--scratch` gives you none.** Create
+`examples/providerconfig.yaml`, matching the provider family from Phase 4: by default a
+`ClusterProviderConfig` named `default`, unless the project's spec or API names another
+config (charter §5). Without it, every managed resource sits unauthenticated while the build
+and the tests pass. Read [providerconfig.md](references/providerconfig.md) before you write
+it: the manifest, its family-group apiVersion, and the credential secret the README must
+list.
+
+## Phase 9: Final build, and report
+
+`up project build` again; it produces the package under `_output/` (`.uppkg`). Then report
+what ran and what it printed, not a checklist (`control-plane-project-charter` §4): the
+commands and exit codes, the layer reached (package build), and what you assumed. The
+template is in [templates.md](references/templates.md#hand-off-report).
+
+This skill stops at a built package. Deploying it (`up project run`) is `verify-configuration`'s
+job; where a run lands and why a Space context needs the user's choice — `--public`
+publishes their package — is `control-plane-project-charter` `charter/targets.md`.
+
+## Boundaries
+
+- Composition logic → `author-composition`; tests → `author-tests`, which writes each failing
+  test before `author-composition` implements it (charter §3); verification and deploying →
+  the project's own gate, else `verify-configuration`.
+
+## Success criteria
 
 Checks for you before you report, not a report format (charter §4: report what ran). The
 skill succeeds when:
-- Project structure created
-- XRD written by hand, with the schema the user or spec defined
-- First build generates models (`.up/<language>/` model tree exists)
-- `up function generate` creates function structure
-- Final build succeeds (`.uppkg` created)
-- No unbounded dependency: every `dependsOn` `version` names the major you built against, never `'>=v0.0.0'`
-- Examples created
-- User guided to language-specific skill
+
+- Project structure created, with `upbound.yaml` metadata set before any generator ran
+- XRD written by hand, with the schema the user or spec defined, and `check_xrd_schema.py` run
+- First build generated the models (`.up/<language>/` model tree exists)
+- `up function generate` created the function, its step before auto-ready
+- Final build succeeded (`.uppkg` under `_output/`)
+- No unbounded dependency: every `dependsOn` `version` names the major you built against,
+  never `'>=v0.0.0'`
+- Example XRs and `examples/providerconfig.yaml` created
+- The hand-off names the next skill
 
 ## References
 
-- [knowledge.md](references/knowledge.md) — read for the XRD, `upbound.yaml`, `.gitignore`,
-  composition and example templates, the detailed phase instructions (including the field
-  wizard and provider packages by cloud), common pitfalls, the hand-off template, and deploying
-  after the final build.
+- [templates.md](references/templates.md) — read when writing `upbound.yaml`, an XRD,
+  `.gitignore` or example XRs, when asking a user for project or field information, when
+  choosing a provider package, when a build fails, and for the hand-off report.
 - [providerconfig.md](references/providerconfig.md) — read before writing
   `examples/providerconfig.yaml` (Phase 8).
 - [mrap.md](references/mrap.md) — read before writing a ManagedResourceActivationPolicy or
-  running `up dep add --api`.
+  running `up dep add --api` (Phase 4).
 - [project-templates.md](references/project-templates.md) — read before starting from a
-  language template rather than `--scratch`.
+  language template rather than `--scratch` (Phase 1).

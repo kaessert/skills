@@ -15,8 +15,8 @@ A template gives you a **complete, passing** project — XRD, composition, funct
 test, E2E test, `examples/providerconfig.yaml` — which is usually a better starting point than
 scaffolding from scratch. Know that:
 
-- **The templates are v1.** Do not copy a template's XRD as a starting point for a v2 API;
-  write it yourself (`control-plane-project-charter` §5).
+- **The templates are v1**, XRD included: a template project stays v1 until it is migrated,
+  and a new v2 API's XRD is written by hand (SKILL.md Phase 3).
 - **The language templates emit the *embedded* Python layout** (`functions/<n>/main.py` +
   `requirements.txt`, `from .model.io...`), not the SDK layout that `up function generate`
   produces. Code you add must match what the project already has.
