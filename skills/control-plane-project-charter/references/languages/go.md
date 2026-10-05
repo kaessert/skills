@@ -1,10 +1,9 @@
 # Go
 
-Everything Go-specific for a control-plane project: composition functions **and** tests.
+Everything Go-specific for a control-plane project: composition functions and tests.
 
-The language-agnostic rules — the TDD loop, what a v2 managed resource needs, what a green
-run proves, reporting discipline — are in [`control-plane-project-charter`](../../SKILL.md) and are
-**not** repeated here. Read the charter first; this file only tells you how Go expresses it.
+The language-agnostic rules are in [`control-plane-project-charter`](../../SKILL.md); this file and
+[`go/`](go/) say how Go expresses them.
 
 | | |
 |---|---|
@@ -23,18 +22,16 @@ run proves, reporting discipline — are in [`control-plane-project-charter`](..
 | [`go/functions.md`](go/functions.md) | the scaffold and what to change in it, the function-sdk-go v0.5 calls, a function template, a unit-test template, failure modes |
 | [`go/tests.md`](go/tests.md) | how `up` runs a Go test, a composition-test template that tests the function template, failure modes |
 
----
+## Layout
 
-# Part 1 — Layout
-
-| | Detected by | What is in it |
+| | Files | What is in it |
 |---|---|---|
 | Function | `functions/<n>/*.go` | its own module, `package main`: `main.go` (the gRPC server, leave it), `fn.go` (`RunFunction`), `fn_test.go` |
 | Test | `tests/<t>/go.mod` | its own module, `package main`: `main.go` prints the tests as YAML |
 
 Every function and every test directory is a separate Go module, so run `go` commands from inside it.
 
-# Part 2 — Imports and models
+## Imports and models
 
 **The import path is the API group reversed, then the version**, under `dev.upbound.io/models`:
 
@@ -86,65 +83,23 @@ replace dev.upbound.io/models => ../../.up/go/models
 - The path is relative, so it holds only for a module two levels below the project root (`functions/<n>/`,
   `tests/<t>/`).
 
----
+## Where Go runs
 
-## What is different about Go
+- **A Go test program runs on your machine**, not in a container: `up test run` runs `go mod
+  tidy` and `go run .` locally, so it sees your full environment and files, and the `UP_` filter
+  does not apply to it; a variable that does not arrive was not exported in the shell that ran
+  `up`. Name its inputs `UP_*` anyway, and say in a comment that the prefix is a convention here:
+  the test then ports to KCL and Python, and one `grep UP_` lists what a run needs
+  ([`charter/container.md`](../charter/container.md)). A test that works locally may depend on
+  something no CI runner has: name everything it reads.
+- **Every matched test program runs on every `up test run`**, e2e ones included, so the
+  composition gate is `up test run "tests/test-*"` (charter §7; [`go/tests.md`](go/tests.md#e2e-tests)).
+- **The function itself runs in a container** at render time, like every language, with no
+  forwarded environment and no host mounts.
+- **`up project build` compiles Go** (`go mod tidy` and `ko`), so a function that does not compile
+  fails the build; it still does not prove the function runs (charter §8).
 
-**Go test manifests are generated on your machine.** `up test run` runs `go mod tidy` and
-then `go run .` locally rather than starting a build container (up v0.55.0 source), so the `UP_`
-prefix filter and the unmounted `~/.aws` in
-[`control-plane-project-charter` §7](../../SKILL.md#7-the-container-boundary) **do not apply to a Go test
-module**. It inherits `up`'s full environment, whatever the variable is called, and reads your
-real files. If a variable seems not to arrive, it was not exported in the shell that ran `up`.
-
-Go is not unique in this — go-templating and YAML tests also run locally (in-process, without
-a container at all). KCL and both Python layouts are the containerized ones.
-
-Three consequences:
-
-1. **Name test inputs `UP_*` anyway.** Go does not need the prefix, but the KCL and Python
-   tests do, the same test ports to them unchanged, and one `grep` for `UP_` lists everything
-   a run needs. Say in a comment that the prefix is a convention here, not a filter.
-2. A Go test that works locally may depend on something no CI runner has. Whatever the test
-   reads from the environment, name it explicitly.
-3. **Every matched test program runs on every `up test run`, e2e ones too, even without
-   `--e2e`.** An e2e program that exits non-zero on a missing input therefore fails a plain
-   `up test run "tests/*"` at `✗ Parsing tests`. The composition gate is
-   `up test run "tests/test-*"` (charter §7; [`go/tests.md`](go/tests.md#e2e-tests)).
-
-### The function container is a different matter
-
-None of the above applies to the composition function itself. Rendering runs **every**
-function as a Docker container, Go included, with no forwarded environment and no host
-mounts. A Go function never sees your shell environment or your credential files.
-
-### And Go is the one language `up project build` actually compiles
-
-The Go builder runs `go mod tidy` and a real `ko` compile, so a Go function that does not
-compile **fails the build** — unlike KCL and single-file Python, where the build only tars
-source into an image. That makes a green `up project build` worth slightly more here than
-[`control-plane-project-charter` §8](../../SKILL.md#8-a-green-run-is-not-evidence) allows in general. It still
-does not mean the function *runs*.
-
-## Everything else is the same
-
-Go tests render to the **same** `CompositionTest` / `E2ETest` objects
-(`meta.dev.upbound.io/v1alpha1`) as every other language. The fields, the semantics of
-`assertResources` (partial and positive for objects, **exact for lists**), timeouts, and the
-`extraResources` structure are identical — [`yaml.md`](yaml.md) is the clearest reading of
-that object model, because it shows the objects with no language in the way.
-
-Namespaced APIs reach Go as plain `apiVersion` strings: `s3.aws.m.upbound.io/v1beta1`.
-
-## Choosing the test language
-
-**Go functions get Go tests**, unless the project already has tests in another language —
-then match those ([`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch)). Only a
-test that emits a `CompositionTest` or `E2ETest` counts: a Go program in `tests/` printing
-`items: []` neither makes the project's tests Go nor keeps them from being Go. The tests
-build their expectations from the same generated models the function uses, so a misspelt
-field fails to compile instead of failing a render. The template, the model import paths and
-the failure modes are in [`go/tests.md`](go/tests.md).
-
-go-templating tests (`*.gotmpl`) are a different language with their own reference:
-[`go-templating.md`](go-templating.md).
+Go tests produce the same `CompositionTest` and `E2ETest` objects as every other language;
+[`yaml.md`](yaml.md) shows that object model with no language in the way. Which language new
+tests use is in [`README.md`](README.md); go-templating tests (`*.gotmpl`) are a different
+language: [`go-templating.md`](go-templating.md).

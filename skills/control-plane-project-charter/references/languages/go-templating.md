@@ -4,7 +4,7 @@ Go templates with Sprig, used two ways in an `up` project: as **composition func
 (`function-go-templating`) and as **tests**. They share a syntax and nothing else — different inputs, different
 function sets — so do not carry idioms from one to the other unexamined.
 
-The language-agnostic rules are in [`control-plane-project-charter`](../../SKILL.md). Read the charter first.
+The language-agnostic rules are in [`control-plane-project-charter`](../../SKILL.md).
 
 | | |
 |---|---|
@@ -135,9 +135,8 @@ before changing the expectation.
 
 ### E2E tests
 
-`--e2e` scaffolds the same shape around an `E2ETest`. Run-scoped values come from Sprig's `env` (the template
-renders locally, inside `up`): `{{ env "UP_RUN_ID" }}`. Guard each with `{{ if not (env "X") }}{{ fail "X unset" }}{{ end }}`
-so a missing value fails before a control plane is created. That `fail` also fires under a plain
-`up test run "tests/*"`, which renders every matched template with or without `--e2e`, and stops the whole run
-at `✗ Parsing tests`: run the composition gate as `up test run "tests/test-*"` and write that in the project
-README (charter §7). The rules in `e2e-test-configuration` apply.
+`--e2e` scaffolds the same shape around an `E2ETest`; its fields and credentials are in author-tests' `e2e.md`
+reference. Run-scoped values come from Sprig's `env` (the template renders locally, inside `up`):
+`{{ env "UP_RUN_ID" }}`. Guard each with `{{ if not (env "X") }}{{ fail "X unset" }}{{ end }}` so a missing
+value fails before a control plane is created. That `fail` also fires under a plain `up test run "tests/*"`,
+so the composition gate is `up test run "tests/test-*"` (charter §7).

@@ -214,19 +214,14 @@ func resourcesToItems[T any](resources ...any) []T {
 }
 ```
 
-Run it and read the render before trusting an expectation you typed:
+Run it and read the render before trusting an expectation you typed
+([`charter/evidence.md`](../../charter/evidence.md) says how, and why the generated `resourceRefs` names
+such as `example-963082b09556` are safe to copy):
 
 ```bash
 gofmt -l tests/ && (cd tests/test-<n> && go vet .)
-up test run tests/test-<n> --function-logs     # render.log per test under _output/composition_test/<ts>/
+up test run tests/test-<n> --function-logs     # prints the directory holding each test's render.log
 ```
-
-A plain `up test run` writes no `_output/composition_test/<ts>/`, so the directories already there are from
-earlier runs: re-run with `--function-logs` and read the directory it prints. `--function-logs` is rejected
-together with `--e2e`; an e2e run has no `render.log`.
-
-The `resourceRefs` names (`example-963082b09556`) come from `render.log`. Renders are deterministic, so they
-are stable across runs; copy them, never derive them.
 
 ## E2E tests
 
@@ -238,15 +233,10 @@ E2ETest template, the field defaults (the Go scaffold writes `timeoutSeconds: 30
 program runs locally and sees every variable); name them `UP_*` anyway.
 
 **A missing input exits non-zero, naming the variable**, so an E2E run stops at parse time instead of after a
-control plane and real resources exist. That is safe only because the composition gate never runs this program:
-
-- `up test run` runs the program of **every** directory it matches, with or without `--e2e`; `up` filters by
-  kind only after generation, so the program runs the same way in both modes. A plain `up test run "tests/*"`
-  therefore runs it, and without the variable the whole run fails at `✗ Parsing tests`.
-- So the composition gate is `up test run "tests/test-*"` and E2E is `up test run "tests/e2etest-<n>" --e2e …`.
-  **Write both commands in the project README**, and say there that `tests/*` also runs the e2e programs.
-- Do not swap the exit for a placeholder value: the run would then pass parsing without the credential and
-  fail only at the provider, after a control plane exists.
+control plane and real resources exist. That is safe only because the composition gate is
+`up test run "tests/test-*"`, which never runs this program (charter §7; write both commands in the project
+README). Do not swap the exit for a placeholder value: the run would then pass parsing without the credential
+and fail only at the provider, after a control plane exists.
 
 ## Go-specific failure modes (reproduced)
 

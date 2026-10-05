@@ -5,10 +5,10 @@ Composition functions written in Go. The scaffold facts below were observed on `
 passes the three tests in [`tests.md`](tests.md) under `up test run`, and the mutant `if versioning` → `if
 true` turns `versioning-disabled` red. The unit-test template goes red under the same mutant.
 
-Imports and the `go.mod` wiring are in [`../go.md`](../go.md) Part 2. The models are on disk under
+Imports and the `go.mod` wiring are in [`../go.md`](../go.md#imports-and-models). The models are on disk under
 `.up/go/models/io/upbound/m/<provider>/<service>/<version>/<kind>.go` (no `dev.upbound.io` level). What a v2
 managed resource needs is in
-[`control-plane-project-charter` §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) and is not repeated here.
+[`control-plane-project-charter` §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
 
 ## The scaffold, and what to change in it
 
@@ -19,7 +19,7 @@ managed resource needs is in
 | `main.go` | the gRPC server (`function.Serve`, kong flags) | leave it alone |
 | `fn.go` | `RunFunction`: `response.To(...)`, a TODO, and a `FunctionSuccess` condition with `.TargetCompositeAndClaim()` | write the logic. Replace `.TargetCompositeAndClaim()` with `.TargetComposite()`: it is a v1 leftover, and a v2 namespaced XR has no claim |
 | `fn_test.go` | `TestRunFunction` with an **empty `cases` table** | add cases before you trust it. As generated, `go test` prints `ok` and runs nothing, the same vacuous pass as the stub test in charter §8 |
-| `go.mod` | `function-sdk-go v0.5.0`, plus the models `require` and `replace` | keep the `replace` ([`../go.md`](../go.md) Part 2) |
+| `go.mod` | `function-sdk-go v0.5.0`, plus the models `require` and `replace` | keep the `replace` ([`../go.md`](../go.md#gomod-the-models-replace)) |
 
 The module is a single `package main`, so **`go build ./...` writes a binary named after the directory**
 (`functions/<n>/<n>`, about 55 MB) into the working tree, where the next `git add functions/<n>` commits it

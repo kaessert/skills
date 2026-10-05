@@ -1,32 +1,24 @@
 # YAML
 
-Raw-YAML **tests** with real-world examples. There are no YAML composition functions — YAML
-is a test-only language here, and its independence from the function language is the point.
-
-The language-agnostic rules — the TDD loop, what a v2 managed resource needs, the container
-boundary, what a green run proves, reporting discipline — are in
-[`control-plane-project-charter`](../../SKILL.md) and are **not** repeated here. Read the charter first; this
-file only tells you how YAML expresses it.
+Raw-YAML tests, with real examples. YAML is a test language only: there are no YAML composition
+functions. It shows the test object model with no language in the way, which is why the other
+language references point here for it. When to write tests in YAML rather than the composition
+language is in [`README.md`](README.md).
 
 | | |
 |---|---|
 | Scaffold a test | `up test generate <n> --language yaml` (add `--e2e`) |
 | Run one | `up test run "tests/<n>"` |
 
-## Why YAML
+- **No imports.** The `.m.` lives in the `apiVersion` string (`s3.aws.m.upbound.io/v1beta1`,
+  `kubernetes.m.crossplane.io/v1alpha1`, `helm.m.crossplane.io/v1beta1`).
+- **Several tests per file**, separated by `---`.
+- **Comment what each test proves** and what it deliberately does not cover; real configurations
+  do, and it makes the suite readable without the function open.
 
-YAML tests are the simplest option - no imports, no toolchain, no model generation - and they show the test object model with no language in the way, which is why the other language references point here for it.
+## Composition test (real example)
 
-**YAML is the fallback test language, not the default.** New tests use the composition language whenever `up` supports it as a test language (`kcl`, `python`, `go`, `go-templating`); write YAML tests when the functions are TypeScript (no CLI test language), when the project has no embedded function, or when the project's existing tests are already YAML - `configuration-aws-ctp` is Python functions with YAML tests, and new tests there stay YAML. The rule: `control-plane-project-charter` §10.
-
-Key differences from KCL/Python:
-- **No imports.** Namespacing lives directly in the `apiVersion` string (e.g. `s3.aws.m.upbound.io/v1beta1`, `kubernetes.m.crossplane.io/v1alpha1`, `helm.m.crossplane.io/v1beta1`).
-- **Multiple tests per file** are separated by `---` documents.
-- Assertions are partial by structure: assert only the fields you list; the renderer must produce at least those.
-
-## Composition Test (real example)
-
-Multiple `CompositionTest` documents in one `test.yaml`. Each renders the composition against an XR fixture and asserts composed resources.
+Two `CompositionTest` documents in one `test.yaml`, each rendering the composition against an inline XR.
 
 ```yaml
 # tests/test-controlplane/test.yaml
@@ -61,7 +53,7 @@ spec:
     kind: EKS
     metadata:
       name: test-cp
-  # Assert critical fields, not just existence - here the Release's chart + values.
+  # Assert the fields that matter, not just existence: here the chart version.
   - apiVersion: helm.m.crossplane.io/v1beta1
     kind: Release
     metadata:
@@ -116,9 +108,10 @@ spec:
                 source: InjectedIdentity
 ```
 
-## Sequential test with observedResources (real example)
+## Observed state (real example)
 
-Feed a mocked `status` for a prior resource; assert what renders as a result. Keep `validate: false` (as the scaffold does) - these tests mock status the schema would not populate.
+Feed a mocked `status` for an earlier resource and assert what renders as a result. Keep
+`validate: false`, as the scaffold does: the mocked status is not schema-valid.
 
 ```yaml
 apiVersion: meta.dev.upbound.io/v1alpha1
@@ -178,9 +171,11 @@ spec:
         serviceAccount: aws-load-balancer-controller
 ```
 
-## E2E Test (real example)
+## E2E test (real example)
 
-A single `E2ETest` document per file. Note the real config tracks a **channel** with no pinned version, uses `["Ready"]`, and sizes the timeout to a real EKS cluster.
+One `E2ETest` document per file. It tracks a channel with no pinned version, waits for `Ready`,
+sizes the timeout to a real EKS cluster, and creates the `ClusterProviderConfig` every composed
+resource defaults to.
 
 ```yaml
 # tests/e2etest-controlplane/test.yaml
@@ -224,11 +219,6 @@ spec:
   skipDelete: false
 ```
 
-## Tips
-
-- **Document your intent in comments.** Real configs use leading comments to explain what each test proves and what it deliberately does NOT cover - do the same; it makes tests self-documenting.
-- **`E2ETest` cannot assert arbitrary status fields**, and `defaultConditions` takes condition types, not expressions. If a value only appears on `status`, cover it in a composition test with `observedResources` and report the e2e layer as Ready only (author-tests' `e2e.md` reference).
-
-## Go / go-templating
-
-See [`go.md`](go.md).
+`E2ETest` cannot assert status values, and `defaultConditions` takes condition types, not
+expressions: author-tests' `e2e.md` reference. The Go and go-templating test references are
+[`go/tests.md`](go/tests.md) and [`go-templating.md`](go-templating.md).
