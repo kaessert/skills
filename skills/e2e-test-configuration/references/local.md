@@ -21,7 +21,7 @@ runs, and could change between versions.
 up test run "tests/e2etest-<n>" --e2e --local
 ```
 
-inside the run idiom in SKILL.md Step 3. Optional:
+inside the run idiom in SKILL.md Step 4. Optional:
 
 - `--control-plane-version <version>` pins UXP (otherwise `spec.crossplane.version`, otherwise the latest
   stable UXP).

@@ -1,6 +1,6 @@
 # E2E report templates
 
-Read when writing the report (SKILL.md Step 6). Every line traces to the run's log or a read taken during the
+Read when writing the report (SKILL.md Step 7). Every line traces to the run's log or a read taken during the
 run.
 
 ## Pass
@@ -44,5 +44,5 @@ run.
 ```text
 [1/3] e2etest-basic       PASSED  (EXIT=0, 412 s)
 [2/3] e2etest-secondary   FAILED  (EXIT=1, 1310 s)
-[3/3] e2etest-peering     not run (stopped after the first failure)
+[3/3] e2etest-peering     not run (stopped: shared cause in [2/3])
 ```
