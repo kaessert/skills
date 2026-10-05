@@ -91,21 +91,26 @@ replace dev.upbound.io/models => ../../.up/go/models
 ## What is different about Go
 
 **Go test manifests are generated on your machine.** `up test run` runs `go mod tidy` and
-then `go run .` locally rather than starting a build container, so the `UP_` prefix filter and
-the unmounted `~/.aws` in
+then `go run .` locally rather than starting a build container (up v0.55.0 source), so the `UP_`
+prefix filter and the unmounted `~/.aws` in
 [`control-plane-project-charter` §7](../../SKILL.md#7-the-container-boundary) **do not apply to a Go test
-module**. It sees your real environment and your real credential files.
+module**. It inherits `up`'s full environment, whatever the variable is called, and reads your
+real files. If a variable seems not to arrive, it was not exported in the shell that ran `up`.
 
 Go is not unique in this — go-templating and YAML tests also run locally (in-process, without
 a container at all). KCL and both Python layouts are the containerized ones.
 
-Two consequences:
+Three consequences:
 
-1. Do not carry the `UP_`-prefixed credential pattern across from the KCL or Python
-   templates. It is not wrong, but it is not required either, and copying it without saying
-   why leaves the next reader believing the boundary exists here.
+1. **Name test inputs `UP_*` anyway.** Go does not need the prefix, but the KCL and Python
+   tests do, the same test ports to them unchanged, and one `grep` for `UP_` lists everything
+   a run needs. Say in a comment that the prefix is a convention here, not a filter.
 2. A Go test that works locally may depend on something no CI runner has. Whatever the test
    reads from the environment, name it explicitly.
+3. **Every matched test program runs on every `up test run`, e2e ones too, even without
+   `--e2e`.** An e2e program that exits non-zero on a missing input therefore fails a plain
+   `up test run "tests/*"` at `✗ Parsing tests`. The composition gate is
+   `up test run "tests/test-*"` (charter §7; [`go/tests.md`](go/tests.md#e2e-tests)).
 
 ### The function container is a different matter
 

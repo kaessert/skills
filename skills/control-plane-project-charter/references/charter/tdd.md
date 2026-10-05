@@ -32,9 +32,9 @@ catch, confirm *that test* goes red while the others stay green, then revert:
 
 ```bash
 # 1. mutate the implementation (delete the field, move the block below an early return, ...)
-up test run "tests/*"     # expect: exactly the new test fails, and it names the right field
+up test run "tests/test-*"   # expect: exactly the new test fails, and it names the right field
 git checkout -- <the file you mutated>
-up test run "tests/*"     # expect: green again
+up test run "tests/test-*"   # expect: green again
 ```
 
 Revert with git, not by editing back: `up test run` re-serialises `upbound.yaml` and drops its

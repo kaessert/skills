@@ -109,7 +109,8 @@ from models.io.example.platform.network import v1alpha1 as networkv1alpha1
 
 # UP_-prefixed: only these cross into the generation container. See
 # control-plane-project-charter §7. Indexing, not .get, so a missing value fails here
-# rather than at the provider twenty minutes later.
+# rather than at the provider twenty minutes later. It fails a plain `up test run "tests/*"`
+# too, which runs this program without --e2e: the composition gate is "tests/test-*".
 azure_creds = os.environ["UP_AZURE_CREDENTIALS"]
 
 # Credential Secret - stringData is plain text.

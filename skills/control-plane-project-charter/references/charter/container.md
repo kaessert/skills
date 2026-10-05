@@ -4,23 +4,25 @@ Where manifest generation and function rendering actually run, and what crosses 
 
 ---
 
-**Manifest generation does not run on your machine — in most languages.** `up test run` tars
-the project, starts a Docker container from the language's build image, and runs your test
-module inside it.
+**Every `up test run` first runs the test program in every matched directory** — the
+`Parsing tests` step, before any render and before any control plane exists. Where that program
+runs, and which environment it sees, depends on the test language (up v0.55.0 source):
 
-| Test language | Where generation runs |
-|---|---|
-| KCL | container (`kcl run -o test.yaml`) |
-| Python, embedded (`main.py`) | container (`uptestpyrunner`) |
-| Python, SDK (`pyproject.toml`) | container (`hatch run test`) |
-| Go | **locally** — `go mod tidy` then `go run .` |
-| go-templating | **locally** — in-process, no container |
-| YAML | **locally** — in-process, no container |
+| Test language | Where generation runs | What it sees |
+|---|---|---|
+| KCL | container (`kcl run -o test.yaml`) | only `UP_*` variables, no `~/.aws` |
+| Python, embedded (`main.py`) | container (`uptestpyrunner`) | only `UP_*` variables, no `~/.aws` |
+| Python, SDK (`pyproject.toml`) | container (`hatch run test`) | only `UP_*` variables, no `~/.aws` |
+| Go | **locally** — `go mod tidy` then `go run .`, in the test dir | your full environment and your real files |
+| go-templating | **locally** — in-process, inside `up` | `up`'s own environment, through Sprig's `env` |
+| YAML | **locally** — in-process, no container | nothing; static YAML reads no input |
 
-So the boundary below applies to KCL and Python. It does not apply to Go, go-templating or
-YAML tests, which see your real environment and your real credential files.
+**Name every test input `UP_*`, in every language.** KCL and Python need the prefix; Go does not,
+but a Go test written that way ports to the other languages unchanged, and one `grep` for `UP_`
+finds everything the suite needs before a run.
 
-Two consequences, and they are the difference between a working test and two wasted runs:
+For KCL and Python, two consequences, and they are the difference between a working test and
+two wasted runs:
 
 1. **`~/.aws`, `~/.config/gcloud` and `~/.azure` are not mounted.** Nothing that reads a
    credentials file or a cloud CLI's config finds anything. A default credential chain
@@ -30,19 +32,35 @@ Two consequences, and they are the difference between a working test and two was
    `AZURE_CREDENTIALS`, `GOOGLE_APPLICATION_CREDENTIALS` — all absent, whatever your shell
    has exported.
 
-So a credential reaches a generated manifest by exactly one route: **export it under a `UP_`
+So a credential reaches a generated manifest by one portable route: **export it under a `UP_`
 name before the run, and read that name in the test module.**
 
 ```bash
 export UP_AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
 export UP_AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
-up test run tests/e2etest-<n> --e2e --control-plane-group=<group>
+up test run "tests/e2etest-<n>" --e2e --control-plane-group=<group>
 ```
 
 **Read the variable in a way that fails loudly when it is missing.** A silent fallback to
 `""` generates a syntactically valid Secret holding nothing; the run then proceeds all the
 way to provisioning a control plane and real resources before the provider rejects the empty
 key. Failing at manifest generation costs about a second and names the variable you forgot.
+
+**That is safe only if the composition gate never runs an e2e program.** `up test run` runs
+the program of every directory it matches, with or without `--e2e`, and filters by kind only
+afterwards; one non-zero exit aborts the whole run at `✗ Parsing tests` before any test
+executes. A plain `up test run "tests/*"` therefore runs every e2e program too, and fails
+whenever their inputs are unset. Split the runs by directory prefix instead:
+
+```bash
+up test run "tests/test-*"                        # composition gate: no e2e program runs
+up test run "tests/e2etest-<n>" --e2e ...         # E2E: fails fast on a missing input
+```
+
+Write both commands in the project README, so nobody uses `tests/*` as the gate. An
+`e2etest-*` directory run on its own without `--e2e` stops with `unable to validate composition
+tests: no valid CompositionTests found`: the matched directories produced no
+`CompositionTest`. That is the wrong glob or a missing flag, not a failing test.
 
 Prefer web identity (`source: Upbound`) wherever the platform supports it — no credential
 crosses the boundary at all, and this whole section stops applying.

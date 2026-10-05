@@ -29,9 +29,9 @@ Consequences:
   render, see `author-tests` "Checking what is not a render".
 - **Commit `go.mod` and `go.sum` after running `go mod tidy` yourself.** `up test run` tidies in place, so an
   untidy module leaves the tree dirty after every test run.
-- The program sees your real environment (charter §7's `UP_` boundary does not apply). Read nothing from it in
-  composition tests; e2e tests read their run-scoped values with `os.Getenv` and exit non-zero when one is
-  missing.
+- The program inherits `up`'s full environment, any variable name (charter §7's `UP_` filter is for KCL and
+  Python only). Read nothing from it in composition tests. E2E tests read their inputs with `os.Getenv`, named
+  `UP_*` by convention so they port to the other languages ([E2E tests](#e2e-tests)).
 - **Output must be deterministic.** Never range over a Go map to build a list you assert: map iteration order
   is random, and lists are compared exactly, so the test flakes. No `time.Now()`, no randomness.
 
@@ -230,10 +230,20 @@ are stable across runs; copy them, never derive them.
 
 ## E2E tests
 
-`up test generate <n> --e2e --language go` scaffolds the same program shape around an `E2ETest`. The rules in
-`e2e-test-configuration` apply; the only Go-specific point is
-that credentials and run ids come from `os.Getenv` directly (the program runs locally), and a missing value must
-exit non-zero before any control plane is created.
+`up test generate <n> --e2e --language go` scaffolds the same program shape around an `E2ETest`, in
+`tests/e2etest-<n>/`. The rules in `e2e-test-configuration` apply. Go-specific: credentials and run ids come
+from `os.Getenv` directly (the program runs locally and sees every variable); name them `UP_*` anyway.
+
+**A missing input exits non-zero, naming the variable**, so an E2E run stops at parse time instead of after a
+control plane and real resources exist. That is safe only because the composition gate never runs this program:
+
+- `up test run` runs the program of **every** directory it matches, with or without `--e2e`; `up` filters by
+  kind only after generation, so the program runs the same way in both modes. A plain `up test run "tests/*"`
+  therefore runs it, and without the variable the whole run fails at `✗ Parsing tests`.
+- So the composition gate is `up test run "tests/test-*"` and E2E is `up test run "tests/e2etest-<n>" --e2e …`.
+  **Write both commands in the project README**, and say there that `tests/*` also runs the e2e programs.
+- Do not swap the exit for a placeholder value: the run would then pass parsing without the credential and
+  fail only at the provider, after a control plane exists.
 
 ## Go-specific failure modes (reproduced)
 
@@ -242,6 +252,8 @@ exit non-zero before any control plane is created.
 | Wrong expected value | that test FAILs (good) |
 | Function mutant (`if versioning` → `if true`) | only a test with a `resourceRefs` guard FAILs; without it the suite stays green |
 | Compile error, panic or non-zero exit in `main.go` | the **whole run** fails at `✗ Parsing tests` (`failed to generate test files: … failed to execute 'go run .'`), no test executes. It reads as a broken test, never as RED |
+| E2E program exits on a missing variable under `up test run "tests/*"` | the composition gate fails at `✗ Parsing tests` (`failed to execute 'go run .': <your message>`), though no composition test is wrong. Run the gate as `"tests/test-*"` |
+| `tests/e2etest-<n>` run on its own without `--e2e` | `unable to validate composition tests: no valid CompositionTests found`: the dir produced no `CompositionTest`. Add `--e2e` |
 | `items` empty | **nothing fails, and nothing ran from that dir.** Next to other tests it drops out of the count (`Total Tests Executed`); on its own, or with other empty dirs, the run prints `No test files found` and exits 0. Exit non-zero on an empty list, as the template does |
 | `go.mod`/`go.sum` not tidy or not committed | the run passes and leaves the working tree dirty |
 | Building a list from a Go map | flaky FAIL on list order |

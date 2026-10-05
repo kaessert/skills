@@ -1148,8 +1148,8 @@ ls -la dist/
 # Return to project root
 cd ../..
 
-# Run composition tests
-up test run tests/*
+# Run composition tests (test-* only: tests/* also runs the e2e programs)
+up test run "tests/test-*"
 
 # Build project container
 up project build

@@ -138,5 +138,7 @@ before changing the expectation.
 
 `--e2e` scaffolds the same shape around an `E2ETest`. Run-scoped values come from Sprig's `env` (the template
 renders locally, inside `up`): `{{ env "UP_RUN_ID" }}`. Guard each with `{{ if not (env "X") }}{{ fail "X unset" }}{{ end }}`
-so a missing value fails before a control plane is created. The rules in
-`e2e-test-configuration` apply.
+so a missing value fails before a control plane is created. That `fail` also fires under a plain
+`up test run "tests/*"`, which renders every matched template with or without `--e2e`, and stops the whole run
+at `✗ Parsing tests`: run the composition gate as `up test run "tests/test-*"` and write that in the project
+README (charter §7). The rules in `e2e-test-configuration` apply.

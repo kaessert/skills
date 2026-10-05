@@ -38,6 +38,9 @@ It is a reminder, not a replacement: the reasons and the evidence are in the cha
   provider-kubernetes manifest, still need their own `metadata.namespace` (§5).
 - The provider schema is a lower bound: check the cloud API's own rules (name formats,
   reserved prefixes, create-only fields) (§6).
+- The composition gate is `up test run "tests/test-*"`: `up test run` runs every matched test
+  program, e2e ones too even without `--e2e`, and one failing program fails the whole run.
+  Name test inputs `UP_*`; only those reach KCL and Python programs (§7).
 
 **Reporting**
 - Name what ran and its exit code — the command's own, not that of a `| tail` after it

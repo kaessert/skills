@@ -179,7 +179,7 @@ Before writing any summary:
 
 1. **Name what you actually ran**, and what its exit code was — the command's own. After
    `up test run … | tail -20`, `$?` is `tail`'s, not `up`'s. Redirect, then read `$?`
-   (`up test run "tests/*" > /tmp/t.log 2>&1; echo "exit=$?"`), or read `${PIPESTATUS[0]}`
+   (`up test run "tests/test-*" > /tmp/t.log 2>&1; echo "exit=$?"`), or read `${PIPESTATUS[0]}`
    straight after the pipe in bash.
 2. **Re-read the evidence you are about to paste** and check it does not contradict your
    verdict.
@@ -290,7 +290,21 @@ Silently skipping is not.
 
 ## 7. The container boundary
 
-**Detail:** [`charter/container.md`](references/charter/container.md) — which languages are containerized, how `UP_`-prefixed variables are forwarded, and the tighter second boundary around function rendering.
+`up test run` first runs the test program of **every directory it matches**, before any test
+and whatever the flags (up v0.55.0):
+
+- **Where it runs depends on the language.** KCL and Python generate in a container that gets
+  only `UP_`-prefixed variables and no `~/.aws`. Go runs `go run .` on your machine, with your
+  full environment and real files. Name every test input `UP_*` anyway: it works in every
+  language.
+- **E2E programs run too, even without `--e2e`.** One non-zero exit fails the whole run at
+  `✗ Parsing tests`, so an e2e program that exits on a missing input breaks a plain
+  `up test run "tests/*"`. Run the composition gate as `up test run "tests/test-*"` and E2E as
+  `up test run "tests/e2etest-<n>" --e2e …`, and write both commands in the project README.
+- **`no valid CompositionTests found`** means the matched dirs produced no `CompositionTest`,
+  e.g. an `e2etest-*` dir run without `--e2e`. Wrong glob or missing flag, not a failing test.
+
+**Detail:** [`charter/container.md`](references/charter/container.md) — the per-language table, the `UP_` credential route, and the tighter second boundary around function rendering.
 
 
 ## 8. A green run is not evidence
