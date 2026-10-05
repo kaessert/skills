@@ -149,10 +149,13 @@ Language-neutral mistakes. (KCL import-syntax and Python dump-mode mistakes live
 
 ### Executing
 1. Check for `.agents/tasks/REFACTOR_TESTS.md`
-2. If missing: ask user to create plan first
+2. If missing: do the Planning steps above and stop there; report the plan rather than
+   executing it (charter §1: never block on a question nobody can answer)
 3. Execute ONLY the highest priority unchecked item
-4. **Hand off to `verify-configuration`** once the suite is green — it builds and deploys,
-   which is the gate, not the inner loop
+4. **Run the gate once the suite is green**, as in SKILL.md's "The gate, after the loop": the
+   project's own gate if it has one, else `verify-configuration` for the build and the whole
+   suite. E2E or a deploy only where the project, the user or your instructions allow it
+   (charter §9)
 5. Mark item complete with date
 6. Report completion and next item
 

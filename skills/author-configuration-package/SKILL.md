@@ -435,9 +435,9 @@ After the final build, report what ran and what it printed, not a checklist
 **Assumed / not verified:** {e.g. Kinds confirmed from the generated models; ProviderConfig not applied}
 
 ### Next steps
-1. Composition logic: `author-composition` (`functions/{resource}/`)
-2. Tests: `author-tests`
-3. Gate: the project's own gate if it has one, else `verify-configuration`
+1. Tests and composition logic, test first: `author-tests` writes the failing test,
+   `author-composition` makes it pass (`functions/{resource}/`)
+2. Gate: the project's own gate if it has one, else `verify-configuration`
 ```
 
 ## Templates & Detailed Instructions
