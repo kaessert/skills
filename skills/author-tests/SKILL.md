@@ -329,6 +329,8 @@ Planning or executing a test refactor: follow
 - kcl.md (`control-plane-project-charter` `languages/kcl.md`) - KCL syntax, imports, templates (composition + E2E for AWS/Azure/GCP)
 - python.md (`control-plane-project-charter` `languages/python.md`) - Python SDK test layout, Pydantic dump modes, templates
 - yaml.md (`control-plane-project-charter` `languages/yaml.md`) - raw YAML tests, real-world examples
+- go/tests.md (`control-plane-project-charter` `languages/go/tests.md`) - Go test layout, composition-test template, failure modes (unit tests: `languages/go/functions.md`)
+- go-templating.md (`control-plane-project-charter` `languages/go-templating.md`) - `*.gotmpl` tests
 
 ## Success Criteria
 
