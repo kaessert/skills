@@ -303,10 +303,10 @@ Which kind of control plane you get is decided by your current context, not by a
 > Cloud Space. Local dev control planes are used by default otherwise, and can be
 > explicitly requested with `--local`.
 
-**Prefer `--local` for iteration.** It runs in a KIND cluster and serves images from a
-local registry path, so there is no remote push, no repository, and no visibility decision
-at all — the 401 class cannot occur. It still creates real cloud resources through your
-provider credentials, so it gives the same end-to-end proof:
+**`--local` cannot hit this.** It runs in a KIND cluster and serves images from a local
+registry path, so there is no remote push, no repository, and no visibility decision at
+all — the 401 class cannot occur. It still creates real cloud resources through your
+provider credentials:
 
 ```bash
 up project run --local --timeout=20m
@@ -314,11 +314,12 @@ up project run --local --timeout=20m
 
 The default `--timeout` is `5m`, which is short for a first run that has to pull providers.
 
-**If you are on a Space and hit the 401**, switch to `--local` rather than working around
-the credential. Do **not** reach for `--public` as a workaround: it means *"create new
-repositories with public visibility"* — it permanently publishes the user's package to a
-public repository. That is the user's decision to make, not a debugging step. Use it only
-when they have explicitly asked for a public repository.
+**If you are on a Space and hit the 401**, do not switch targets yourself: put the three
+options of Phase 5 step 4 to the user, or report them to your caller. `--local` is one of
+them, and it is not the Space they connected to. Never reach for `--public` as a
+workaround: it means *"create new repositories with public visibility"* — it permanently
+publishes the user's package to a public repository. That is the user's decision to make,
+not a debugging step. Use it only when they have explicitly asked for a public repository.
 
 Retrofitting visibility afterwards is its own trap: `up repository update <name>` requires
 an unrelated `--publish` flag, rejects the value `up repository get` prints for it, and has
@@ -337,7 +338,7 @@ Configuration's conditions and events. Causes seen in practice:
 
 | `describe` shows | Cause | Fix |
 |---|---|---|
-| `cannot unpack package: ... 401 Unauthorized ... UNAUTHORIZED: authentication required` | the control plane can't **pull** the package `up project run` just **pushed** — it pushes to a **private** repository by default and gives the control plane it created no pull credential (common on `disconnected` Spaces; check `up profile list`) | Re-run with **`--local`** (KIND + local registry, so nothing is pushed and the failure class cannot occur). Do *not* use `--public` to work around it — that permanently publishes the package. See below |
+| `cannot unpack package: ... 401 Unauthorized ... UNAUTHORIZED: authentication required` | the control plane can't **pull** the package `up project run` just **pushed** — it pushes to a **private** repository by default and gives the control plane it created no pull credential (common on `disconnected` Spaces; check `up profile list`) | Hand back the choice of Phase 5 step 4: pull access for the Space, `--public`, or `--local` (KIND + local registry, so nothing is pushed and the failure class cannot occur). Do *not* use `--public` to work around it — that permanently publishes the package. See above |
 | `cannot resolve ... not found` | pushed to a different repo than the CP is installing | reconcile `spec.repository` with the installed package reference |
 | provider revision unhealthy | provider still installing, or a bad version constraint | check `kubectl get provider.pkg.crossplane.io` and its revisions |
 
