@@ -106,3 +106,38 @@ Every resource sets `forProvider` and nothing else unless the project asks
 merges `config.metadata("<key>")` into its metadata: the key is the composition resource name,
 so it must be unique per resource and stable across runs (renaming it orphans the live resource).
 Set `metadata.name` only when the resource needs a stable external name.
+
+## Composing a connection Secret
+
+A v2 XR publishes no connection details, so compose a Secret yourself
+(`plan-v2-migration` `breaking-changes.md`, "Connection secrets"). No `metadata.namespace`: Crossplane
+puts it in the XR's namespace
+([charter §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs)).
+
+```kcl
+import base64
+import models.io.k8s.api.core.v1 as corev1
+
+_connectionSecret = lambda config: {str: any} -> [any] {
+    [
+        corev1.Secret{
+            metadata = config.metadata("connection-secret") | {
+                name = "${config.resourceName}-connection"
+            }
+            data = {
+                # status values are plain strings: encode them
+                endpoint = base64.encode(ocds["db-instance"]?.Resource?.status?.atProvider?.endpoint or "")
+                # ConnectionDetails values are already base64: copy them as they are
+                password = ocds["db-instance"]?.ConnectionDetails?.password or ""
+            }
+        }
+    ] if ocds["db-instance"] else []
+}
+```
+
+The observed values exist only once the resource has been created and reported back, so the
+Secret is gated on the observed resource; a test reaches that branch only with
+`spec.observedResources` ([charter §8](../../../SKILL.md#8-a-green-run-is-not-evidence)).
+Importing `corev1` needs the Kubernetes API models: an `apiDependencies` entry in
+`upbound.yaml` for `k8s`, then `up project build`.
+
