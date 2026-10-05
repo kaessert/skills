@@ -69,13 +69,16 @@ find functions -name "*.k" | head -5
 
 | Phase | Description | Method |
 |-------|-------------|--------|
-| 0 | Pre-flight + language detection | Direct (Read, Bash) |
-| 1 | Dependencies + git branch | Direct (Edit, Bash) |
-| 2 | XRD migration | Direct (Edit) |
+| 0 | Pre-flight + language detection | Directly |
+| 1 | Dependencies + git branch | Directly |
+| 2 | XRD migration | Directly |
 | 3 | Function code migration | Skill → `author-composition` — **inline**, expands into your context |
-| 4 | Composition updates | Direct (Edit) |
-| 5 | Example updates | Direct (Edit) |
+| 4 | Composition updates | Directly |
+| 5 | Example updates | Directly |
 | 6 | Test updates | Skill → `author-tests` — **inline**, expands into your context |
+| 7 | File reorganization | Directly (`git mv`) |
+| 8 | Verification | Skill → `verify-configuration`, `e2e-test-configuration` — **as sub-agents**, they report back |
+| 9 | Documentation | User-guided |
 
 **Migrating the tests can lead, and usually should.** A migration is backfill — the code
 already works — so there is no natural RED unless you create one. Updating a test to its v2
@@ -86,8 +89,6 @@ bites with a deliberate mutation instead. Either way the loop is the one in
 `control-plane-project-charter` §3;
 a test updated against already-passing code and never observed failing is where the false
 coverage claims come from.
-| 7 | File reorganization | Direct (git mv) |
-| 8 | Verification | Skill → `verify-configuration`, `e2e-test-configuration` — **as sub-agents**, they report back |
 
 The authoring skills run inline: loading one expands its guidance into **your**
 context rather than spawning a separate agent, so you keep everything it discovers and it
@@ -97,7 +98,6 @@ verification skills run as sub-agents because their output is long and disposabl
 to a sub-agent that loads it, and wait for its result rather than being notified later. If
 your harness has no sub-agents, follow each brief yourself instead
 (`control-plane-project-charter` §1).
-| 9 | Documentation | User-guided (Edit) |
 
 ---
 
