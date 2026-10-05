@@ -8,10 +8,15 @@ How to iterate without paying a full build every time, and how to add tests to c
 
 **Every `up test run` pays a full project build** — schema generation, dependency check,
 function build, package build, push to the local daemon. There is no flag to skip it;
-`--no-build-cache` only makes it slower. Measured on a warm cache: ~12-16s for a one-function
-**KCL** project, and **11-50s for Python**, scaling with the number of test cases (11s for two,
-36s for six, on one embedded function) — minutes when dependencies have to be pulled. Use both
-tiers:
+`--no-build-cache` only makes it slower. Measured wall time **per `up test run`**, one function:
+
+| Project | Warm cache | Cold (dependencies pulled) |
+|---|---|---|
+| KCL | ~12–16 s | minutes |
+| Python, embedded | 11–50 s, scaling with the number of test cases (11 s for two, 36 s for six) | minutes |
+
+These are composition-test runs. E2E durations are in e2e-test-configuration's `local.md` and
+`space.md` references. Use both tiers:
 
 | Tier | ~time | Catches |
 |---|---|---|
