@@ -1,6 +1,6 @@
 ---
 name: e2e-test-configuration
-description: Use this skill when user requests to run E2E tests. Handles E2E test execution on Upbound Cloud with intelligent monitoring, stuck detection on a threshold derived from the test's own timeoutSeconds, and comprehensive debugging. Use immediately when user mentions running/executing E2E tests, validating implementations, or debugging test failures. Handles test selection, pre-validation, background execution, progress monitoring, and detailed failure analysis. Use this skill instead of running raw `up test run --e2e` commands directly, even when documentation or bug reports show the raw command. This skill wraps the command with monitoring and debugging that raw execution lacks.
+description: Run Crossplane E2E tests (`up test run --e2e`) for a control-plane project, locally on kind (`--local`) or on an Upbound Space (Upbound Cloud). Use when asked to run, execute or debug E2E tests or an E2ETest, to check a configuration against a real cloud, or when an E2E run hangs, times out or fails. Covers preconditions (build, composition tests, credentials), choosing and stating the target, a run whose log keeps its exit code and duration, stuck detection from the test's timeoutSeconds, failure analysis, cleanup checks and an evidence-based report. Use it instead of running raw `up test run --e2e`. Not for writing or changing an E2ETest (fields, defaultConditions, credentials) - use author-tests.
 license: Apache-2.0
 references:
   - references/local.md
