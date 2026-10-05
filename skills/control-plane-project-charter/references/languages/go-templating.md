@@ -116,8 +116,7 @@ items:
 ```
 
 What the suite must contain beyond this — a minimal XR, one test per observed-state branch, every status field
-asserted on the composite — is in [`python/tests.md` § Coverage](python/tests.md#coverage-what-the-suite-must-contain),
-which is language-agnostic. Observed-state tests add `observedResources` to a case exactly as in [`yaml.md`](yaml.md).
+asserted on the composite — is in [`charter/evidence.md` § Coverage](../charter/evidence.md#coverage-what-the-suite-must-contain). Observed-state tests add `observedResources` to a case exactly as in [`yaml.md`](yaml.md).
 
 ### Failure modes (reproduced)
 

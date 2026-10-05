@@ -58,7 +58,7 @@ or the worked example behind a rule.
 | [`charter/xrd-design.md`](references/charter/xrd-design.md) | naming, validation, immutability, status and printer columns for the XR API (§5) |
 | [`charter/provider-schema.md`](references/charter/provider-schema.md) | measured constraint density, and the rules that live only in cloud API docs (§6) |
 | [`charter/container.md`](references/charter/container.md) | which languages are containerized, and what crosses the boundary (§7) |
-| [`charter/evidence.md`](references/charter/evidence.md) | reading a render, how `assertResources` matches, making a suite exhaustive (§8) |
+| [`charter/evidence.md`](references/charter/evidence.md) | reading a render, how `assertResources` matches, making a suite exhaustive, what a suite must contain (§8) |
 | [`charter/generators.md`](references/charter/generators.md) | the `--language` slugs, and what each CLI generator actually emits (§10) |
 | [`rules-card.md`](references/rules-card.md) | the charter on one screen, plus a reviewer variant, for an orchestrator to paste into agent prompts — loading a skill does not load this charter |
 
@@ -347,7 +347,7 @@ write the second test rather than declaring the branch untestable. Then be preci
 it proves: your branch logic, given the status you wrote. It does not prove a provider ever
 reports that status. For that, `--e2e` or a live apply — or say it is unverified.
 
-**Detail:** [`charter/evidence.md`](references/charter/evidence.md) — finding the render artifacts, how `assertResources` matches a resource, and asserting `spec.crossplane.resourceRefs` so a surplus resource fails the suite.
+**Detail:** [`charter/evidence.md`](references/charter/evidence.md) — finding the render artifacts, how `assertResources` matches a resource, asserting `spec.crossplane.resourceRefs` so a surplus resource fails the suite, and what a suite must contain (minimal XR, observed-state branches, status on the composite).
 
 
 ## 9. Never create infrastructure as a side effect

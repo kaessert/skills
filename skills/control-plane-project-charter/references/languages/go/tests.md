@@ -8,8 +8,8 @@ The object model — `CompositionTest`, `assertResources` (partial and positive 
 lists**), `observedResources`, `extraResources` — is the same in every language; [`../yaml.md`](../yaml.md)
 shows it with no language in the way. What the suite must contain (one test per input shape, one per
 observed-state branch, every status field asserted on the composite, absence guarded through
-`resourceRefs`) is in [`../python/tests.md` § Coverage](../python/tests.md#coverage-what-the-suite-must-contain);
-that section is language-agnostic despite its location, and it applies here unchanged.
+`resourceRefs`) is in [`charter/evidence.md` § Coverage](../../charter/evidence.md#coverage-what-the-suite-must-contain),
+and it applies here unchanged.
 
 ## How `up` runs a Go test
 

@@ -1,6 +1,6 @@
 # Reading a render, and making a suite exhaustive
 
-How to find what a function actually emitted, how `assertResources` matches, and the one assertion that catches a surplus resource. [`control-plane-project-charter` §8](../../SKILL.md#8-a-green-run-is-not-evidence) states the rule.
+How to find what a function actually emitted, how `assertResources` matches, the one assertion that catches a surplus resource, and what a suite must contain. [`control-plane-project-charter` §8](../../SKILL.md#8-a-green-run-is-not-evidence) states the rule.
 
 ---
 
@@ -64,3 +64,62 @@ identical across repeated runs, which makes the composed names identical too
 The hash covers the XR's name and each composition resource name, so renaming either changes
 every generated name — which is correct, because renaming a composition resource orphans
 resources on a live platform (§5) and you want a test that says so.
+
+### Coverage: what the suite must contain
+
+The scaffold generates **one** test, against **one** example XR, asserting **only** composed
+resources. That suite is green over a function that crashes on a minimal XR, silently drops
+status fields, and never runs its readiness branch. "The tests pass" is not a verification
+claim until the suite covers these three shapes. Each language file shows them in its own
+syntax (Python: `languages/python/tests.md`; Go: `languages/go/tests.md`; YAML:
+`languages/yaml.md`).
+
+**1. One test per input shape — including a minimal XR.** Use the inline `xr` field instead of
+`xrPath`, with only the XRD-required fields set and every optional one omitted; you do not need
+a second example file. Inline `xr` and `xrPath` are mutually exclusive, so a test helper that
+takes `xrPath` needs an `xr` parameter, never both at once. This is where "the user wrote the
+obvious minimal manifest" bugs live: the shipped example usually sets every optional field, so
+the omitted branch never renders.
+
+**2. One test per observed-state branch.** Code gated on observed resources or on readiness
+**never executes** when `observedResources` is empty — it is unexercised, not merely
+unasserted. Supply the observed state explicitly:
+
+- Every observed resource needs the `crossplane.io/composition-resource-name` annotation. It is
+  what keys the resource into the function's observed resources, and the renderer rejects the
+  whole test without it: `encountered composed resource without required
+  "crossplane.io/composition-resource-name" annotation`.
+- Without `status.conditions` the resource is observed but **not** ready, which is its own
+  useful test case. Add `Ready` and `Synced` conditions with status `True` to drive the ready
+  branch.
+
+Writing *observed but not ready* and *observed and ready* as two cases is what separates a
+readiness check from an existence check in your assertions; with only the ready case, a
+function that never checks readiness passes.
+
+**3. Assert every `status` field the function writes, on the composite.** `assertResources`
+matches the composite ([§8](../../SKILL.md#8-a-green-run-is-not-evidence)). Without this, a
+status write that clobbers nested keys — writing the status more than once drops all but the
+last — passes silently, and you blame the provider.
+
+Other inline fields worth knowing, all optional: `composition` and `xrd` (inline instead of
+`*Path`), `extraResources`, `context`, and `functionCredentialsPath`.
+
+**A conditional resource needs all three:**
+
+1. A test for the omitted case asserting the resources that *should* be there. This catches
+   crashes on that branch — the common failure — and is a real regression guard.
+2. A **`resourceRefs` assertion on the composite** (above), which turns absence into a real
+   automated guard: a surplus resource fails the list comparison.
+3. A read of `render.log` confirming the conditional resource is absent, quoted in your
+   summary — that is where you get the `resourceRefs` order from anyway.
+
+Report it accurately. With a `resourceRefs` assertion: *"test 4 covers the
+omitted-lifecycleRules branch; the composite's resourceRefs assertion fails if a lifecycle
+resource appears."* Without one: *"absence was confirmed once by reading render.log and is not
+asserted by the suite."* Never *"validates that no lifecycle resource is created"* unless
+something actually fails when one is.
+
+**Out of scope for any composition test.** Assertions are partial-positive, so a *stray*
+field — an external-name annotation on a resource whose external name the provider assigns —
+is never flagged. That class fails only on a live control plane.

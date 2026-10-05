@@ -1,6 +1,6 @@
 # Python: Tests
 
-Writing composition and E2E tests in Python: what the suite must contain, how assertions behave, the templates, and the two dump modes.
+Writing composition and E2E tests in Python: coverage in Python, how assertions behave, the templates, and the two dump modes.
 
 Language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
 
@@ -8,15 +8,14 @@ Language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.
 
 # Part 4 — Tests
 
-## Coverage: what the suite must contain
+## Coverage in Python
 
-The scaffold generates **one** test, against **one** example XR, asserting **only** composed
-resources. That suite is green over a function that crashes on a minimal XR, silently drops
-status fields, and never runs its readiness branch. "The tests pass" is not a verification
-claim until the suite covers these three shapes.
+What the suite must contain — a minimal XR, one test per observed-state branch, every status
+field asserted on the composite, absence guarded through `resourceRefs` — and how to report it
+is language-agnostic: [`charter/evidence.md` § Coverage](../../charter/evidence.md#coverage-what-the-suite-must-contain).
+This section is how each part is written in Python.
 
-**1. One test per input shape — including a minimal XR.**
-Use the inline `xr` field instead of `xrPath`; you do not need a second example file.
+**1. A minimal XR, inline:**
 
 ```python
 spec=compositiontest.Spec(
@@ -55,15 +54,11 @@ def buildTest(name, *, xrPath=None, xr=None, assertResources=None):
 test_minimal = buildTest("minimal", xrPath=None, xr={...})
 ```
 
-This is where "the user wrote the obvious minimal manifest" bugs live. An XRD object with
-`default: {}` generates `Optional[Kms] = {}`, and Pydantic does not coerce defaults — so the
-field is a plain `dict` when omitted and a model when set, and no single access style is
-correct. The shipped example usually sets every optional field, so this branch never renders.
+The Python bug the minimal XR catches: an XRD object with `default: {}` generates
+`Optional[Kms] = {}`, and Pydantic does not coerce defaults — so the field is a plain `dict`
+when omitted and a model when set, and no single access style is correct.
 
-**2. One test per observed-state branch.**
-Code gated on `req.observed.resources` or on readiness **never executes** when
-`observedResources` is empty — it is unexercised, not merely unasserted. Supply the observed
-state explicitly:
+**2. Observed state** — code gated on `req.observed.resources` or on readiness:
 
 ```python
 observedResources=[
@@ -102,25 +97,13 @@ observedResources=[
 generated models — `Condition.lastTransitionTime` is a `datetime`, and serialising one into
 the test manifest is a wire-format gamble you do not need to take.
 
-Writing *observed but not ready* and *observed and ready* as two cases is what separates
-`is_resource_ready` from `resource_exists` in your assertions; with only the ready case, a
-function that never checks readiness passes.
+Two cases, *observed but not ready* and *observed and ready*, are what separate
+`is_resource_ready` from `resource_exists` in your assertions.
 
-**3. Assert every `status` field the function writes, on the composite.**
-`assertResources` matches the composite (see [`control-plane-project-charter` §8](../../../SKILL.md#8-a-green-run-is-not-evidence)). Without this, a
-`resource.update()` that clobbers nested keys — writing `{"status": {...}}` more than once
-drops all but the last — passes silently, and you blame the provider.
+**3. Status on the composite.** In Python the clobbering write is a `resource.update()` that
+writes `{"status": {...}}` more than once: all but the last are dropped.
 
-Other inline fields worth knowing, all `Optional`: `composition` and `xrd` (inline instead of
-`*Path`), `extraResources`, `context`, and `functionCredentialsPath`.
-
-**Asserting that something is NOT composed.** `assertResources` is positive-only for
-objects: it cannot name a resource and say "not this", and there is no `assertAbsent`. A test
-that renders the omitted-field case and lists the resources that *should* exist proves the
-render succeeded — it does **not** prove the conditional resource was skipped. Do not report
-it as if it did.
-
-There are two ways to close that gap, and the first is an automated guard:
+**4. Absence through `resourceRefs`** on the composite:
 
 ```python
 # On the composite. resourceRefs is a LIST, and lists are matched exactly in length and
@@ -137,61 +120,9 @@ There are two ways to close that gap, and the first is an automated guard:
 ]}},
 ```
 
-Two things that example is showing you, both from a real render:
-
-- **Hardcoding a generated name here is safe.** A render synthesizes a deterministic uid, so
-  those hashes are identical on every run — verified across repeated runs and a mutation run
-  ([`control-plane-project-charter` §8](../../../SKILL.md#8-a-green-run-is-not-evidence)). §5's warning that
-  generated names are unstable is about a live control plane, not a render.
-- **The order is the renderer's**, and it is neither alphabetical nor creation order — the
-  `Bucket` everything else depends on comes *last*. Copy the list out of `render.log` rather
-  than reasoning about it. An upstream reordering breaks this assertion loudly, which is the
-  safe direction to fail.
-
-The second is the render output, which is also how you obtain that list:
-
-```bash
-up test run "tests/<t>" --function-logs
-# then read the FULL list of rendered resources:
-cat _output/composition_test/<ts>/<test>/render.log
-```
-
-Reading the whole log to eyeball what is missing is error-prone. Reduce it to the set of
-resource names the composition actually emitted, and the absence is unambiguous:
-
-```bash
-grep -h "composition-resource-name:" _output/composition_test/<ts>/<test>/render.log \
-  | sort | uniq -c
-```
-
-That prints one line per composed resource. For the no-rules case it should show exactly
-`bucket`, `pab` and `sse` and **no** `lifecycle` entry — quote that output in your summary,
-because it is the evidence, and the sorted list makes a surplus resource just as visible as
-a missing one.
-
-**`--function-logs` is required for this — without it nothing is written at all.** Verified:
-a run with no `--function-logs` creates no `_output/composition_test` directory, so
-`--output-dir` is inert on its own; it only relocates output that `--function-logs` causes
-to exist. And neither works with `--e2e`.
-
-So for a conditional resource, do all three:
-
-1. A test for the omitted case asserting the resources that *should* be there. This catches
-   crashes on that branch — the common failure — and is a real regression guard.
-2. A **`resourceRefs` assertion on the composite**, which turns absence into a real automated
-   guard: a surplus resource fails the list comparison.
-3. A read of `render.log` confirming the conditional resource is absent, quoted in your
-   summary — that is where you get the `resourceRefs` order from anyway.
-
-Report it accurately. With a `resourceRefs` assertion: *"test 4 covers the
-omitted-lifecycleRules branch; the composite's resourceRefs assertion fails if a lifecycle
-resource appears."* Without one: *"absence was confirmed once by reading render.log and is
-not asserted by the suite."* Never *"validates that no lifecycle resource is created"* unless
-something actually fails when one is.
-
-**Out of scope for any composition test.** Assertions are partial-positive, so a *stray*
-field — an external-name annotation on a resource whose external name the provider assigns —
-is never flagged. That class fails only on a live control plane.
+Copy the list out of `render.log` rather than retyping or reasoning about it: why the
+generated names are safe to hardcode and why the order is the renderer's is in
+[`charter/evidence.md`](../../charter/evidence.md).
 
 ## The two dump modes (CRITICAL)
 
