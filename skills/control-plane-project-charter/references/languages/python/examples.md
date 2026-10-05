@@ -1,14 +1,11 @@
-# Python: Complete function examples
+# Python: complete function examples
 
-Two full functions, plus the project files they assume.
+Two whole functions in the SDK layout, and the `upbound.yaml` they assume. The Python index is
+[`../python.md`](../python.md).
 
-Language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
+## Azure network
 
----
-
-## Complete Function Example: Azure Network (v2)
-
-Full SDK implementation showing all patterns together:
+A ResourceGroup and a VirtualNetwork that references it by selector:
 
 ```python
 # functions/network/function/fn.py
@@ -33,39 +30,22 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
         self, req: fnv1.RunFunctionRequest, _: grpc.aio.ServicerContext
     ) -> fnv1.RunFunctionResponse:
         rsp = response.to(req)
-
-        # Pattern 2: struct_to_dict bootstrap — the wire type is always a protobuf Struct
         observed_xr = networkv1alpha1.Network(
             **resource.struct_to_dict(req.observed.composite.resource)
         )
-
-        # Extract from XR spec
         location = observed_xr.spec.location
-        platform_name = observed_xr.metadata.name
+        name = observed_xr.metadata.name
+        tags = {**(dict(observed_xr.spec.tags) if observed_xr.spec.tags else {}), "ManagedBy": "crossplane"}
 
-        # Pattern 4: Tags conversion (Pydantic model → Python dict)
-        base_tags = dict(observed_xr.spec.tags) if observed_xr.spec.tags else {}
-        tags = {**base_tags, "ManagedBy": "crossplane"}
-
-        # Pattern 3: forProvider only — v2 supplies namespace/policies/providerConfig
+        # forProvider only; metadata.name only because the tests assert stable names.
         desired_rg = rgv1beta1.ResourceGroup(
-            metadata=k8s.ObjectMeta(
-                name=f"rg-{platform_name}",                  # namespace: propagated automatically
-            ),
-            spec=rgv1beta1.Spec(
-                forProvider=rgv1beta1.ForProvider(
-                    location=location,
-                    tags=tags,
-                ),
-            ),
+            metadata=k8s.ObjectMeta(name=f"rg-{name}"),
+            spec=rgv1beta1.Spec(forProvider=rgv1beta1.ForProvider(location=location, tags=tags)),
         )
         resource.update(rsp.desired.resources["rg"], desired_rg)
 
-        # Pattern 3: forProvider only
         desired_vnet = vnetv1beta1.VirtualNetwork(
-            metadata=k8s.ObjectMeta(
-                name=f"vnet-{platform_name}",                # namespace: propagated automatically
-            ),
+            metadata=k8s.ObjectMeta(name=f"vnet-{name}"),
             spec=vnetv1beta1.Spec(
                 forProvider=vnetv1beta1.ForProvider(
                     location=location,
@@ -78,13 +58,14 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
             ),
         )
         resource.update(rsp.desired.resources["vnet"], desired_vnet)
-
         return rsp
 ```
 
----
+## Web platform: child XRs and a gated Helm release
 
-## Complete Function Example: Web Platform with Conditional Resources (v2)
+Two child XRs, then a Helm ProviderConfig and Release once the cluster is ready, or once the
+release already exists. The child `Cluster` XR's own composition writes the Secret
+`<cluster-name>-kubeconfig`; a v2 XR publishes no connection details.
 
 ```python
 # functions/webplatform/function/fn.py
@@ -93,11 +74,12 @@ from crossplane.function import logging, resource, response
 from crossplane.function.proto.v1 import run_function_pb2 as fnv1
 from crossplane.function.proto.v1 import run_function_pb2_grpc as grpcv1
 
-from models.io.example.platform.webplatform import v1alpha1 as webv1alpha1
-from models.io.example.platform.network import v1alpha1 as networkv1alpha1
-from models.io.example.platform.compute import v1alpha1 as aksv1alpha1
-from models.io.k8s.api.core import v1 as corev1
 from models.io.k8s.apimachinery.pkg.apis.meta import v1 as k8s
+from models.io.crossplane.m.helm.providerconfig import v1beta1 as helmpcv1beta1
+from models.io.crossplane.m.helm.release import v1beta1 as releasev1beta1
+from models.io.example.platform.webplatform import v1alpha1 as webv1alpha1
+from models.io.example.platform.network import v1alpha1 as networkv1alpha1  # network.platform.example.io
+from models.io.example.platform.cluster import v1alpha1 as clusterv1alpha1  # cluster.platform.example.io
 
 
 def resource_exists(req: fnv1.RunFunctionRequest, key: str) -> bool:
@@ -123,66 +105,57 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
         self, req: fnv1.RunFunctionRequest, _: grpc.aio.ServicerContext
     ) -> fnv1.RunFunctionResponse:
         rsp = response.to(req)
-
         observed_xr = webv1alpha1.WebPlatform(
             **resource.struct_to_dict(req.observed.composite.resource)
         )
+        name = observed_xr.metadata.name
 
-        platform_name = observed_xr.metadata.name
-        parent_ns = observed_xr.metadata.namespace           # Pattern 5: namespace propagation
-
-        # Always create Network XR (no dependency)
-        network = networkv1alpha1.Network(
-            metadata=k8s.ObjectMeta(
-                name=f"network-{platform_name}",
-                namespace=parent_ns,                          # Pattern 5
-            ),
-            spec=networkv1alpha1.Spec(
-                location=observed_xr.spec.location,
-                cidr="10.0.0.0/16",
-            ),
-        )
-        resource.update(rsp.desired.resources["network"], network)
-
-        # Always create AKS XR (depends on Network but XR system handles ordering)
-        aks = aksv1alpha1.AKS(
-            metadata=k8s.ObjectMeta(
-                name=f"aks-{platform_name}",
-                namespace=parent_ns,                          # Pattern 5
-            ),
-            spec=aksv1alpha1.Spec(
+        # Child XRs: no metadata.namespace, Crossplane sets the XR's.
+        resource.update(rsp.desired.resources["network"], networkv1alpha1.Network(
+            spec=networkv1alpha1.Spec(location=observed_xr.spec.location, cidr="10.0.0.0/16"),
+        ))
+        resource.update(rsp.desired.resources["cluster"], clusterv1alpha1.Cluster(
+            metadata=k8s.ObjectMeta(name=f"{name}-cluster"),  # fixed: the kubeconfig Secret is named after it
+            spec=clusterv1alpha1.Spec(
                 location=observed_xr.spec.location,
                 nodeCount=observed_xr.spec.nodeCount or 2,
             ),
-        )
-        resource.update(rsp.desired.resources["aks"], aks)
+        ))
 
-        # Pattern 8: Safe conditional creation - create Helm release only after AKS exists
-        if is_resource_ready(req, "aks") or resource_exists(req, "app-helm-release"):
-            # Extract kubeconfig from AKS connection details
-            kubeconfig = b""
-            if "aks" in req.observed.resources:
-                aks_cds = req.observed.resources["aks"].connection_details
-                kubeconfig = aks_cds.get("kubeconfig", b"")
-
-            if kubeconfig:
-                # Pattern 9: Manual connection secret
-                kubeconfig_secret = corev1.Secret(
-                    metadata=k8s.ObjectMeta(
-                        name=f"{platform_name}-kubeconfig",
-                        namespace=parent_ns,                   # Pattern 5
+        # Ready or already exists, so a flapping cluster does not delete the release.
+        if is_resource_ready(req, "cluster") or resource_exists(req, "app"):
+            resource.update(rsp.desired.resources["helm-config"], helmpcv1beta1.ProviderConfig(
+                metadata=k8s.ObjectMeta(name=f"{name}-helm"),
+                spec=helmpcv1beta1.Spec(credentials=helmpcv1beta1.Credentials(
+                    source="Secret",
+                    secretRef=helmpcv1beta1.SecretRef(
+                        name=f"{name}-cluster-kubeconfig",
+                        namespace=observed_xr.metadata.namespace,  # a spec value: the XR's namespace
+                        key="kubeconfig",
                     ),
-                    type="Opaque",
-                    stringData={"kubeconfig": kubeconfig.decode("utf-8")},
-                )
-                resource.update(rsp.desired.resources["kubeconfig-secret"], kubeconfig_secret)
-
+                )),
+            ))
+            rsp.desired.resources["helm-config"].ready = fnv1.READY_TRUE  # auto-ready cannot judge it
+            resource.update(rsp.desired.resources["app"], releasev1beta1.Release(
+                spec=releasev1beta1.Spec(
+                    forProvider=releasev1beta1.ForProvider(chart=releasev1beta1.Chart(
+                        name="podinfo",
+                        repository="https://stefanprodan.github.io/podinfo",
+                        version="6.5.0",
+                    )),
+                    # The project composes this ProviderConfig, so the reference is warranted.
+                    providerConfigRef=releasev1beta1.ProviderConfigRef(
+                        kind="ProviderConfig", name=f"{name}-helm",
+                    ),
+                ),
+            ))
         return rsp
 ```
 
----
+The Helm model classes were checked against a generated `.up/python` tree; the child XR classes
+depend on your XRDs.
 
-## upbound.yaml v2 Template
+## upbound.yaml
 
 ```yaml
 apiVersion: meta.dev.upbound.io/v2alpha1
@@ -190,7 +163,7 @@ kind: Project
 metadata:
   name: platform-network
 spec:
-  description: "Azure Network platform abstraction"
+  description: Azure network platform abstraction
   license: Apache-2.0
   maintainer: Platform Team <platform@example.io>
   repository: xpkg.upbound.io/myorg/platform-network
@@ -199,15 +172,15 @@ spec:
   apiDependencies:
   - type: k8s
     k8s:
-      version: v1.33.0                               # Required for Secret models in E2E
+      version: v1.33.0                   # the k8s core models (Secret)
   dependsOn:
   - apiVersion: pkg.crossplane.io/v1
     kind: Provider
     package: xpkg.upbound.io/upbound/provider-azure-network
-    version: ">=v2.0.0"                              # v2.x required for namespaced MRs
+    version: ">=v2.0.0"                  # v2 providers serve the namespaced .m. APIs
   - apiVersion: pkg.crossplane.io/v1
     kind: Provider
-    package: xpkg.upbound.io/upbound/provider-azure-resources
+    package: xpkg.upbound.io/upbound/provider-family-azure   # ResourceGroup
     version: ">=v2.0.0"
   - apiVersion: pkg.crossplane.io/v1
     kind: Function
@@ -215,11 +188,7 @@ spec:
     version: ">=v0.2.1"
 ```
 
----
-
-## pyproject.toml (SDK layout)
+## pyproject.toml
 
 `up function generate` and `up test generate` write it; do not hand-write one. The single edit
-you may need: if `.up/python` did not exist at generate time, the `dependencies` list lacks
-`"crossplane-models @ file:./../../.up/python"`. Add that line, run `up project build`, and
-re-run `setup_venv.py` ([`../python.md`](../python.md)).
+you may need is adding a missing `crossplane-models` line ([`../python.md`](../python.md#layout-sdk-or-embedded)).

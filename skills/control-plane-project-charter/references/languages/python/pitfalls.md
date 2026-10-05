@@ -1,41 +1,28 @@
-# Python: Pitfalls, debugging and v1 to v2
+# Python: pitfalls
 
-The mistakes that produce a green run and a broken platform, how to read the failures, and what changes when moving a Python function from v1 to v2.
+The Python mistakes that give a green run and a broken platform, and the errors they print. The
+Python index is [`../python.md`](../python.md).
 
-Language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.md); the Python index is [`../python.md`](../python.md).
+## Mistakes
 
----
+| Mistake | Symptom | Fix |
+|---|---|---|
+| Import path derived by hand | `ModuleNotFoundError` | `python3 "$SCRIPTS/probe_project.py" --project <root> <Kind>` ([`imports.md`](imports.md)) |
+| Non-namespaced model imported in a v2 project | renders the cluster-scoped `apiVersion` | the `.m.` path: `models.io.upbound.m.aws…`, not `models.io.upbound.aws…`. The probe script flags v1 modules |
+| `.m.` in the wrong place | API not found | `azure.m.upbound.io`, not `azurem.upbound.io` (that is KCL's import segment) |
+| Prefixed nested classes | `ResourceGroupSpec` / `VirtualNetworkForProvider` do not exist | classes are unprefixed and module-qualified: `rgv1beta1.Spec`, `rgv1beta1.ForProvider` |
+| No `struct_to_dict` | `AttributeError: get` at model construction | `resource.struct_to_dict(req.observed.composite.resource)` ([`patterns.md`](patterns.md#function-bootstrap)) |
+| Several `resource.update(..., {"status": {...}})` calls | only the last field arrives; `status.conditions` may vanish; tests green | one call with all keys ([`patterns.md`](patterns.md#resourceupdate-replaces-nested-keys-it-does-not-merge-them)) |
+| `xr.spec.<obj>.get(...)` or `.attr` on an optional XRD object | `'Kms' object has no attribute 'get'`, or `'dict' object has no attribute 'enableKeyRotation'` on half the inputs | drop `default: {}` from the XRD, or normalise ([`patterns.md`](patterns.md#an-optional-xrd-object-is-a-dict-when-absent-and-a-model-when-present)) |
+| Fixed XRD `properties` for tags | `Input should be a valid string [input_value=None]` | `additionalProperties: {type: string}` ([`patterns.md`](patterns.md#tags-and-other-flexible-maps)) |
+| `managementPolicies=["*"]`, a default `providerConfigRef`, or `metadata.namespace` on a managed resource | in the function: noise, or a reference to a ProviderConfig nothing creates; on an expected resource, `exclude_unset` keeps it and the assertion fails against a render that omits it | omit them unless the project asks (charter §5; [`tests.md`](tests.md)) |
+| Composed ProviderConfig never marked ready | XR never becomes ready | `.ready = fnv1.READY_TRUE`, before or after `resource.update()`; there is no `resource.READY_TRUE` ([`readiness.md`](readiness.md#mark-a-composed-providerconfig-ready)) |
+| Observed resource looked up by its generated name | `KeyError` or a silent miss | the composition key: `req.observed.resources["mysql"]` |
+| Gated on `is_resource_ready` only | the resource is deleted when its dependency flaps | `or resource_exists(req, "key")` ([`readiness.md`](readiness.md)) |
+| Resource appended after a guard clause | absent for some inputs | its own `if` block ([`readiness.md`](readiness.md#the-early-return-chain)) |
+| Function converted to the other layout | build breaks on imports | match the project: embedded is `.model.` + `def compose(req, rsp)`, SDK is `models.` + `RunFunction` |
 
-## Common Pitfalls
-
-| Pitfall | Symptom | Fix |
-|---------|---------|-----|
-| Wrong import path | `ModuleNotFoundError` | Run `python3 "$SCRIPTS/probe_project.py" --project <project-root> <Kind>` — never derive it by hand. Reversed group + lowercased Kind, de-duplicated when the group's **leftmost** segment already equals the Kind |
-| No `struct_to_dict` | `AttributeError: get` at model construction — an unhelpful message, not a silent failure, and not version-dependent | Wrap in `resource.struct_to_dict()` |
-| Several `resource.update(..., {"status": {...}})` calls | XR reports only the last field; `status.conditions` may vanish. Renders fine, tests green | `resource.update` clobbers nested keys (protobuf `Struct.update`). Write **one** call with all keys — Pattern 4b above |
-| `xr.spec.<obj>.get(...)` or `.attr` on an optional XRD object | `AttributeError` on half your inputs: `'Kms' object has no attribute 'get'`, or `'dict' object has no attribute 'enableKeyRotation'` | `default: {}` in the XRD generates `Optional[Kms] = {}` and Pydantic does not coerce defaults, so it is a `dict` when absent and a model when set. Normalise first; drop `default: {}` — Pattern 4c |
-| Only one example XR, which sets every optional field | The absent-field branch never renders, so it ships broken | Add a minimal XR (required fields only) as its own test case |
-| Setting a `providerConfigRef` the project does not ask for | Resource never reconciles on a live control plane; composition test still passes | Omit `providerConfigRef` if and only if `ClusterProviderConfig/default` exists and is the right one — namespaced MRs default to it. `kind="ProviderConfig"` needs a `ProviderConfig` of that name in, or created in, the XR's namespace (charter §5) |
-| Setting `metadata.namespace` on MRs | Harmless but misleading noise | Omit it — Crossplane propagates the XR's namespace to every composed resource |
-| Tags are a model, not a dict | Pydantic validation error downstream | The XRD used fixed `properties` instead of `additionalProperties` — fix the XRD (Pattern 10). `dict(tags) if tags else {}` works either way, but under the correct schema it is a no-op, not a fix |
-| Fixed XRD properties for tags | `Input should be a valid string [input_value=None]` | Use `additionalProperties: type: string` |
-| Composed ProviderConfig never marked ready | XR never becomes ready; function-auto-ready cannot judge a ProviderConfig | Set `.ready = fnv1.READY_TRUE` on it, before or after `resource.update()` (the `Ready` enum lives in `fnv1`/`run_function_pb2`; there is no `resource.READY_TRUE`) |
-| Observed resource by full name | `KeyError` or silent miss | Use composition KEY: `req.observed.resources["mysql"]` |
-| Conditional by `is_ready` only | Resource deleted when dep flaps | Add `or resource_exists(req, "key")` |
-| Readiness logic not exercised by composition test | Green test, then failure on the real control plane | Supply `observedResources` with `status.conditions` — the branch **is** reachable locally. See "Readiness branches need `observedResources`" above |
-| Setting `managementPolicies=["*"]` | On a function: nothing, it matches the default. On an **expected** resource in a test: `exclude_unset=True` *keeps* it, and the assertion then fails against a render that correctly omits it | Omit it. `exclude_unset` only keeps it out while you do not set it |
-| Wrong `.m.` placement | API not found | `azure.m.upbound.io` not `azurem.upbound.io` |
-| Prefixed nested classes | Render crash: `ResourceGroupSpec`/`VirtualNetworkForProvider` don't exist | Nested classes are **unprefixed & module-qualified**: `rgv1beta1.Spec`, `rgv1beta1.ForProvider`, `rgv1beta1.ProviderConfigRef` — never `<Kind>Spec`/`<Kind>ForProvider` (datamodel-codegen names them generically per module) |
-| New resource "verified" by a green test | Works locally, missing on the control plane | `assertResources` ignores resources you didn't list. Read `_output/composition_test/<ts>/<test>/render.log` **and** add the resource to the assertions |
-| Resource appended after a guard clause | Resource silently absent for some inputs | The template's `return`-based guards gate everything below them. Give the new resource its own `if` block (see *Watch the early-return chain*) |
-| Converting a function to the other layout | Build breaks on imports | Match the project: embedded uses `.model.` + `def compose(req, rsp)`, SDK uses `models.` + `RunFunction`. Run the probe script to see which |
-| Non-namespaced (v1) model imported | Resource applies to the wrong API, `ProviderConfig` mismatch | Use the `.m.` path (`io.upbound.m.aws...`). The probe script flags v1 modules explicitly |
-
----
-
-## Common Debugging Patterns
-
-### Pydantic Validation Errors
+## Errors and what they mean
 
 ```
 pydantic_core._pydantic_core.ValidationError: 1 validation error for ResourceGroup
@@ -43,93 +30,48 @@ spec.forProvider.tags.Environment
   Input should be a valid string [input_value=None, input_type=NoneType]
 ```
 
-**Fix**: Change XRD schema from fixed properties to `additionalProperties: type: string`
-Then regenerate models: `up project build`
+The XRD declares tags with fixed `properties`. Use `additionalProperties: {type: string}`, then
+`up project build` to regenerate the models.
 
 ```
 pydantic_core._pydantic_core.ValidationError: 1 validation error for Spec
   Extra inputs are not permitted [input_value=...]
 ```
 
-**Fix**: Check provider version in `upbound.yaml` matches what you expect.
-Regenerate models after updating: `up project build`
-
-### Import Errors
+The models do not match the field: check the provider version in `upbound.yaml`, then
+`up project build`.
 
 ```
 ModuleNotFoundError: No module named 'models.io.example.platform.network.network'
 ```
 
-**Fix**: The Kind segment is de-duplicated when the group's **leftmost** segment already equals the
-lowercased Kind (group `network.platform.example.io`, Kind `Network`):
-```python
-# WRONG - "network" repeated
-from models.io.example.platform.network.network import v1alpha1
-# CORRECT - de-duplicated
-from models.io.example.platform.network import v1alpha1
-```
-A sibling Kind in that same group is **not** de-duplicated
-(`from models.io.example.platform.network.subnet import v1alpha1`). Don't infer the rule from one
-resource — run `python3 "$SCRIPTS/probe_project.py" --project <project-root> <Kind>`.
+The Kind segment is de-duplicated when the group's leftmost segment equals the lowercased Kind
+(group `network.platform.example.io`, Kind `Network`): `from models.io.example.platform.network
+import v1alpha1`. A sibling Kind in that group is not
+(`models.io.example.platform.network.subnet`).
 
 ```
 ModuleNotFoundError: No module named 'models'
 ```
 
-**Fix**: The `crossplane-models` package isn't installed. Ensure `.up/python` exists
-(run `up project build` / `up dependency add`) and that `crossplane-models @ file:...`
-is listed in the function/test `pyproject.toml`. (In the embedded layout the models
-come from the `model` symlink instead, imported as `from .model.io...`.)
-
-### struct_to_dict Errors
+`crossplane-models` is not installed: `.up/python` must exist (`up project build` or
+`up dependency add`) and the `pyproject.toml` must list `crossplane-models @ file:...`. In the
+embedded layout the models come from the `model` symlink, as `from .model.io...`.
 
 ```
 AttributeError: 'Struct' object has no attribute 'spec'
 ```
 
-**Fix**: Add `resource.struct_to_dict()` wrapper:
-```python
-# WRONG
-observed_xr = networkv1alpha1.Network(**req.observed.composite.resource)
-# CORRECT
-observed_xr = networkv1alpha1.Network(
-    **resource.struct_to_dict(req.observed.composite.resource)
-)
-```
+`req.observed.composite.resource.spec` was read directly: parse it with
+`resource.struct_to_dict()` first.
 
-### Test Assertion Failures
+An expected resource reported as `no actual resource found`: read what rendered
+([`charter/evidence.md`](../../charter/evidence.md)), then compare the name and the `apiVersion`.
 
-```
-AssertionError: Expected ResourceGroup not found in composed resources
-```
+## Migrating a Python function from v1 to v2
 
-**Debug steps**:
-1. Render the composition manually to see actual output:
-   ```bash
-   up composition render apis/composition.yaml examples/xnetwork/example.yaml
-   ```
-2. Check if resource name matches: `name="rg-example-network"` vs actual `name="rg-mynetwork"`
-3. Check `apiVersion` in test includes `.m.` suffix for v2
-
----
-
-## Quick Reference: v1 → v2 Python Migration
-
-| Change | v1 | v2 |
-|--------|----|----|
-| Azure import | `from models.io.upbound.azure.resources...` | `from models.io.upbound.m.azure.resources...` |
-| AWS import | `from models.io.upbound.aws.ec2...` | `from models.io.upbound.m.aws.ec2...` |
-| GCP import | `from models.io.upbound.gcp.compute...` | `from models.io.upbound.m.gcp.compute...` |
-| XR parse | `XKind(**req.observed.composite.resource)` | `XKind(**resource.struct_to_dict(...))` |
-| providerConfigRef | `{name: "default"}` | **remove it** if and only if `ClusterProviderConfig/default` exists and is the right one — namespaced MRs default to it (charter §5) |
-| deletionPolicy | `deletionPolicy=rgv1beta1.Spec.DeletionPolicy.Delete` | **remove it** — `managementPolicies: ["*"]` is the default; only set it for a non-default policy such as `["Create","Observe","Update","LateInitialize"]` (orphan on delete) |
-| metadata | `ObjectMeta(name="rg-...")` | unchanged — namespace is propagated automatically, don't add it |
-| apiVersion in tests | `azure.upbound.io/v1beta1` | `azure.m.upbound.io/v1beta1` |
-| XRD apiVersion | `apiextensions.crossplane.io/v1` | `apiextensions.crossplane.io/v2` |
-| XRD scope | (implicit cluster) | `scope: Namespaced` |
-| Connection secrets | `connectionSecretKeys` in XRD | Manual Secret composition in function |
-| Helm secret namespace | `crossplane-system` | XR namespace (`parent_ns`) |
-
-> The table above covers the **v1 → v2 API** migration; the SDK vs embedded layout
-> (up v0.50.0+) is an orthogonal axis — see the note at the top of this file and
-> "SDK vs embedded" in Part 1.
+What changes in a v1 → v2 migration, language-neutral, is in `plan-v2-migration`'s
+`breaking-changes.md` reference. In Python it shows up as the import (`models.io.upbound.<cloud>…`
+→ `models.io.upbound.m.<cloud>…`), test `apiVersion`s gaining `.m.`, and connection details moving
+from `rsp.desired.composite.connection_details` to a composed Secret
+([`readiness.md`](readiness.md#connection-secrets)).
