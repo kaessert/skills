@@ -28,7 +28,7 @@ up project run --timeout=20m     # the --timeout default is 5m, short for a firs
 **3. On a Space? Pre-flight before you spend ten minutes:**
 
 ```bash
-up repository get <project-name>            # PUBLIC=false and no pull secret => it will wedge
+up repository get <repository>              # from upbound.yaml spec.repository; PUBLIC=false and no pull secret => it will wedge
 kubectl get imageconfigs.pkg.crossplane.io
 kubectl -n crossplane-system get secrets | grep -i pull
 ```

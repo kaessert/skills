@@ -55,7 +55,7 @@ group:
 ```bash
 KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
 up ctx . -f- > "$KCFG"
-grep -q '^apiVersion:' "$KCFG" || { echo "not a kubeconfig: $KCFG"; head -3 "$KCFG"; }
+kubectl --kubeconfig "$KCFG" config current-context || echo "not a kubeconfig: $KCFG"
 echo "group: $GROUP  kubeconfig: $KCFG"   # shell variables do not survive to your next command; reuse the values
 ```
 
@@ -92,7 +92,7 @@ ready`, no XR exists and tracing resources is wasted effort:
 
 ```bash
 up controlplane list                     # the control plane usually reads Available/Healthy regardless
-up ctx ../<control-plane-name>           # relative form
+up ctx ./<control-plane-name>            # from the group context; no leading "." means absolute
 kubectl get configuration.pkg.crossplane.io
 kubectl describe configuration.pkg.crossplane.io <name>
 ```
@@ -105,7 +105,7 @@ exists:
 
 ```bash
 CPCFG=$(mktemp -t kubeconfig-cp.XXXXXX)
-up ctx <control-plane-name> -f- > "$CPCFG"   # relative to the current group
+up ctx ./<control-plane-name> -f - > "$CPCFG"   # from the group context
 ```
 
 ## Evidence and cleanup

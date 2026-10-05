@@ -57,7 +57,7 @@ Steps:
    kubectl describe configuration --kubeconfig <path>
 
 2. Stuck at "Applying Extra Resources", or the provider cannot authenticate:
-   kubectl get providerconfig -A -o wide --kubeconfig <path>
+   kubectl get clusterproviderconfig,providerconfig -A -o wide --kubeconfig <path>
    (never print a Secret's data)
 
 3. Resource status:
@@ -101,7 +101,7 @@ and report it as terminated.
 | `.spec.credentials.secret: field not declared in schema` | ProviderConfig shape: it is `secretRef`, not `secret` (author-tests' `e2e.md` reference) |
 | `InvalidClientTokenId` | credential value malformed, e.g. `session_token` instead of `aws_session_token`: check the Secret's format |
 | `AccessDenied` | the credential works but lacks a permission |
-| `ProviderConfig not found` | missing namespace, or wrong API group |
+| `ProviderConfig not found` | the referenced config does not exist: wrong `kind` (a namespaced `ProviderConfig` nobody created), wrong name, or wrong API group — `control-plane-project-charter` `charter/v2-resources.md` |
 | `SyntaxError: Expected TOKRbracket …` or `field not found in the input object` | a `defaultConditions` entry is not a condition type: a broken test, not RED |
 | Assert fails on `Ready` with `status: {}` | the resource never got a status: often a missing composed resource or a selector that matches nothing; rule out credentials first |
 | Function errors | composition code; reproduce with the composition tests |

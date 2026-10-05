@@ -143,7 +143,7 @@ kubectl describe configuration.pkg.crossplane.io <name>
 
 | `describe` shows | Cause |
 |---|---|
-| `cannot unpack package: … 401 Unauthorized … UNAUTHORIZED: authentication required` | private repository, and no pull credential for it on that control plane. Retrying changes nothing |
+| `cannot unpack package: … 401 Unauthorized … UNAUTHORIZED: authentication required` | private repository, and no pull credential for it on that control plane (common under a disconnected profile: `up profile list`). Retrying changes nothing |
 | `cannot resolve … not found` | pushed to a different repository than the one being installed: reconcile `spec.repository` |
 | provider revision unhealthy | a provider still installing, or a bad version constraint: `kubectl get providers.pkg.crossplane.io` and its revisions |
 
