@@ -49,22 +49,16 @@ the spec and state the assumption, or stop and report. Load `control-plane-proje
 before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
 load it.
 
-## Core Principle
-
-**A test's *meaning* is language-agnostic; only its *syntax* differs.**
-
-Every composition and E2E test - whether written in KCL, Python, YAML, Go, or go-templating - compiles to the same two Kubernetes objects: `CompositionTest` and `E2ETest` (`meta.dev.upbound.io/v1alpha1`). The fields, the concepts, the critical rules, and the common mistakes are identical across languages. The only thing that changes is how you express those objects: KCL models, Python Pydantic builders, raw YAML manifests, or Go.
-
-So this skill has two layers:
-- **Language-agnostic core** (this file + [knowledge.md](references/knowledge.md)): the object model, rules, patterns, and mistakes. Read these regardless of language.
-- **Per-language reference** (kcl.md (`control-plane-project-charter` `languages/kcl.md`), python.md (`control-plane-project-charter` `languages/python.md`), yaml.md (`control-plane-project-charter` `languages/yaml.md`), go/tests.md (`control-plane-project-charter` `languages/go/tests.md`)): syntax, scaffolding, templates, and language-specific mistakes.
+A test's *meaning* is language-agnostic; only its *syntax* differs. Every test, in any
+language, compiles to a `CompositionTest` or an `E2ETest` (`meta.dev.upbound.io/v1alpha1`):
+the rules and mistakes are in this file and [knowledge.md](references/knowledge.md), the syntax
+in the charter's file for the test language (Step 1).
 
 ## Scope
 
 **This skill DOES:**
 - Create/modify composition tests and E2E tests in any supported language
-- Plan test refactoring (creates `.agents/tasks/REFACTOR_TESTS.md`)
-- Execute refactoring (one priority item at a time)
+- Plan or execute a test refactor ([knowledge.md](references/knowledge.md#refactoring-workflow))
 - Generate scaffolds with `up test generate`
 - **Run the test you just wrote** — `up test run "tests/<t>"`, directly, as the RED/GREEN loop requires
 
@@ -168,60 +162,16 @@ No such test yet? Pick the language:
   3. Functions in more than one language: ask the user
 ```
 
-Scaffold in the chosen language:
+Scaffold in the chosen language with `up test generate <name> [--e2e] --language <lang>`
+(`kcl`, `python`, `yaml`, `go`, `go-templating`), then write the test from the template in that
+language's file.
 
-| Language | Composition test | E2E test |
-|----------|------------------|----------|
-| KCL | `up test generate <name> --language kcl` | `up test generate <name> --e2e --language kcl` |
-| Python | `up test generate <name> --language python` | `up test generate <name> --e2e --language python` |
-| YAML | `up test generate <name> --language yaml` | `up test generate <name> --e2e --language yaml` |
-| Go | `up test generate <name> --language go` | `up test generate <name> --e2e --language go` |
-| go-templating | `up test generate <name> --language go-templating` | `up test generate <name> --e2e --language go-templating` |
-
-> **Python tests: set up the venv before you write one.** `up test generate --language python`
-> creates a `pyproject.toml` in the new test directory; installing it is what makes
-> `from models.io...` resolve for the person reading along in an editor, and it is a
-> prerequisite for the fast tier. One command, ~11s, after `up project build`:
->
-> ```bash
-> python3 <author-composition>/scripts/setup_venv.py --project <root>
-> ```
->
-> `<author-composition>` is the directory containing that skill's SKILL.md, beside this skill's
-> directory.
->
-> It installs every function *and* test directory from the project's own pins, so run it again
-> after generating a new test directory. Details in
-> `languages/python.md` (`control-plane-project-charter` `languages/python.md`).
+> **Python tests:** run `setup_venv.py` again after generating each test directory; the
+> charter's `languages/python.md` says how.
 
 > **New projects:** `up project init` takes `--test-language` **separately** from `--language` (functions). Pass the same value to both (`--language go --test-language go`). It does not accept `yaml`; YAML tests are scaffolded per test with `up test generate --language yaml`.
 
 > **Go / go-templating:** same object model and rules as every other language. Read the verified templates and the reproduced failure modes before writing one: `languages/go/tests.md` (Go programs that print the tests; commit `go.mod`/`go.sum`; an empty `items` list passes silently) and `languages/go-templating.md` (a misspelt key renders `<no value>` silently; every file in the test dir must be a template) in `control-plane-project-charter`.
-
-## Decision Tree
-
-```
-User Request → What action?
-
-CREATE NEW TEST:
-  → Detect/choose language (Step 1)
-  → Which type?
-    → Composition (fast, no cloud): up test generate <feature> --language <lang>
-    → E2E (real resources):        up test generate <feature> --e2e --language <lang>
-  → Fill in logic using the matching per-language reference
-
-MODIFY EXISTING TEST:
-  → Read test first, match its language and style, then apply changes
-
-PLAN REFACTORING:
-  → Create .agents/tasks/REFACTOR_TESTS.md with prioritized items
-  → DO NOT execute, just plan
-
-EXECUTE REFACTORING:
-  → Check for plan file first
-  → Execute ONE item at a time
-  → Run tests after each item
-```
 
 ## Quick Reference
 
@@ -239,23 +189,15 @@ defaults, credentials per target, a Go template, and what counts as an e2e RED.
 - **Set `timeoutSeconds` explicitly**, sized to what you provision. Credentials depend on the
   target: `source: Upbound` works only on a Spaces control plane.
 
-**CRITICAL**: always use the `.m.` API groups in tests. The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See `control-plane-project-charter` §5 (what a v2 composed resource needs). How the `.m.` is written differs per language — the import path in KCL, Python and Go, the `apiVersion` string in YAML; see the per-language reference.
+**Managed resources in a test follow binding rule 5** (`control-plane-project-charter` §5):
+the `.m.` groups, written as the import path in KCL, Python and Go and as the `apiVersion`
+string in YAML; `providerConfigRef` and `managementPolicies` asserted only where the project's
+spec or API sets them (whether a render keeps a value equal to the model default depends on
+the language and SDK; see the language file).
 
-**Omit `providerConfigRef` if and only if `ClusterProviderConfig/default` exists and is the
-right one** — the API server defaults an omitted one to
-`{kind: ClusterProviderConfig, name: default}`, the object the templates and generated E2E
-tests create. These are defaults the project may override (`control-plane-project-charter` §5):
-when its spec or API sets `providerConfigRef` or `managementPolicies`, assert them as
-specified (whether a render keeps a value equal to the model default depends on the language
-and SDK; see the language file).
-`kind: ProviderConfig` is a bug only when no namespaced `ProviderConfig` of that
-name exists in, or is created in, the XR's namespace — the resource then stays inert on a
-control plane while the tests pass.
-
-So in a test's `extraResources`, create a **`ClusterProviderConfig`** (cluster-scoped, no
+In a test's `extraResources`, create a **`ClusterProviderConfig`** (cluster-scoped, no
 namespace) by default. When the project uses namespaced credentials, create the namespaced
-`ProviderConfig` the function references instead, in the XR's namespace (`namespace: default`).
-The training labs use `ClusterProviderConfig`; see
+`ProviderConfig` the function references instead, in the XR's namespace (`namespace: default`):
 [knowledge.md](references/knowledge.md#two-providerconfig-kinds-v2).
 
 ## Critical Rules (all languages)
@@ -317,21 +259,21 @@ The training labs use `ClusterProviderConfig`; see
   `verify-configuration`'s "Local-only projects and projects with their own gate" says what
   changes.
 
-### Refactoring
-
-Planning or executing a test refactor: follow
-[knowledge.md](references/knowledge.md#refactoring-workflow) — plan into
-`.agents/tasks/REFACTOR_TESTS.md` without executing, then execute one item at a time.
-
 ## References
 
-- [knowledge.md](references/knowledge.md) - language-agnostic object model, patterns, common mistakes, refactoring template
-- [e2e.md](references/e2e.md) - read before writing or changing any `E2ETest`: fields, `defaultConditions`, status, credentials per target, Go template, e2e RED
-- kcl.md (`control-plane-project-charter` `languages/kcl.md`) - KCL syntax, imports, templates (composition + E2E for AWS/Azure/GCP)
-- python.md (`control-plane-project-charter` `languages/python.md`) - Python SDK test layout, Pydantic dump modes, templates
-- yaml.md (`control-plane-project-charter` `languages/yaml.md`) - raw YAML tests, real-world examples
-- go/tests.md (`control-plane-project-charter` `languages/go/tests.md`) - Go test layout, composition-test template, failure modes (unit tests: `languages/go/functions.md`)
-- go-templating.md (`control-plane-project-charter` `languages/go-templating.md`) - `*.gotmpl` tests
+- [e2e.md](references/e2e.md) — read before writing or changing any `E2ETest`: fields,
+  `defaultConditions`, status, credentials per target, Go template, e2e RED.
+- [knowledge.md](references/knowledge.md) — read for the language-agnostic object model,
+  patterns and common mistakes, and before planning or executing a test refactor (plan into
+  `.agents/tasks/REFACTOR_TESTS.md` without executing, then one item at a time).
+- The language files are the charter's (`control-plane-project-charter`, indexed by its
+  `languages/README.md`); read the one Step 1 names before writing a test:
+  - `languages/kcl.md` — KCL syntax, imports, templates (composition + E2E for AWS/Azure/GCP)
+  - `languages/python.md` — Python SDK test layout, Pydantic dump modes, templates
+  - `languages/yaml.md` — raw YAML tests, real-world examples
+  - `languages/go/tests.md` — Go test layout, composition-test template, failure modes (unit
+    tests: `languages/go/functions.md`)
+  - `languages/go-templating.md` — `*.gotmpl` tests
 
 ## Success Criteria
 
