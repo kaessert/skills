@@ -37,6 +37,9 @@ git checkout -- <the file you mutated>
 up test run "tests/*"     # expect: green again
 ```
 
+Revert with git, not by editing back: `up test run` re-serialises `upbound.yaml` and drops its
+comments (observed with up v0.55.0), so a mutation commented out there cannot be found again.
+
 **Mutate the implementation, never the test's expected value.** Changing the expected value
 turns any test red, including one that asserts nothing the code does, so it proves only that
 the comparison runs. The mutation has to be the regression the test exists to catch.
