@@ -8,11 +8,9 @@ runs, and could change between versions.
 
 - **Docker must be reachable** (`docker info` exits 0). `up` creates the cluster itself through the kind
   library; the `kind` CLI is only needed to look inside or clean up.
-- **No `up ctx` check.** `--local` forces a local control plane whatever the current context says, and nothing
-  on this path reads it. A broken or unreachable context is irrelevant here: `up ctx . --short` failing is not a
-  failed precondition for a local run.
-- **No repository, `--public` or group decision.** The package is sideloaded into a local registry, never
-  pushed.
+- **No `up ctx`, repository, `--public` or group check.** `--local` ignores the context and sideloads the
+  package instead of pushing it (`control-plane-project-charter` `charter/targets.md`), so a failing
+  `up ctx . --short` is not a failed precondition here.
 - **Credentials are a static Secret** in `extraResources`: `credentials.source: Secret` plus
   `secretRef: {namespace, name, key}`, built from a `UP_*` variable. `source: Upbound` web identity does not work
   on kind. The shapes, and the AWS credentials-file format, are in author-tests' `e2e.md` reference.
@@ -90,7 +88,6 @@ After the run the cluster is gone, so `kubectl get managed` afterwards is imposs
   failure at `Creating local development control plane`, run `kind get clusters` and `docker ps -a`.
 - **Remove only what this run created:** the cluster named `<project>-uptest-<test>`, with
   `kind delete cluster --name <cluster>`. Anything else on the machine is the user's.
-- **`kind delete cluster` does not remove the registry container.** Observed with `up project run --local`,
-  which leaves `up-<project>-registry` (`upbound/olareg`) behind after its cluster is deleted. If you delete a
-  leaked cluster by hand, check `docker ps -a` for this run's registry container and remove it with
-  `docker rm -f -v <container>`.
+- **`kind delete cluster` leaves the registry container behind** (`charter/targets.md`). If you delete a
+  leaked cluster by hand, check `docker ps -a` for this run's registry container (`upbound/olareg`) and remove it
+  with `docker rm -f -v <container>`.

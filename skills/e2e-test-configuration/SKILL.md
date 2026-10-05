@@ -41,9 +41,8 @@ before you run anything**:
   Do not pick one.
 - **A test that can only pass on one target decides.** A ProviderConfig with `source: Upbound` works only on
   a Space. Report the mismatch rather than running it elsewhere.
-- **Always pass the target flags.** Without `--local`, `up` uses a Space only when the current context
-  resolves to a Space group, and runs locally otherwise, including from a Space-level context with no group,
-  without saying so.
+- **Always pass the target flags.** Without them the current context decides where the run lands, without
+  saying so (`control-plane-project-charter` `charter/targets.md`).
 - **State the target in one line before the run** ("running e2e on local kind" or "running e2e on Space
   `<space>/<group>`"), and check it against the run's first progress line (Step 4).
 

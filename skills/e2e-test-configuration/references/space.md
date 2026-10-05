@@ -8,8 +8,7 @@ runs of this skill, and could change between versions.
 
 Run these after SKILL.md Step 1's build, composition and credential checks, stopping at the first failure.
 
-**1. The context resolves to a group.** `--control-plane-group` defaults to the group in the current
-context, so a Space-level context with no group silently runs on local kind instead.
+**1. The context names a group.** Derive it; never hardcode one:
 
 ```bash
 up ctx . --short                       # <org>/<space>/<group>[/<control-plane>]
@@ -17,19 +16,13 @@ GROUP=$(up ctx . --short | cut -d/ -f3)
 [ -n "$GROUP" ] || echo "no group in context; select one with 'up ctx <org>/<space>/<group>'"
 ```
 
-Bare `up ctx` cannot work for an agent: with no terminal it fails with `could not open a new TTY: open
-/dev/tty: device not configured`. The non-interactive forms are `up ctx .` (current context), `up ctx .
---short` (bare path) and relative navigation (`up ctx ../<name>`).
+No group in the context, or a group that does not exist: report it, and never create one (SKILL.md Never). How
+`up` picks the group and the non-interactive `up ctx` forms: `control-plane-project-charter`
+`charter/targets.md`.
 
-Derive the group from the context; never hardcode one. If the group the context names does not exist, report
-it. Never create a group, space or control plane to make the run work: that is an outward-facing change to the
-user's Space that outlives the run. Observed: a default borrowed from another Space named an absent group, the
-agent created it, and an empty group was left behind.
-
-**2. The repository the package is pushed to is pullable.** On a Space, `--e2e` builds and pushes the
-package, then installs it on a control plane it gives no pull credential. A private repository makes the
-install fail to pull what the push just wrote: the run stalls on `Waiting for package to be ready` and exits
-`context deadline exceeded`, which names neither half of the problem. A one-second check predicts it:
+**2. The repository the package is pushed to is pullable.** A private one wedges the run on `Waiting for
+package to be ready` and ends it with `context deadline exceeded` (why: `charter/targets.md`). A one-second
+check predicts it:
 
 ```bash
 REPO=$(yq -r '.spec.repository // .metadata.name' upbound.yaml | sed 's|.*/||')
@@ -38,26 +31,16 @@ up repository get "$REPO" --format=json 2>/dev/null \
   || echo "repository does not exist yet"
 ```
 
-`--public` creates **new** repositories public (`up test run --help`: "Create new repositories with public
-visibility.") and does not change an existing one:
-
-| Repository state | Without `--public` | With `--public` |
-|---|---|---|
-| Does not exist yet | created **private**: install cannot pull, `context deadline exceeded` | created public: works |
-| Exists, `public: true` | works | works |
-| Exists, `public: false` | hangs, then `context deadline exceeded` | **still hangs**: the flag does not flip an existing repository |
-
-Adding `--public` to a retry looks like the fix for the last row and changes nothing.
-
-**`--public` is the user's decision, never yours.** It permanently publishes their package; that is a
-disclosure choice, not a debugging step, and re-running without the flag does not undo it.
+`public = True` → go on. Anything else needs a decision that is not yours: `--public` only makes a repository
+it *creates* public, so it fixes "does not exist yet" and changes nothing for an existing private one
+(`charter/targets.md`).
 
 - If the caller already chose `--public` (in the brief, or earlier in the conversation), use it and do not ask
   again.
 - Otherwise, before burning a run, name the options: publish publicly, change the existing repository's
   visibility (the user's call, outside this skill), push to a repository the control plane can already pull
   from (`--repository`), or have the caller choose the local target instead. Interactive, ask; unattended,
-  stop and report. Never add `--public` because a run hung.
+  stop and report. **Never add `--public` because a run hung: it permanently publishes the user's package.**
 
 **3. Credentials.** `source: Upbound` web identity works here, and only here. Each test gets its own control
 plane named `<project>-uptest-<test>`, so a trust policy needs a wildcard subject (inference). A static Secret
@@ -65,10 +48,9 @@ works too. Shapes: author-tests' `e2e.md` reference.
 
 ## Target flags
 
-`--kubeconfig` is an input the CLI reads, never an output it writes. A stale or garbage file at that path is
-believed, fails to resolve, and the run silently falls back to `Creating local development control plane...`.
-Observed: a leftover `/tmp/kubeconfig-*` holding an error string turned a Space run into a local one. So write
-it fresh, check it, and pass `--control-plane-group` explicitly even when the context names the group:
+Write the kubeconfig fresh in this run and check it: `--kubeconfig` is an input, and a stale file sends the run
+to local kind (`charter/targets.md`). Pass `--control-plane-group` explicitly even when the context names the
+group:
 
 ```bash
 KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
@@ -110,17 +92,15 @@ ready`, no XR exists and tracing resources is wasted effort:
 
 ```bash
 up controlplane list                     # the control plane usually reads Available/Healthy regardless
-up ctx ../<control-plane-name>           # relative form; `up ctx default/<cp>` is rejected
+up ctx ../<control-plane-name>           # relative form
 kubectl get configuration.pkg.crossplane.io
 kubectl describe configuration.pkg.crossplane.io <name>
 ```
 
-A `401 Unauthorized` or `UNAUTHORIZED: authentication required` in the unpack error means the control plane
-cannot pull the package that was just pushed: a private repository with no pull credential on that Space
-(common when `up profile list` shows the active profile as `disconnected`). Fix `spec.repository` or the
-Space's pull secret; retrying the test does not help.
+A `401 Unauthorized` or `UNAUTHORIZED: authentication required` in the unpack error is the private-repository
+case of precondition 2 (`charter/targets.md`): retrying does not help; hand back that precondition's options.
 
-For the troubleshooting brief in [troubleshooting.md](troubleshooting.md), get the test control plane's kubeconfig while it
+For the brief in [troubleshooting.md](troubleshooting.md), get the test control plane's kubeconfig while it
 exists:
 
 ```bash
