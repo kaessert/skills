@@ -8,6 +8,7 @@ references:
   - references/charter/evidence.md
   - references/charter/generators.md
   - references/charter/provider-schema.md
+  - references/charter/targets.md
   - references/charter/tdd.md
   - references/charter/v2-resources.md
   - references/charter/xrd-design.md
@@ -60,6 +61,7 @@ or the worked example behind a rule.
 | [`charter/provider-schema.md`](references/charter/provider-schema.md) | measured constraint density, and the rules that live only in cloud API docs (§6) |
 | [`charter/container.md`](references/charter/container.md) | which languages are containerized, and what crosses the boundary (§7) |
 | [`charter/evidence.md`](references/charter/evidence.md) | reading a render, how `assertResources` matches, making a suite exhaustive, what a suite must contain (§8) |
+| [`charter/targets.md`](references/charter/targets.md) | where `up project run` and `up test run --e2e` land (local KIND or a Space), reading `up ctx`, the group, `--kubeconfig`, `--public` and repository visibility, a run stuck on `Waiting for package to be ready`, teardown (§9) — read before any run that creates a control plane |
 | [`charter/generators.md`](references/charter/generators.md) | the `--language` slugs, and what each CLI generator actually emits (§10) |
 | [`rules-card.md`](references/rules-card.md) | the charter on one screen, plus a reviewer variant, for an orchestrator to paste into agent prompts — loading a skill does not load this charter |
 
@@ -113,7 +115,7 @@ skill's default and why.
 | Composition language | `functions/*/` contents — see [`languages/`](references/languages/) |
 | Test language | the `tests/*/` dirs that produce a `CompositionTest` or `E2ETest` — may differ from the composition language; with none yet, §10 picks it |
 | Provider field names, types and constraints | the generated models under `.up/` |
-| Current Space / group / control plane | `up ctx . --short` |
+| Current Space / group / control plane | `up ctx . --short` — how to read it: [`charter/targets.md`](references/charter/targets.md) |
 
 Read the XRD's **defaults** before you design anything against it. `up test run` applies them
 itself — it derives a CRD from the XRD and runs Kubernetes' structural-defaulting library over
@@ -353,27 +355,21 @@ reports that status. For that, `--e2e` or a live apply — or say it is unverifi
 
 ## 9. Never create infrastructure as a side effect
 
-A group, a Space, a control plane, or a published package is the user's decision.
+A group, a Space, a control plane or a published package is the user's decision. Running what
+you were asked to run — an E2E test, `up project run` — is not a side effect; anything you add
+to make it work is.
 
-- **Never create a control-plane group** to make a command work. `--control-plane-group`
-  defaults to the current context's group, and an empty group falls back to the kubeconfig
-  namespace and then to the literal `default` — a cloud control plane in group `default` is a
-  real thing you just created, not a no-op.
-- **Check the context is in a Space before you start.** If the current kubeconfig context is
-  *not* an Upbound Space context — a plain EKS or docker-desktop context — the run silently
-  uses a **local KIND cluster** instead, which is a different result rather than a fallback.
-  A Space-level context does not trigger this; a non-Space one does. `up ctx . --short` tells
-  you which you have.
-- **`--public` publishes the user's package.** It is a disclosure decision, never a debugging
-  step. It applies only to repositories the command *creates*: pushing to a repository that
-  already exists leaves its visibility untouched. `up repository update --private` can flip
-  the flag back afterwards, but it cannot un-publish what was already fetched — treat the
-  disclosure as irreversible even though the setting is not. Accepted by `up test run`,
-  `up project push`, `up project run` and `up project simulate create`.
-- **Delete what this run created; deleting anything else is the user's call.** Cleaning up
-  your own leftovers — an e2e control plane, a kind cluster and its registry container, a
-  scratch directory — is required, not optional. For anything you did not create, report what
-  you would delete and let the user choose.
+- **Never create a group, Space or control plane to make a command work.**
+- **Never let the context choose the target silently.** Read it with `up ctx . --short`, or
+  pass `--local`; a local KIND result is not a Space result.
+- **Never pass `--public` on your own initiative.** It publishes the user's package — an
+  irreversible disclosure, never a debugging step.
+- **Never pass a `--kubeconfig` you did not write and check in this run.**
+- **Delete what this run created, and nothing else.** Your own leftovers — a control plane, a
+  kind cluster and its registry container, a scratch directory — are yours to remove; for
+  anything else, report what you would delete and let the user choose.
+
+**Detail:** [`charter/targets.md`](references/charter/targets.md) — which control plane a run lands on, how to read `up ctx`, how the group defaults to `default`, why a bad `--kubeconfig` silently goes local, what `--public` does and does not change, diagnosing `context deadline exceeded`, and teardown.
 
 ---
 
