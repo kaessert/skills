@@ -123,11 +123,13 @@ requirement on a file — dependencies in `upbound.yaml`, a frozen XRD surface, 
   surface; `<author-configuration-package>` is the directory containing that skill's SKILL.md,
   beside this skill's directory. Where the project has a gate script, such checks belong there,
   beside the build and the test run (charter §2: the project's gate wins; `verify-configuration`).
-  Where it has none, report which requirements no automated check covers.
 - **Never turn a test program into a linter.** A test dir that checks repo files, exits
   non-zero on a mismatch and prints `items: []` adds zero tests. Passing, it drops out of the
   count (alone: `No test files found`, exit 0); failing, it stops at `✗ Parsing tests`, which
   is a broken test, not RED.
+- **The report lists what nothing covers.** A required line, not optional prose: by spec
+  clause, each requirement no automated check covers (e.g. XRD `required` lists, enums,
+  scope; the dependency set), and whether it was checked by hand or not at all.
 
 ## Step 1: Detect the Test Language (do this first)
 
@@ -336,5 +338,6 @@ authoring is complete when:
 - Test content follows the agnostic rules + the matching per-language reference
 - All critical fields asserted (not just existence)
 - The new assertion was observed to FAIL before the implementation existed, and to pass after
+- The report lists, by spec clause, each requirement no automated check covers
 - The gate passed once the suite was green — the project's own gate if it has one, else
   `verify-configuration`, without a deploy where none is allowed (see The gate, after the loop)
