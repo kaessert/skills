@@ -85,7 +85,7 @@ every `required:`, `default:`, open-ended map and `status` field you meant to ha
 | `up example generate [<xrd>]` | wizard, or an XRD → `examples/<plural>/example.yaml` |
 | `up xrd generate <example.yaml>` | an example **XR** → an inferred `apis/<plural>/definition.yaml` + language models. **Not for the XRD you ship**: at most a read-only second opinion (below) |
 | `up composition generate <xrd\|xr>` | XRD or XR → `apis/<plural>/composition.yaml`, **and adds the required function packages as dependencies** |
-| `up function generate <name> [<pipeline-path>]` | → `functions/<name>/…`, and wires it into that composition's pipeline |
+| `up function generate <name> [<pipeline-path>]` | → `functions/<name>/…`, and wires it into that composition's pipeline. On an existing `functions/<name>` it prompts to overwrite and, without a TTY, cancels: wire the step by hand (charter `generators.md`) |
 | `up test generate <name> [--e2e]` | → `tests/test-<name>/…` (or `tests/e2etest-<name>/…`) |
 
 `up xrd generate` also accepts `--input rgd` (ResourceGraphDefinition) and `--input SimpleSchema`,
@@ -195,6 +195,7 @@ MODIFY EXISTING:
 
 ```bash
 # MUST follow this exact sequence
+0. Set upbound.yaml metadata  # spec.repository names the embedded function in every functionRef
 1. Create files + add dependencies
 2. up dep update-cache
 3. up project build           # FIRST - generates models

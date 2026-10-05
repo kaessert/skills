@@ -32,5 +32,13 @@ directly (§5). Nothing wires it up — `up project build` reads whatever is in 
 | `up xrd generate <example>` | a schema inferred from one example: no `required:`, no `default:`, no `minItems`, no `status` properties, `integer` widened to `number`, an open-ended map frozen into the keys the example used, and an array's item schema taken from the **last** element only. **Write the XRD yourself** (§5) — repairing all of that is more work than authoring it. |
 
 The `functionRef` name in a composition is `<repository-org>-<repository-name><function-dir>`,
-concatenated with no separator between the repository name and the directory — read
-`spec.repository` in `upbound.yaml` if you have to write one by hand.
+concatenated with no separator between the repository name and the directory, taken from
+`spec.repository` in `upbound.yaml` when you generate. **Set the project metadata before
+`up composition generate` and `up function generate`:** the embedded function's name follows
+`spec.repository`, so changing it afterwards leaves every `functionRef` naming the old function,
+and they must be regenerated or rewritten with this formula.
+
+`up function generate <n> <composition-path>` on an existing `functions/<n>` asks whether to
+overwrite it. Without a TTY it prints `operation cancelled by user` and exits 1 (observed with
+up v0.55.0). To wire a function that already exists, add the step by hand instead: a
+`functionRef.name` from the formula above and `step: <n>`, before the auto-ready step.
