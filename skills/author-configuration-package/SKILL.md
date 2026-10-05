@@ -1,6 +1,6 @@
 ---
 name: author-configuration-package
-description: Use this skill when user requests to create, scaffold, modify, or extend a Crossplane configuration package. Handles project initialization, XRD creation/modification, composition setup, dependency management, function generation, building, and setting up the local development environment. Use immediately when user mentions creating/scaffolding/modifying/extending a configuration package, adding new resources to an existing package, installing or adding a provider ("add provider-aws-s3", "install the AWS provider", `up dep add`), or setting up the Python environment ("configure a venv", "my imports do not resolve", "set the VS Code interpreter"). Use this skill instead of manually creating project structures, XRDs, or running `up project init`/`up function generate` commands directly. This skill ensures correct build order, proper scaffolding, and prevents common initialization mistakes that manual setup lacks.
+description: Use this skill when user requests to create, scaffold, modify, or extend a Crossplane configuration package. Handles project initialization, XRD creation/modification, composition setup, dependency management (including MRAPs and `up dep add --api`), function generation, building, and setting up the local development environment. Use immediately when user mentions creating/scaffolding/modifying/extending a configuration package, adding new resources to an existing package, installing or adding a provider ("add provider-aws-s3", "install the AWS provider", `up dep add`), or setting up the Python environment ("configure a venv", "my imports do not resolve", "set the VS Code interpreter"). Use this skill instead of manually creating project structures, XRDs, or running `up project init`/`up function generate` commands directly. This skill ensures correct build order, proper scaffolding, and prevents common initialization mistakes that manual setup lacks.
 license: Apache-2.0
 references:
   - references/knowledge.md
@@ -259,6 +259,25 @@ equivalent.
 
 **Always:** prefer **v2+ Upbound Official families** (`provider-<cloud>-<service>`) over the monolithic `provider-<cloud>`; after the first build, verify the composed resources exist under `.up/python/models` (or the KCL/Go model tree) and correct Kinds/API versions. When more than one package/family could fit, ask the user, listing the candidates rather than guessing.
 
+## Activating managed resources: ManagedResourceActivationPolicy (MRAP)
+
+`kind: ManagedResourceActivationPolicy`, `apiVersion: apiextensions.crossplane.io/v1alpha1`,
+with `spec.activate:` listing MRD names (`vpcs.ec2.aws.m.upbound.io`). Observed with up v0.55.0:
+
+- **The manifest must sit under `apis/`** (any subdirectory, e.g. beside the XRD). Anywhere
+  else (`policies/`, `examples/`) it is silently left out of the package.
+- **`up project build` barely validates it.** A field typo ships an MRAP that activates
+  nothing; a wrong `kind` or `apiVersion` is silently dropped; only a wrong value type fails.
+  `activate` entries are not checked against any CRD. Verify an MRAP on a control plane.
+- **The default policy hides its effect.** UXP's default MRAP activates `*`. To see yours, start
+  the control plane with the Crossplane Helm value `provider.defaultActivations: []` (e.g.
+  `up project run --local --helm-values <file>`; charter §9 decides whether you may) and check
+  that exactly the MRDs you listed are Active.
+- **`up dep add --api crossplane:<tag>` only adds MRAP models** for Go/Python/KCL; the build
+  does not need it. The tag must be a UXP version in both `upbound/crossplane` and
+  `upbound/controller-manager`: `v2.1.4-up.1` worked; `v2.1.0`, `v2.1.3` and `v2.1.3-up.1`
+  returned 404. Look the tag up; don't guess.
+
 ## Quick Reference
 
 | Phase | Action | Key Command |
@@ -364,15 +383,9 @@ kubectl apply -f examples/providerconfig.yaml
 
 **Kind naming (new vs migration).** For a **new** config, name the XRD Kind exactly as the user's XR (e.g. `Network`) — **no `X` prefix and no `claimNames`** (those are the v1 claim model). An XRD from a template or an older project may use the legacy claim-based `X<Kind>` + `claimNames: <Kind>` (`up project init` templates are v1); for a new namespaced XR, switch it to the intended Kind and drop `claimNames`. **When migrating an existing v1 config, keeping the `X`-prefixed Kind is fine** — don't force-rename existing XRs.
 
-### Provider Options by Cloud
+### Dependency pitfalls
 
-| Cloud | Common Providers |
-|-------|------------------|
-| AWS | provider-aws-ec2, provider-aws-rds, provider-aws-s3, provider-aws-iam, provider-aws-eks |
-| Azure | provider-azure-compute, provider-azure-network, provider-azure-storage |
-| GCP | provider-gcp-compute, provider-gcp-network, provider-gcp-storage |
-
-> **Base/cross-service resources** (`ResourceGroup`, `ProviderConfig`, …) ship in **`provider-family-<cloud>`** (e.g. `provider-family-azure`), **not** the service providers above — service providers depend on the family transitively. See "Resolving Provider/Function Packages" above.
+Provider packages by cloud: [knowledge.md](references/knowledge.md#phase-4-dependencies).
 
 > **Pitfall — external pipeline functions must be declared dependencies.** Your project's own **embedded** functions (built from `functions/`) are wired automatically. But an **external** function `functionRef` (e.g. `crossplane-contrib-function-auto-ready`, `function-patch-and-transform`) that isn't in `upbound.yaml` `dependsOn` and cached (`up dep update-cache`) makes `up test run`'s render fail with `unknown function … is it listed in the render input?`. **Fix by declaring the dependency — do not delete a pipeline step the project needs.** (`up test run` *does* render declared external functions — verified.) The one step to delete is one outside the project's declared function set, such as the duplicate auto-ready step `up composition generate` adds: remove it together with its dependency.
 
