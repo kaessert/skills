@@ -102,13 +102,16 @@ first; its Python layout differs from what `up function generate` produces.
 ## Phase 2: Gather the project and resource information
 
 From the spec: project name, API group, cloud, organisation, maintainer; then the resource
-Kind, its plural and its version (`v1alpha1` for a new API, charter `xrd-design.md`).
+Kind, its plural and its version (`v1alpha1` for a new API, charter `xrd-design.md`); and the
+function language for Phase 7 (`kcl`, `python`, `go`, `go-templating`) — from the spec or an
+existing function, else ask: it is a decision, not a discoverable fact. New tests follow it
+(charter §10).
 Interactive and not in the spec: ask, with the tables in
 [templates.md](references/templates.md#questions-for-a-new-project).
 
 ## Phase 3: Write the XRD, and check its design
 
-**Write the XRD yourself** (charter §5 has the reason and the v2 skeleton). For a **new** XRD:
+**Write the XRD yourself** (charter §5 has the reason, `charter/v2-resources.md` the v2 skeleton). For a **new** XRD:
 
 | Field | Value |
 |---|---|

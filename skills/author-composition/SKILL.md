@@ -126,7 +126,7 @@ The design you just settled fixes what the function must emit — keys, Kinds, f
 that as an assertion now, while it states intent.
 
 1. Make sure the XRD and a composition exist so the test has something to point at. Write the
-   XRD yourself (`author-configuration-package`; charter §5 has the v2 skeleton), scaffold the
+   XRD yourself (`author-configuration-package`; the charter's `charter/v2-resources.md` has the v2 skeleton), scaffold the
    composition with `up composition generate`, which emits only an auto-ready step, and wire
    your function in with `up function generate <n> <composition-path>`. The function body
    stays empty or unchanged.

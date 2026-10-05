@@ -253,7 +253,7 @@ best noise and at worst breaks the resource.
 | `managementPolicies` | **No** | The namespaced MR spec carries `+kubebuilder:default={"*"}`, so the API server fills it in, and that default deletes the external resource with the MR. Never write `["*"]` yourself. Set it only for a different policy — `["Create","Observe","Update","LateInitialize"]` to orphan on delete — or when the project's API exposes it as a parameter. |
 | `deletionPolicy` | **No** | The namespaced MR spec has no such field. To orphan, use `managementPolicies` (above); to delete, set nothing. A v1 API's `deletionPolicy` parameter maps the same way (`plan-v2-migration`). |
 | `providerConfigRef` | Omit it if and only if `ClusterProviderConfig/default` exists and is the right one | The same struct, the same way: `+kubebuilder:default={"kind":"ClusterProviderConfig","name":"default"}`. |
-| `metadata.name` | Only for a stable external name | Otherwise Crossplane generates `<prefix>-<sha256(xr-uid + composition-resource-name)[:12]>`, where the prefix comes from the `crossplane.io/composite` label, truncated to 63 chars. Deterministic for one XR instance, **not** across re-creations — and it falls back to a random 5-char suffix when the composition-resource-name annotation or the controller ownerRef is missing. Inside a *render* it is fully deterministic and safe to assert — see §8. |
+| `metadata.name` | Only for a stable external name | Otherwise Crossplane generates `<prefix>-<sha256(xr-uid + composition-resource-name)[:12]>`, where the prefix comes from the `crossplane.io/composite` label, truncated to 63 chars. Deterministic for one XR instance, **not** across re-creations — and it falls back to a random 5-char suffix when the composition-resource-name annotation or the controller ownerRef is missing. Inside a *render* it is fully deterministic and safe to assert — see [`charter/evidence.md`](references/charter/evidence.md). |
 | `crossplane.io/composition-resource-name` | Never by hand | It comes from the key you store the resource under. |
 
 **These are defaults; the project may override them (§2).** When the project's spec or API
@@ -357,8 +357,8 @@ to make it work is.
   irreversible disclosure, never a debugging step.
 - **Never pass a `--kubeconfig` you did not write and check in this run.**
 - **Delete what this run created, and nothing else.** Your own leftovers — a control plane, a
-  kind cluster and its registry container, a scratch directory — are yours to remove; for
-  anything else, report what you would delete and let the user choose.
+  kind cluster and its registry container, a scratch directory — must be removed before
+  you report; for anything else, report what you would delete and let the user choose.
 
 **Detail:** [`charter/targets.md`](references/charter/targets.md) — which control plane a run lands on, how to read `up ctx`, how the group defaults to `default`, why a bad `--kubeconfig` silently goes local, what `--public` does and does not change, diagnosing `context deadline exceeded`, and teardown.
 

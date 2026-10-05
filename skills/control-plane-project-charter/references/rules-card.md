@@ -27,7 +27,7 @@ reviewer variant into prompts for agents that review. Section numbers (§N) are 
 - Backfilling a test for working code: mutate the implementation, never the test's expected
   value, see the test go red, then revert (§3).
 - Every value the function passes through gets, in at least one test, a value that is not the
-  default and no sibling field shares; otherwise a hard-coded constant stays green (§3).
+  default and no sibling field shares; otherwise a hard-coded constant stays green (§3, `charter/tdd.md`).
 - New tests use the language of the existing `CompositionTest`/`E2ETest` dirs, else the
   composition language, else YAML. A program printing `items: []` is no test and sets
   nothing (§10).

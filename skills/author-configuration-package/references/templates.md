@@ -185,6 +185,7 @@ Only for what the spec does not say (SKILL.md Phase 2).
 | Cloud provider | AWS, Azure, GCP, other | for the provider packages |
 | Organization | acme | the `repository` field |
 | Maintainer | `Platform Team <platform@acme.io>` | |
+| Function language | kcl, python, go, go-templating | the `--language` of Phase 7; tests follow it (charter §10) |
 
 Then the resource:
 

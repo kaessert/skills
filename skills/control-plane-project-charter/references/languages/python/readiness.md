@@ -45,7 +45,8 @@ if connection_data:
     resource.update(rsp.desired.resources["connection-secret"], connection_secret)
 ```
 
-The `k8s` core models need the `k8s` API dependency in `upbound.yaml` ([`test-templates.md`](test-templates.md)).
+`connection_details` values are bytes: `.decode()` them for `stringData`, or base64-encode them
+for `data`. The `k8s` core models need the `k8s` API dependency in `upbound.yaml` ([`test-templates.md`](test-templates.md)).
 
 ## Mark a composed ProviderConfig ready
 

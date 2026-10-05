@@ -119,7 +119,7 @@ Two layouts are current. Match the one the project uses; never convert one to th
 | Test | `tests/test-<n>/test/__main__.py`: builds the tests and ends with `print(yaml.dump({"items": [...]}))` | `tests/test-<n>/main.py` (+ `resources.py`): module-level `CompositionTest` objects; no `items`, nothing printed |
 | Model import | `from models.io…` (installed package) | `from .model.io…` (the `model` symlink) |
 | Dependencies | `pyproject.toml` (hatch) with `crossplane-models @ file:./<rel>/.up/python` | `requirements.txt` + the `model -> ../../.up/python/models` symlink |
-| Produced by | `up function generate`, `up test generate --language python` | `up project init` language templates (e.g. AWS Bucket + Python) |
+| Produced by | `up function generate`, `up test generate --language python` (up ≥ v0.50.0; earlier versions generate the embedded layout) | `up project init` language templates (e.g. AWS Bucket + Python) |
 
 How `up` picks the builder differs between functions and tests:
 
