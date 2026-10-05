@@ -21,8 +21,7 @@ runs, and which environment it sees, depends on the test language (up v0.55.0 so
 but a Go test written that way ports to the other languages unchanged, and one `grep` for `UP_`
 finds everything the suite needs before a run.
 
-For KCL and Python, two consequences, and they are the difference between a working test and
-two wasted runs:
+For KCL and Python, two consequences:
 
 1. **`~/.aws`, `~/.config/gcloud` and `~/.azure` are not mounted.** Nothing that reads a
    credentials file or a cloud CLI's config finds anything. A default credential chain

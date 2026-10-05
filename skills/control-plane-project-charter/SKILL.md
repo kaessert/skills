@@ -41,7 +41,7 @@ which language a project is written in or which skill you happen to be: how to b
 agent, how to develop, what Crossplane v2 actually requires, and how to report what you did.
 
 Language-specific syntax lives in [`languages/`](references/languages/) — one file per language,
-indexed by [`languages/README.md`](references/languages/README.md); §10 says which to read. Skill
+indexed by [`languages/README.md`](references/languages/README.md), which holds the detection table (§10). Skill
 workflows live in each skill's `SKILL.md`. Nothing in this file is language-specific, and
 nothing in it is optional.
 
@@ -56,7 +56,7 @@ or the worked example behind a rule.
 |---|---|
 | [`charter/agent-context.md`](references/charter/agent-context.md) | what inline and forked (separate-agent) skills may and may not do (§1) |
 | [`charter/tdd.md`](references/charter/tdd.md) | the two-tier inner loop, and backfilling tests for existing code (§3) |
-| [`charter/v2-resources.md`](references/charter/v2-resources.md) | the v2 XRD skeleton, what CRD defaults do to a render, choosing a ProviderConfig (§5) |
+| [`charter/v2-resources.md`](references/charter/v2-resources.md) | the v2 XRD skeleton, what CRD defaults do to a render, choosing a ProviderConfig, the symptom of a missing or wrong one (§5) |
 | [`charter/xrd-design.md`](references/charter/xrd-design.md) | naming, validation, immutability, status and printer columns for the XR API (§5) |
 | [`charter/provider-schema.md`](references/charter/provider-schema.md) | measured constraint density, and the rules that live only in cloud API docs (§6) |
 | [`charter/container.md`](references/charter/container.md) | which languages are containerized, and what crosses the boundary (§7) |
@@ -77,10 +77,8 @@ you consider asking anything; every skill's mode line means this:
 - **Unattended** — handed a brief as a separate agent (forked), or no user in the loop: never
   ask; decide from the spec and state the assumption, or stop and report.
 
-**When nobody can answer, never block on a question.** That includes a caller that cannot
-relay a question: decide from the project's own spec and say which assumption you made, or
-stop and report the open question as your result. Wherever a skill says to ask, read it with
-this rule.
+**When nobody can answer, never block on a question** — that includes a caller that cannot
+relay one. Wherever a skill says to ask, read it with this rule.
 
 When a skill says to hand work to a sub-agent, or to run a command in the background, use
 your harness's own way of doing that. If it has none, do the work in band: follow the brief
@@ -123,7 +121,7 @@ the XR before the pipeline sees it — so a field with a `default:` reaches your
 the example sets it or not, and a test that asserts only what the example mentions is asserting
 the XRD's defaults back to itself.
 
-Two limits, and they are easy to trip over:
+Two limits:
 
 - **Only if the test sets `xrdPath` (or inline `xrd`).** Without it the XR is rendered exactly
   as written and no defaulting happens at all.
@@ -138,12 +136,9 @@ This is the plugin's default flow for composition code, tests, and migrations al
 `author-tests` owns the authoring detail; the loop itself is
 here because every skill is bound by it.
 
-**Why test-first here specifically.** Every evaluation round of these skills has produced the
-same finding: coverage reported that did not exist — *"covers the conditional branch"*,
-*"Coverage: complete"* — for tests that could not have failed. Writing the test first and
-**watching it fail** is the only thing that makes a coverage claim checkable rather than
-aspirational. You do not have to argue that the test would catch a regression; you saw it
-catch the absence of the implementation.
+**Why test-first.** The most common false report is coverage for a test that could not have
+failed — *"covers the conditional branch"*, *"Coverage: complete"*. Watching the test fail first
+makes a coverage claim checkable: you saw it catch the absence of the implementation.
 
 ### The loop
 
@@ -177,11 +172,10 @@ catch the absence of the implementation.
 
 ## 4. Report the effect, not the intent
 
-Every skill in this plugin that reported success in a recent evaluation overstated what it
-had verified — a green composition suite reported as "production-ready", a local KIND run
-reported as a Space pass, "all resources Ready" pasted above a tree showing `Ready=False`,
-provider values "verified" that were read back off the input manifest. The pattern is always
-the same: asserting what the change was *meant* to do instead of reading back what it *did*.
+Overstated reports follow one pattern — a green composition suite called "production-ready",
+a local KIND run reported as a Space pass, "all resources Ready" above a tree showing
+`Ready=False`, provider values "verified" from the input manifest: asserting what the change was
+*meant* to do instead of reading back what it *did*.
 
 Before writing any summary:
 
@@ -198,9 +192,7 @@ Before writing any summary:
    a useful report. A checkmark you cannot support is not.
 5. **A coverage claim is a claim about what would fail.** Before writing "covers X",
    "complete", or "N/N", answer: *what change to the code would make this go red?* If you
-   cannot name one, you have not covered X — you have written something that passes. This
-   is where the reports go wrong most often: "covers the conditional branch" and
-   "Coverage: complete" were both false for the very test the skill had just written.
+   cannot name one, you have not covered X — you have written something that passes.
 6. **Drop the checkmark register.** `✅ Complete`, `PASS`, and a tidy summary table read as
    verification regardless of what is behind them, and they are what makes an overstated
    report persuasive. Write what ran, what it printed, and what remains unknown. If the
@@ -285,8 +277,8 @@ provided` (v1.3.3), and composition tests that assert the same omission stay gre
 
 Namespaced APIs and `forProvider`-only are *Crossplane* correctness. They say nothing about
 whether the provider will accept the resource. A composition can be perfectly v2-conformant
-and still emit a resource AWS rejects — observed: lifecycle rules with neither `filter` nor
-`prefix`, which fail with `MalformedXML`, while composition tests passed.
+and still emit a resource AWS rejects: S3 lifecycle rules with neither `filter` nor `prefix`
+pass composition tests and fail with `MalformedXML`.
 
 **First, read what the models do record.** Some generated models carry conditional rules the
 type system cannot express, in docstrings and field descriptions: *"Required if
@@ -336,8 +328,7 @@ cannot load Composition from "": not a composition: /
 Per §3's table that is a **broken test, not RED** — fill the paths in first.
 
 The vacuous pass is the *next* state: correct paths, and an `assertResources` list you never
-populated. An empty expected list produces no errors, so that test is green and means nothing
-whatsoever.
+populated. An empty expected list produces no errors, so that test is green and means nothing.
 
 A filled-in single test is not much better: one input shape, asserting only composed
 resources, passes over a function that crashes on a minimal XR and drops three of four status
