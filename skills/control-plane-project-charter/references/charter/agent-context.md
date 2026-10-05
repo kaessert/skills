@@ -10,18 +10,12 @@ You share their context and their working directory, and you can ask.
 
 - **Read the conversation before you go looking.** The caller has usually already
   established the project root, the language, the provider family and the target context.
-  Re-deriving those is the hillclimbing these skills exist to remove.
 - **Ask when a decision is genuinely undetermined.** A question costs one turn and reaches
   the user. Guessing costs a rebuild, a suite written against the wrong shape, or a resource
   the provider rejects. Ask about decisions — is this list one aggregate resource or N,
-  which layout, which region — never about things the project can tell you.
-- **Do not ask what you can discover.** Layout, model paths, existing dependencies, current
-  context: look, do not interview.
-- **Unless nobody can answer.** If your caller is itself a forked agent — `execute-v2-migration`
-  can run that way — it cannot reach the user either, so a question there terminates *its* turn.
-  The same holds in an autonomous run with no user in the loop. In both cases, decide from the
-  project's own spec and state the assumption you made, or stop and report the open question
-  as your result. Never block on a question nobody can answer.
+  which layout, which region — never about what the project can tell you (§2).
+- **Unless nobody can answer** — a caller that is itself a forked agent, or a run with no user
+  in the loop. Then §1's never-block rule applies.
 
 **Your work is visible.** Every command you run and every file you write lands in the
 caller's context, so your summary points at evidence they already have rather than standing
@@ -34,14 +28,13 @@ in for it. That removes the temptation, but not the discipline in §4.
   know where the project is unless you look. Never search the current working directory
   blindly — it may be an unrelated repository.
 - **Asking a question ends your turn.** The fork terminates and hands the caller a result
-  for work that never happened. An interview is a failed run that reports success. This
-  holds regardless of whether the caller waits for you — waiting changes *when* the caller receives your
-  result, not whether you can reach the user. You cannot.
+  for work that never happened: an interview is a failed run that reports success. A caller
+  that waits for you changes when it gets your result, not whether you can reach the user.
 
-**Act on the brief you were given, discover the rest from the project, and do the work.** Ask
-only when a genuinely irreversible decision is undetermined — publishing a package, or
-deleting something — and then state the assumption you would otherwise make. Prefer
-proceeding with a stated assumption over stopping.
+**Act on the brief you were given, discover the rest from the project, and do the work.**
+Prefer proceeding with a stated assumption over stopping. The exception is an irreversible
+decision nobody made — publishing a package, deleting something: do not make it; stop and
+report it as the open question, with the assumption you would otherwise have made.
 
 **Your only output channel is prose.** The caller cannot see your exit codes, your
 `render.log`, or your resource tree. That is exactly why §4 exists.

@@ -4,22 +4,17 @@ How sparse the recorded constraints really are, and the classes of rule that liv
 
 ---
 
-**Expect this to be sparse, not systematic.** Measured over the namespaced AWS models in a real
-project: `Conflicts with` in 12 of 127 Kinds, `Required if` in 3 — and those cluster in the big
-Kinds like RDS `Instance`. Two consequences: the grep is cheap and worth running, and **finding
-nothing is not evidence the API has no such rule.**
+Measured over the namespaced AWS models in a real project: `Conflicts with` in 12 of 127 Kinds,
+`Required if` in 3, clustered in the big Kinds like RDS `Instance`. So the grep is cheap and worth
+running, and **finding nothing is not evidence the API has no such rule.**
 
 One false positive to filter out: *"At most one of each condition type may apply"* appears in
 269 of 281 model files. It is the Kubernetes `Condition` docstring in every resource's *status*
 block, not a provider input constraint.
 
-**Then ask the structural question the models cannot answer:**
-
-> **When an XR field is a list, is one resource — or one rule — per element actually correct
-> for this API?**
-
-Treat *one element → one object* as a decision you justify, not the default. These are the
-rule classes that live only in the cloud API and never in a CRD schema:
+The structural question the models cannot answer: **when an XR field is a list, is one
+resource — or one rule — per element actually correct for this API?** (§6: a decision you
+justify, not the default.) These rule classes live only in the cloud API, never in a CRD schema:
 
 | Class of rule | Example | Where it is written down |
 |---|---|---|
