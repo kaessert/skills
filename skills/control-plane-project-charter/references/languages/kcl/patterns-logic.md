@@ -1,109 +1,50 @@
 # KCL: conditionals, comprehensions and references
 
-Conditional resources, list comprehensions, selector-based references, type merging, optional fields, and multi-branch logic.
+Conditional resources, list comprehensions, selector references, merging, optional fields and
+multi-branch logic. Structure and the helpers (`config.metadata`, `config.sanitizeLabels`) are
+in [`patterns.md`](patterns.md); the KCL index is [`../kcl.md`](../kcl.md).
 
-Structure and the entry point are in [`patterns.md`](patterns.md); language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.md).
+## Conditional resources
 
----
-
-## Pattern 6: Conditional Resource Creation
-
-### Simple Conditional
-
-```kcl
-generateResource = lambda config: {str: any} -> [any] {
-    [
-        Provider.Resource{...}
-    ] if config.enableFeature else []
-}
-```
-
-### Multiple Conditions
-
-```kcl
-generateResource = lambda config: {str: any} -> [any] {
-    [
-        Provider.Resource{...}
-    ] if config.enableFeature and len(config.items) > 0 and not config.useExisting else []
-}
-```
-
-### Full Example
+A generator returns a list, and an empty one when the condition does not hold: end the
+expression with `else []`, so the `+` that joins generators always gets a list. (Without an
+`else`, the line does not parse.)
 
 ```kcl
 _generateGateway = lambda config: {str: any} -> [any] {
-    """Generate gateway only if enabled and region is specified"""
     [
         ec2v1beta1.InternetGateway{
-            metadata = config.metadata("igw") | {
-                name = "igw-${config.resourceName}"
-                labels = config.sanitizeLabels(config.tags)
-            }
-            spec = {
-                forProvider = {
-                    region = config.region
-                    vpcIdSelector = { matchControllerRef = True }
-                    tags = config.tags | { Name = "igw-${config.resourceName}" }
-                }
+            metadata = config.metadata("igw")
+            spec.forProvider = {
+                region = config.region
+                vpcIdSelector.matchControllerRef = True
+                tags = config.tags | { Name = "igw-${config.resourceName}" }
             }
         }
-    ] if config.createGateway and config.region else []
+    ] if config.createGateway and len(config.zones) > 0 else []
 }
 ```
 
-**Key Principle**: Always end with `else []` to return empty list when conditions not met.
+## List comprehensions
 
----
-
-## Pattern 7: List Comprehension
-
-### Basic List Comprehension
-
-```kcl
-_generateItems = lambda config: {str: any} -> [any] {
-    [
-        Provider.Item{
-            metadata = config.metadata("item-${i}") | {
-                name = "item-${config.resourceName}-${i}"
-            }
-            spec = {
-                forProvider = {
-                    value = itemValue
-                }
-            }
-        }
-        for i, itemValue in config.items
-    ] if len(config.items) > 0 else []
-}
-```
-
-### Round-Robin Distribution (Availability Zones)
+Iterate with an index so each resource gets its own composition resource name, and distribute
+over zones round-robin with a modulo:
 
 ```kcl
 _generateSubnets = lambda config: {str: any} -> [any] {
-    """
-    Distributes subnets across zones using round-robin (modulo).
-    Example: 6 subnets across 3 zones = 2 subnets per zone
-    """
     [
         ec2v1beta1.Subnet{
             metadata = config.metadata("subnet-${i}") | {
-                name = "subnet-${config.resourceName}-${config.zones[i % len(config.zones)]}"
                 labels = config.sanitizeLabels(config.tags) | {
                     "zone": config.zones[i % len(config.zones)]
                     "index": str(i)
                 }
             }
-            spec = {
-                forProvider = {
-                    availabilityZone = config.zones[i % len(config.zones)]
-                    cidrBlock = cidr
-                    region = config.region
-                    vpcIdSelector = { matchControllerRef = True }
-                    tags = config.tags | {
-                        Name = "subnet-${config.resourceName}-${config.zones[i % len(config.zones)]}"
-                    }
-                }
+            spec.forProvider = {
+                region = config.region
+                availabilityZone = config.zones[i % len(config.zones)]
+                cidrBlock = cidr
+                vpcIdSelector.matchControllerRef = True
             }
         }
         for i, cidr in config.subnetCidrs
@@ -111,320 +52,110 @@ _generateSubnets = lambda config: {str: any} -> [any] {
 }
 ```
 
-### Key Techniques
+The labels are what a sibling selects on (below). Keep the index stable: it is part of the
+composition resource name, so reordering the input list renames, and orphans, live resources.
 
-- Use index iteration: `for i, item in items`
-- Modulo for round-robin: `zones[i % len(zones)]`
-- Label resources for later selection
-- Always check list lengths before iteration
+## References between composed resources
 
----
+Reference a sibling with a selector, never with a hardcoded ID; the provider resolves it once
+the target exists, so the function stays single-pass.
 
-## Pattern 8: Selector-Based Resource References
-
-**Never hardcode resource IDs. Always use selectors.**
-
-### Three Types of Selectors
-
-#### 1. Controller Reference (Same XR)
-
-```kcl
-parentResourceSelector = {
-    matchControllerRef = True
-}
-```
-
-Use when: Resource references its parent composite resource
-
-#### 2. Label Matching
-
-```kcl
-relatedResourceSelector = {
-    matchLabels = {
-        "resource-type": "compute"
-        "zone": "us-west-2a"
-    }
-}
-```
-
-Use when: Resource references sibling resources created by same composition
-
-#### 3. Combined (Controller + Labels)
-
-```kcl
-specificResourceSelector = {
-    matchControllerRef = True
-    matchLabels = {
-        "resource-type": "storage"
-    }
-}
-```
-
-Use when: Need to narrow selection within same XR
-
-### Example: Route Table Association
+| Selector | Matches |
+|---|---|
+| `matchControllerRef = True` | resources composed by the same XR |
+| `matchLabels = {...}` | resources carrying those labels |
+| both | labelled resources of the same XR, the usual way to pick one of several |
 
 ```kcl
 _generateRouteTableAssociations = lambda config: {str: any} -> [any] {
     [
         ec2v1beta1.RouteTableAssociation{
-            metadata = config.metadata("rta-${i}") | {
-                name = "rta-${config.resourceName}-${i}"
-            }
-            spec = {
-                forProvider = {
-                    region = config.region
-                    # Reference route table by controller
-                    routeTableIdSelector = {
-                        matchControllerRef = True
-                    }
-                    # Reference specific subnet by labels
-                    subnetIdSelector = {
-                        matchLabels = {
-                            "zone": config.zones[i]
-                            "index": str(i)
-                        }
-                    }
+            metadata = config.metadata("rta-${i}")
+            spec.forProvider = {
+                region = config.region
+                routeTableIdSelector.matchControllerRef = True
+                subnetIdSelector = {
+                    matchControllerRef = True
+                    matchLabels = { "zone": config.zones[i], "index": str(i) }
                 }
             }
         }
         for i in range(len(config.zones))
-    ] if len(config.zones) > 0 else []
+    ]
 }
 ```
 
-### Why Selectors?
+## Merging with `|`
 
-- Crossplane resolves references dynamically at runtime
-- No circular dependencies or ordering issues
-- Type-safe resource relationships
-- Supports matching multiple resources
-
----
-
-## Pattern 9: Type Merging with Pipe Operator
-
-**Pattern**: Use `|` operator to merge configurations (right overwrites left)
-
-### Order Matters
-
-`defaults | overrides | finalValues`
-
-### Spec Composition
+The right-hand side wins, so put defaults first and the specific values last:
 
 ```kcl
-spec = {
-    forProvider = {
-        region = config.region
-        customField = config.value
-    }
-}
+tags = config.baseTags | config.resourceTypeTags | { Name = "rt-${config.resourceName}" }
 ```
 
-### Tag Merging (Multi-Level)
+## Optional fields
+
+An absent field reads as `Undefined`, not `None` ([`patterns.md`](patterns.md#entry-point-maink)),
+so test both before falling back to a default, and use `?.` to read through a missing parent:
 
 ```kcl
-tags = config.baseTags | config.resourceTypeTags | {
-    Name = "resource-name"
-    ManagedBy = "crossplane"
-}
-# Order: base tags → type-specific tags → resource-specific tags
+retention = _oxrSpec.retentionDays if _oxrSpec.retentionDays not in [None, Undefined] else 7
+prefix = config.lifecycle?.prefix       # None if lifecycle is absent; no error
 ```
 
-### Metadata Composition
+To leave an optional field out of the rendered resource instead of writing a placeholder, merge
+it in conditionally:
 
 ```kcl
-metadata = config.metadata("resource-id") | {
-    name = "kubernetes-name"
-    labels = config.sanitizeLabels(config.tags)
-    annotations = {
-        "custom.io/annotation": "value"
-    }
-}
+spec.forProvider = {
+    type = sgRule.type
+    cidrBlocks = sgRule.cidrBlocks
+    region = config.region
+    securityGroupIdSelector.matchControllerRef = True
+} | ({fromPort = sgRule.fromPort} if sgRule?.fromPort else {}) \
+  | ({toPort = sgRule.toPort} if sgRule?.toPort else {}) \
+  | ({protocol = sgRule.protocol} if sgRule?.protocol else {})
 ```
 
-**Key Principle**: Start with defaults/base, then add specific overrides, then final required values.
+`if sgRule?.fromPort` drops a legitimate `0` (measured): test against `[None, Undefined]` where
+zero or `False` is a valid value. `rule` is a KCL keyword, so no variable can be called that.
 
----
+## Multi-branch logic
 
-## Pattern 10: Optional Field Handling
-
-### Three Techniques
-
-#### 1. Ternary with None Check
+Two strategies fit in one expression:
 
 ```kcl
-value = oxrSpec.field if oxrSpec.field != None else defaultValue
-boolValue = oxrSpec.flag if oxrSpec.flag != None else False
-```
-
-#### 2. Optional Field Access Operator (`?`)
-
-```kcl
-# Safe access - returns None if field doesn't exist
-value = config.item?.optionalField
-
-# Conditional dict merging for optional fields
-spec = {
-    requiredField = config.required
-} | ({optionalField = config.item.optional} if config.item?.optional else {})
-```
-
-#### 3. Conditional Dict Merging for Multiple Optional Fields
-
-```kcl
-spec = {
-    forProvider = {
-        # Always present
-        region = config.region
-        name = config.name
-    } | ({fromPort = rule.fromPort} if rule?.fromPort else {}) \
-      | ({toPort = rule.toPort} if rule?.toPort else {}) \
-      | ({protocol = rule.protocol} if rule?.protocol else {})
-}
-```
-
-### Full Example: Security Group Rule
-
-```kcl
-_generateSecurityGroupRule = lambda config, rule: any -> any {
-    """Generate security group rule with optional port fields"""
-    ec2v1beta1.SecurityGroupRule{
-        metadata = config.metadata("sgr-${rule.id}") | {
-            name = "sgr-${config.resourceName}-${rule.id}"
-        }
-        spec = {
-            forProvider = {
-                # Required fields
-                type = rule.type
-                cidrBlocks = rule.cidrBlocks
-                region = config.region
-                securityGroupIdSelector = { matchControllerRef = True }
-            } | ({fromPort = rule.fromPort} if rule?.fromPort else {}) \
-              | ({toPort = rule.toPort} if rule?.toPort else {}) \
-              | ({protocol = rule.protocol} if rule?.protocol else {})
-        }
-    }
-}
-```
-
----
-
-## Pattern 11: Complex Conditional Logic
-
-### Nested Conditionals (Strategy Selection)
-
-```kcl
-_generateResources = lambda config: {str: any} -> [any] {
-    """Generate resources with strategy selection"""
-    # Strategy 1: Distributed (one per zone)
+_generateNodes = lambda config: {str: any} -> [any] {
     [
         Provider.Resource{
-            metadata = config.metadata("resource-${i}") | {
-                name = "resource-${config.resourceName}-${config.zones[i]}"
-                labels = {"zone": config.zones[i]}
-            }
-            spec = {
-                forProvider = {
-                    zone = config.zones[i]
-                    region = config.region
-                }
-            }
+            metadata = config.metadata("node-${i}")
+            spec.forProvider = { zone = config.zones[i], region = config.region }
         }
         for i in range(len(config.zones))
-    ] if config.strategy == "distributed" and len(config.zones) > 0 else [
-        # Strategy 2: Single shared resource
+    ] if config.strategy == "distributed" else [
         Provider.Resource{
-            metadata = config.metadata("resource-0") | {
-                name = "resource-${config.resourceName}-shared"
-            }
-            spec = {
-                forProvider = {
-                    zone = config.zones[0]
-                    region = config.region
-                }
-            }
+            metadata = config.metadata("node-shared")
+            spec.forProvider = { zone = config.zones[0], region = config.region }
         }
     ] if config.strategy == "shared" and len(config.zones) > 0 else []
 }
 ```
 
-### Imperative Logic (Complex Scenarios)
-
-Use when list comprehensions become unwieldy (3+ nested conditions):
+With three or more interacting conditions, build the list imperatively inside the lambda:
 
 ```kcl
-_generateComplexResources = lambda config: {str: any} -> [any] {
-    """
-    Use imperative logic when list comprehensions become unwieldy.
-    Better for readability with 3+ nested conditions.
-    """
+_generateResources = lambda config: {str: any} -> [any] {
     resources = []
-
-    # Condition group 1
-    if config.enableFeature1 and len(config.items) > 0:
-        resources += [
-            Provider.ResourceType1{
-                metadata = config.metadata("type1") | {
-                    name = "type1-${config.resourceName}"
-                }
-                spec = {
-                    forProvider = { region = config.region }
-                }
-            }
-        ]
-
-    # Condition group 2 with sub-strategies
-    if config.enableFeature2:
-        if config.strategy == "distributed":
-            resources += [
-                Provider.ResourceType2{
-                    metadata = config.metadata("type2-${i}") | {
-                        name = "type2-${config.resourceName}-${i}"
-                    }
-                    spec = {
-                        forProvider = {
-                            zone = config.zones[i]
-                            region = config.region
-                        }
-                    }
-                }
-                for i in range(len(config.zones))
-            ]
-        else:
-            resources += [
-                Provider.ResourceType2{
-                    metadata = config.metadata("type2-shared") | {
-                        name = "type2-${config.resourceName}-shared"
-                    }
-                    spec = {
-                        forProvider = { region = config.region }
-                    }
-                }
-            ]
-
-    # Condition group 3
-    if config.enableFeature3 and not config.useExisting:
-        resources += [
-            Provider.ResourceType3{
-                metadata = config.metadata("type3") | {
-                    name = "type3-${config.resourceName}"
-                }
-                spec = {
-                    forProvider = { region = config.region }
-                }
-            }
-        ]
-
+    if config.enableFeature1:
+        resources += [Provider.ResourceType1{
+            metadata = config.metadata("type1")
+            spec.forProvider.region = config.region
+        }]
+    if config.enableFeature2 and config.strategy == "distributed":
+        resources += [Provider.ResourceType2{
+            metadata = config.metadata("type2-${i}")
+            spec.forProvider = { zone = config.zones[i], region = config.region }
+        } for i in range(len(config.zones))]
     resources
 }
 ```
-
-### When to Use Imperative
-
-- 3+ nested conditions
-- Multiple strategy branches
-- Building resources incrementally
-- Readability > brevity
-
----
