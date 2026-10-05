@@ -78,7 +78,7 @@ echo "EXIT=${PIPESTATUS[0]}"
 The result carries the complete output and the true exit code, which is the entire record.
 
 **Background only when the run cannot fit in ten minutes** — check the test's
-`spec.timeoutSeconds` (scaffold default 4500s) and expect a first run pulling providers to
+`spec.timeoutSeconds` (scaffolds write 4500s, the Go one 300s) and expect a first run pulling providers to
 overrun. Then run it in the background, and **wait for the exit notification**; a poll of the background output is a progress view for the user, never the basis of a verdict.
 If your harness cannot run commands in the background, run it in the foreground with the
 longest timeout your shell allows — do not detach it yourself — and report a run that timeout cut off as *cut off*, not

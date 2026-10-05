@@ -11,6 +11,7 @@ references:
 Run end-to-end tests with active monitoring, stuck detection (15 min threshold), and comprehensive debugging.
 
 See [knowledge.md](references/knowledge.md) for detailed commands and troubleshooting prompts.
+Writing or changing an `E2ETest` (fields, `defaultConditions`, credentials per target) is author-tests' job: its `e2e.md` reference.
 
 ## Phase 0: Know how you were started, and you are bound by the charter
 
@@ -261,8 +262,8 @@ showing `Ready=False`. Both halves came from the same run; the verdict was writt
 incomplete view of it.
 
 **If the run cannot fit in ten minutes, background is the only option — use it correctly.**
-Read the test's `spec.timeoutSeconds` first (the scaffold default is 4500s, i.e. 75
-minutes; a run that has to pull providers for the first time will not fit either). Then:
+Read the test's `spec.timeoutSeconds` first (scaffolds write 4500s, the Go one 300s; a run
+that has to pull providers for the first time will not fit either). Then:
 
 - Start it detached and **wait for it to exit.** You are re-invoked on completion with the
   real exit code; that notification, plus the `tee`'d log, is your evidence.
@@ -494,6 +495,6 @@ Checks for you before you report, not a report format (`control-plane-project-ch
 ## Notes
 
 - Tests create real cloud resources (auto-cleaned)
-- Uses web identity federation (no AWS creds needed)
+- Credentials depend on the target: web identity only on a Space (author-tests' `e2e.md` reference)
 - Expected duration: 30-40 minutes is normal
 - Each test runs in isolated control plane
