@@ -51,7 +51,8 @@ if "mysql" in req.observed.resources:          # KEY is "mysql", not "mysql-mypl
 
 ## Pattern 7: ProviderConfig Readiness
 
-For resources that act as ProviderConfigs (Helm, Kubernetes provider), mark ready AFTER update:
+A ProviderConfig the function composes (Helm, Kubernetes provider) has no `Ready` condition, so
+function-auto-ready cannot judge it: mark it ready explicitly, or the XR never becomes ready.
 
 ```python
 from crossplane.function import resource, response
@@ -80,10 +81,8 @@ resource.update(rsp.desired.resources["helm-provider-config"], helm_provider_con
 rsp.desired.resources["helm-provider-config"].ready = fnv1.READY_TRUE
 ```
 
-> **Order does not matter here.** `resource.update()` writes only `r.resource`; it never
-> touches `r.ready`. Measured on function-sdk-python 0.11.0 and 0.5.0: setting `ready` before or
-> after `update()` both leave `READY_TRUE`. Write-then-annotate is a fine habit, but nothing
-> depends on it.
+> The order relative to `resource.update()` does not matter: `update()` writes only
+> `r.resource`, never `r.ready` (measured on function-sdk-python 0.11.0 and 0.5.0).
 
 > **The readiness enum is `fnv1.READY_TRUE`** (from `crossplane.function.proto.v1.run_function_pb2 as fnv1`) — **not** `resource.READY_TRUE`. The `resource` module has no such symbol; `resource.READY_TRUE` raises `AttributeError` (verified against `crossplane-function-sdk-python` v0.11.0). `fnv1.Ready.READY_TRUE` also works.
 >

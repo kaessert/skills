@@ -55,8 +55,8 @@ test_network = compositiontest.CompositionTest(
         validate=False,  # scaffold/lab default
         assertResources=[
             # asserted resources: exclude_unset=True (partial match)
-            expected_rg.model_dump(by_alias=True, exclude_unset=True, exclude={"spec": {"deletionPolicy"}}),
-            expected_vnet.model_dump(by_alias=True, exclude_unset=True, exclude={"spec": {"deletionPolicy"}}),
+            expected_rg.model_dump(by_alias=True, exclude_unset=True),
+            expected_vnet.model_dump(by_alias=True, exclude_unset=True),
             # `assertResources` matches the COMPOSITE too - this is how you assert
             # composition outputs. There is no `assertComposite`/`assertStatus` field,
             # and its absence does NOT mean composite assertions are unsupported.

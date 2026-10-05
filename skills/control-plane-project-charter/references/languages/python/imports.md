@@ -68,8 +68,9 @@ Transformation:
 Output: from models.com.example.platform.storagebucket import v1alpha1
 ```
 
-**The one wrinkle:** if the group's *last* segment already equals the lowercased Kind, it is not
-repeated (the generator compares the group's leftmost segment against the Kind).
+**The one wrinkle:** if the group's *leftmost* segment (the last one after reversal) already
+equals the lowercased Kind, it is not repeated. The generator compares the last segment of the
+reversed path against the Kind (up `internal/schemas/generator/python.go`).
 
 | API group | Kind | Module |
 |---|---|---|

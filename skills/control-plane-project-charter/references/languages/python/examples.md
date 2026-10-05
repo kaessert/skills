@@ -195,7 +195,7 @@ spec:
   maintainer: Platform Team <platform@example.io>
   repository: xpkg.upbound.io/myorg/platform-network
   crossplane:
-    version: ">=v1.20.0"
+    version: ">=v2.0.0"
   apiDependencies:
   - type: k8s
     k8s:
@@ -211,10 +211,6 @@ spec:
     version: ">=v2.0.0"
   - apiVersion: pkg.crossplane.io/v1
     kind: Function
-    package: xpkg.upbound.io/crossplane-contrib/function-python
-    version: ">=v0.4.0"
-  - apiVersion: pkg.crossplane.io/v1
-    kind: Function
     package: xpkg.upbound.io/crossplane-contrib/function-auto-ready
     version: ">=v0.2.1"
 ```
@@ -223,28 +219,7 @@ spec:
 
 ## pyproject.toml (SDK layout)
 
-`up function generate`/`up test generate` create a `pyproject.toml` per function/test
-(this is what selects the SDK/hatch builder). The `crossplane-models` entry points at
-the project's generated models via a relative `file:` path.
-
-**Function** (`functions/<n>/pyproject.toml`):
-```toml
-dependencies = [
-  "crossplane-function-sdk-python==0.11.0",
-  "click==8.3.2",
-  "grpcio>=1.73.1",
-  "crossplane-models @ file:./../../.up/python",
-]
-```
-
-**Test** (`tests/<n>/pyproject.toml`):
-```toml
-dependencies = [
-  "pydantic==2.12.4",
-  "pyyaml==6.0.2",
-  "crossplane-models @ file:./../../.up/python",
-]
-```
-
-If the `crossplane-models` line is missing (schemas didn't exist at generate time),
-add it manually and re-run the build — see the sequencing gotcha at the top.
+`up function generate` and `up test generate` write it; do not hand-write one. The single edit
+you may need: if `.up/python` did not exist at generate time, the `dependencies` list lacks
+`"crossplane-models @ file:./../../.up/python"`. Add that line, run `up project build`, and
+re-run `setup_venv.py` ([`../python.md`](../python.md)).

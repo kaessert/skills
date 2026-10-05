@@ -147,10 +147,8 @@ Assertion rules:
 1. Tests **INCLUDE** `apiVersion` and `kind` on asserted resources (unlike function resource creation).
 2. Use the `.m.` suffix in `apiVersion` for v2 resources.
 3. Include `namespace` in v2 metadata.
-4. Exclude fields that vary. `exclude={"spec": {"deletionPolicy"}}` is **v1-only** — the `.m.`
-   v2 Spec has no `deletionPolicy` field at all, so the exclusion is inert on a v2 resource;
-   keep it only if the project still asserts against non-namespaced models.
-   For `managementPolicies`: `exclude_unset=True` keeps whatever you *did* set. If you set
+4. No `exclude={"spec": {"deletionPolicy"}}`: the `.m.` Spec has no `deletionPolicy` field, so
+   the exclusion does nothing. For `managementPolicies`: `exclude_unset=True` keeps whatever you *did* set. If you set
    `["*"]` on an expected resource it stays in the dump and the assertion then fails against a
    render that correctly omits it. The fix is not to set it.
 5. **NEVER exclude** `writeConnectionSecretToRef` - it's an API contract.
@@ -174,7 +172,10 @@ E2E-test scaffolds.
 **Wrong:** `exclude={"spec": {"writeConnectionSecretToRef"}}`.
 **Right:** Never exclude `writeConnectionSecretToRef`.
 
-### `providerConfigRef` name "default" silently stripped
-The provider models default `providerConfigRef` to `{kind: ClusterProviderConfig, name: default}`, and the function SDK serializes with `exclude_defaults=True` - so a resource whose `providerConfigRef.name` is exactly `default` renders **without** the field, and the assertion won't match.
-**Wrong:** `providerConfigRef=...ProviderConfigRef(kind="ClusterProviderConfig", name="default")`
-**Right:** Use a non-default name (e.g. `azure-provider`) in both the XR/example and the assertion so the field is serialized.
+### Asserting a `providerConfigRef` equal to the model default
+The `.m.` models default `providerConfigRef` to `{kind: ClusterProviderConfig, name: default}`. Up
+to function-sdk-python 0.12.0 (`up function generate` pins 0.11.0), `resource.update()` dumps with
+`exclude_defaults`, so a function that sets exactly that value renders **without** the field and
+an assertion on it fails. From 0.13.0 `exclude_unset` keeps an explicit value.
+**Right:** do not set or assert the default at all (charter §5). A non-default `providerConfigRef`
+the project asks for serializes under every version.

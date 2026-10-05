@@ -63,8 +63,9 @@ every iteration pays a full build. And your editor marks `from models.io...` and
 
 **Build the venv from the project's own pins, not by package name.** `pip install
 crossplane-function-sdk-python` gets the newest release, and `resource.update()` has changed
-across versions — 0.5.0 serializes with `exclude_defaults` and does *not* re-add
-`apiVersion`/`kind`, 0.11.0 adds them back, 0.14.0 switched to `exclude_unset`. A fast tier
+across versions: up to 0.12.0 it serializes with `exclude_defaults`, from 0.13.0 with
+`exclude_unset` (and `by_alias`); 0.5.0 and 0.6.0 also drop an unset `apiVersion`/`kind`,
+0.7.0 onwards add them back. `up function generate` (v0.55.0) pins 0.11.0. A fast tier
 running a different serializer from the container is not a proxy for the real run.
 
 ```bash

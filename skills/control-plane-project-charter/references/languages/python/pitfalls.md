@@ -19,7 +19,7 @@ Language-agnostic rules are in [`control-plane-project-charter`](../../../SKILL.
 | Setting `metadata.namespace` on MRs | Harmless but misleading noise | Omit it — Crossplane propagates the XR's namespace to every composed resource |
 | Tags are a model, not a dict | Pydantic validation error downstream | The XRD used fixed `properties` instead of `additionalProperties` — fix the XRD (Pattern 10). `dict(tags) if tags else {}` works either way, but under the correct schema it is a no-op, not a fix |
 | Fixed XRD properties for tags | `Input should be a valid string [input_value=None]` | Use `additionalProperties: type: string` |
-| ProviderConfig ready before update | Resource not marked ready | Call `.ready = fnv1.READY_TRUE` AFTER `resource.update()` (the `Ready` enum lives in `fnv1`/`run_function_pb2` — **there is no `resource.READY_TRUE`**) |
+| Composed ProviderConfig never marked ready | XR never becomes ready; function-auto-ready cannot judge a ProviderConfig | Set `.ready = fnv1.READY_TRUE` on it, before or after `resource.update()` (the `Ready` enum lives in `fnv1`/`run_function_pb2`; there is no `resource.READY_TRUE`) |
 | Observed resource by full name | `KeyError` or silent miss | Use composition KEY: `req.observed.resources["mysql"]` |
 | Conditional by `is_ready` only | Resource deleted when dep flaps | Add `or resource_exists(req, "key")` |
 | Readiness logic not exercised by composition test | Green test, then failure on the real control plane | Supply `observedResources` with `status.conditions` — the branch **is** reachable locally. See "Readiness branches need `observedResources`" above |
