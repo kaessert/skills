@@ -207,7 +207,7 @@ spec:
         source: Upbound         # web/injected identity, never static keys
         upbound:
           webIdentity:
-            roleARN: arn:aws:iam::609897127049:role/solutions-e2e-provider-aws
+            roleARN: arn:aws:iam::123456789012:role/solutions-e2e-provider-aws
   manifests:
   - apiVersion: aws.platform.upbound.io/v1alpha1
     kind: ControlPlane
