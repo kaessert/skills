@@ -365,8 +365,10 @@ A group, a Space, a control plane, or a published package is the user's decision
   the flag back afterwards, but it cannot un-publish what was already fetched — treat the
   disclosure as irreversible even though the setting is not. Accepted by `up test run`,
   `up project push`, `up project run` and `up project simulate create`.
-- **Deleting is never cleanup you decide on.** Report what you would delete and let the user
-  choose.
+- **Delete what this run created; deleting anything else is the user's call.** Cleaning up
+  your own leftovers — an e2e control plane, a kind cluster and its registry container, a
+  scratch directory — is required, not optional. For anything you did not create, report what
+  you would delete and let the user choose.
 
 ---
 
