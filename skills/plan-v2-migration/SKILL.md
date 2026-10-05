@@ -1,221 +1,159 @@
 ---
 name: plan-v2-migration
-description: Use this skill when user requests to migrate, upgrade, or plan migration to Crossplane v2. Analyzes existing v1 configuration packages and generates comprehensive migration checklists covering XRD updates, function code changes, test updates, and file reorganization. Use immediately when user mentions "migrate to v2", "upgrade to crossplane v2", "plan v2 migration", or "crossplane 2 migration". Use this skill instead of manually analyzing migration requirements. This skill ensures comprehensive coverage of all breaking changes and prevents common migration mistakes that manual analysis lacks.
+description: Use this skill when user requests to migrate, upgrade, or plan migration to Crossplane v2. Analyzes an existing v1 configuration package and writes a migration plan covering XRD updates, provider API groups, function code changes, test updates, examples and dependencies, with the decisions a migration needs recorded. Use immediately when user mentions "migrate to v2", "upgrade to crossplane v2", "plan v2 migration", or "crossplane 2 migration". Use this skill instead of manually analyzing migration requirements; it also holds the language-neutral reference of every v1 to v2 breaking change. Executing the plan is execute-v2-migration.
 license: Apache-2.0
 references:
-  - references/knowledge.md
+  - references/breaking-changes.md
+  - references/checklist-template.md
 ---
 
-# Crossplane v2 Migration Planner
+# Crossplane v2 migration planner
 
-Analyze Crossplane v1 configuration packages and generate comprehensive migration checklists.
-
-**Scope**: ANALYSIS ONLY - generates checklist, does NOT execute changes.
-
-**Output**: `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
-
----
+Analyze a Crossplane v1 configuration package and write the plan that `execute-v2-migration`
+carries out: `.agents/plans/CROSSPLANE_V2_MIGRATION.md`.
 
 ## Mode, and the charter
 
-**Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
-the spec and state the assumption, or stop and report. Load `control-plane-project-charter`
-before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
-load it.
+**Interactive:** ask only what the project can't tell you — here, the decisions in Phase 5.
+**Unattended:** never ask; decide from the spec and state the assumption in the plan, or stop
+and report. Load `control-plane-project-charter` before you start, or read its `SKILL.md`
+beside this skill's directory: this skill does not load it.
 
-## Terminology Disambiguation
+## Boundaries
 
-**CRITICAL: These terms are distinct - do not confuse them:**
+- Analysis only. You write the plan file and nothing else: no code changes, builds, tests or
+  commits.
+- Every change you plan comes from [breaking-changes.md](references/breaking-changes.md). Point
+  at its sections; do not restate them in the plan.
+- The plan changes the project, not a control plane. Moving a control plane that runs the v1
+  package is a rollout risk you record, never a step you plan
+  ([Installed v1 APIs](references/breaking-changes.md#installed-v1-apis)).
 
-| Term | What It Means |
-|------|---------------|
-| **Crossplane v2** | The overall new version with namespaced resources |
-| **XRD apiVersion v2** | `apiextensions.crossplane.io/v2` in definition.yaml |
-| **upbound.yaml v2alpha1** | `meta.dev.upbound.io/v2alpha1` project config |
-| **Provider namespaced** | Providers using `.m.` in API groups (awsm, azurem, gcpm) |
-| **X-prefix removal** | v1: `XNetwork` → v2: `Network` |
+## Phase 1: Confirm a v1 project
 
-**Provider import changes:**
-- `aws` → `awsm` (API: `*.aws.m.upbound.io`)
-- `azure` → `azurem` (API: `*.azure.m.upbound.io`)
-- `gcp` → `gcpm` (API: `*.gcp.m.upbound.io`)
-
----
-
-## Quick Reference: Key v1 → v2 Changes
-
-| Component | v1 Pattern | v2 Pattern |
-|-----------|-----------|-----------|
-| XRD apiVersion | `apiextensions.crossplane.io/v1` | `apiextensions.crossplane.io/v2` |
-| XRD scope | (implicit cluster) | `spec.scope: Namespaced` |
-| Resource kind | `XNetwork` | `Network` |
-| claimNames | Required section | Remove entirely |
-| deletionPolicy | `Delete \| Orphan` | `managementPolicies: ["*"]` |
-| providerConfigRef | `name: default` | omitted if and only if `ClusterProviderConfig/default` exists and is the right one; otherwise `{kind, name}` naming an object that exists |
-| Secret namespace | Explicit | Removed (inferred) |
-| compositionSelector | `spec.compositionSelector` | `spec.crossplane.compositionSelector` |
-| Connection secrets | Built-in XR support | Manual Secret composition |
-
-See [knowledge.md](references/knowledge.md) for detailed before/after examples.
-
----
-
-## Workflow
-
-### Phase 0: Detect and Validate v1
-
-**Goal**: Confirm this is a v1 configuration package.
-
-**Steps**:
-1. Check `upbound.yaml` for `apiVersion: meta.dev.upbound.io/v1alpha1`
-2. Check XRDs for `apiextensions.crossplane.io/v1`
-3. Check for cluster-scoped provider imports (no `.m.` in paths)
-
-**If NOT v1**: Report to user and exit gracefully.
-
-The commands: [knowledge.md](references/knowledge.md#detect-v1-configuration).
-
-### Phase 0.5: Discover Project Structure
-
-**Goal**: Map all components that need migration: the project name, XRDs, functions, tests,
-and the X-prefixed directories that need renaming. The commands:
-[knowledge.md](references/knowledge.md#discover-project-structure).
-
-### Phase 1: Verify Dependencies (Use a Sub-agent)
-
-**Goal**: Verify all provider and configuration dependencies support v2.
-
-**IMPORTANT**: Use a sub-agent to avoid loading large marketplace responses into main context.
-
-Hand the sub-agent the prompt in
-[knowledge.md](references/knowledge.md#subagent-prompt-template), which also shows the report
-format to expect. If your harness has no sub-agents, follow the prompt yourself
-(`control-plane-project-charter` §1).
-
-Store sub-agent report for Phase 1.2 of the checklist.
-
-### Phase 2: Analyze Components
-
-**For each XRD**:
-- Check apiVersion, claimNames, connectionSecretKeys
-- Check for X-prefix in kind
-- Check for deletionPolicy parameter
-
-**For each function**:
-- Check provider imports (aws vs awsm, etc.)
-- Check deletionPolicy usage
-- Check providerConfigRef patterns
-- Check connection secret usage
-
-**For each test**:
-- Check provider imports
-- Check XR kind references
-- Check namespace in metadata
-
-**For each example**:
-- Check kind (X-prefix)
-- Check compositionSelector location
-- Check writeConnectionSecretToRef
-
-### Phase 3: Generate Migration Checklist
-
-**Output file**: `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
-
-Use the template from [knowledge.md](references/knowledge.md) → "Migration Checklist Template" section.
-
-**Key sections**:
-1. **Phase 1**: Pre-migration (backup, dependency updates)
-2. **Phase 2**: XRD migration (apiVersion, scope, remove claimNames)
-3. **Phase 3**: Function code migration (imports, providerConfigRef, managementPolicies)
-4. **Phase 4**: Composition updates (compositeTypeRef kind)
-5. **Phase 5**: Example updates (kind, namespace, compositionSelector)
-6. **Phase 6**: Test updates (imports, XR kind, assertions)
-7. **Phase 7**: File reorganization (remove X-prefix from directories)
-8. **Phase 8**: Verification (build, tests)
-9. **Phase 9**: Documentation
-
-**Important**: Include specific file paths and before/after code snippets for each task.
-
-### Phase 4: Display Summary
-
-After writing the checklist, display:
-
-```markdown
-## v2 Migration Plan: [project]
-
-**Output File**: `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
-
-**Migration Scope:**
-- XRDs to update: [count]
-- Functions to update: [count]
-- Tests to update: [count]
-- Examples to update: [count]
-- Dependencies verified: [count] providers, [count] configurations
-
-**Major Breaking Changes Detected:**
-[List 3-5 most critical for this project]
-
-**Complexity**: [Low | Medium | High]
-
-**Execution Strategy:**
-- Phase 1-2: Manual edits (upbound.yaml, XRDs)
-- Phase 3: Use `author-composition` skill for functions
-- Phase 6: Use `author-tests` skill for tests
-- Phase 8: Use `verify-configuration` + `e2e-test-configuration` skills
-
-**Next Steps:**
-1. Review the plan in `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
-2. Create branch: `git checkout -b migrate-to-v2`
-3. Execute phases using recommended skills
+```bash
+grep -n '^apiVersion:' upbound.yaml                         # meta.dev.upbound.io/v1alpha1
+grep -rl 'kind: CompositeResourceDefinition' apis/ | xargs grep -l 'apiextensions.crossplane.io/v1$'
 ```
 
----
+The second command lists the XRDs still on v1; it filters on the kind because Compositions
+are `apiextensions.crossplane.io/v1` in both versions. If nothing is v1, report that and stop.
+If the project is partly migrated, plan only what is left and say so.
 
-## Skill Boundaries
+## Phase 2: Map the project
 
-### This Skill Does
-- Analyze v1 configuration structure
-- Detect all breaking changes
-- Generate phase-based checklist
-- Verify dependencies via sub-agent
-- Write checklist to `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
-- Read-only analysis (safe)
+```bash
+yq '.metadata.name' upbound.yaml
+find apis -name definition.yaml | sort                      # XRDs
+find apis -name composition.yaml | sort                     # compositions
+ls -1d functions/*/ tests/test-*/ tests/e2etest-*/ 2>/dev/null
+ls -1 examples/ 2>/dev/null
+```
 
-### This Skill Does NOT Do
-- Modify any code files
-- Execute the migration
-- Run builds or tests
-- Create git commits
+Detect each function's language and the test language with `control-plane-project-charter`
+`languages/README.md`, and read that language file: the import spelling and the XR bootstrap
+you will plan come from it. Map which composition calls which function (`functionRef.name`) and
+which tests cover which composition.
 
-### Handoff to Other Skills
-| Task | Skill to Use |
-|------|--------------|
-| Execute migration | `execute-v2-migration` |
-| Write function code | `author-composition` |
-| Write tests | `author-tests` |
-| Run verification | `verify-configuration` |
-| Run E2E tests | `e2e-test-configuration` |
+## Phase 3: Check the dependencies
 
----
+A sub-agent keeps the large marketplace pages out of your context. Hand it this brief and wait
+for its report; if your harness has no sub-agents, follow the brief yourself
+(`control-plane-project-charter` §1).
 
-## Success Criteria
+```text
+Read upbound.yaml in <project root> and list every entry of spec.dependsOn.
+
+For each provider: note its name and version, then open
+https://marketplace.upbound.io/providers/<org>/<provider>/<version>#managedResources
+and read the "Namespace Scoped (<count>)" figure. A count above 0 serves the .m. API groups.
+If it is 0, find the oldest version whose count is above 0.
+
+For each configuration: find its source repository from its marketplace page and check
+whether its XRDs are apiextensions.crossplane.io/v2 with scope: Namespaced. If not, find a
+version that is.
+
+If a page cannot be fetched, say so for that package; never guess a version.
+
+Report, per package: current version, v2-ready yes/no, the target version if not, and the
+URL you verified it on.
+```
+
+## Phase 4: Analyze each component
+
+Check every file against [breaking-changes.md](references/breaking-changes.md) and note, per
+file, which sections apply.
+
+```bash
+# XRDs: version, scope, Kind, claim and connection-secret fields
+yq '[.apiVersion, .spec.scope, .spec.names.kind, .spec.claimNames, .spec.connectionSecretKeys, .spec.defaultCompositeDeletePolicy]' apis/<path>/definition.yaml
+# Compositions
+yq '[.spec.mode, .spec.writeConnectionSecretsToNamespace, .spec.compositeTypeRef, .spec.pipeline[].functionRef.name]' apis/<path>/composition.yaml
+# Examples
+yq '[.kind, .metadata.namespace, .spec.compositionSelector, .spec.compositionRef, .spec.writeConnectionSecretToRef]' examples/<file>.yaml
+
+# Functions and tests: legacy provider groups and model paths, in any language
+grep -rnE '(aws|azure|gcp)\.upbound\.io|io[./]upbound[./](aws|azure|gcp)[./]|(kubernetes|helm)\.crossplane\.io|io[./]crossplane[./](kubernetes|helm)[./]' functions/ tests/
+# ... and the fields whose v2 meaning differs
+grep -rnE 'deletionPolicy|providerConfigRef|managementPolicies|[Ss]ecretRef|namespace\s*[:=]' functions/ tests/
+grep -rniE 'connection_?details|writeConnectionSecret' functions/ tests/
+```
+
+The first grep matches the legacy forms only (`ec2.aws.upbound.io`, Python
+`models.io.upbound.aws`, Go `io/upbound/aws/`); extend it for any other provider the project
+uses. Judge each hit of the field grep: a reference naming `default` goes, one naming another
+config stays, a `deletionPolicy` parameter gets mapped.
+
+## Phase 5: Decide
+
+Four questions have no answer in the code. Interactive: ask the user the ones that are open.
+Unattended: take the default and write it into the plan as an assumption.
+
+| Decision | Default |
+|---|---|
+| Keep or rename each X-prefixed Kind | keep ([Kind and the X prefix](references/breaking-changes.md#kind-and-the-x-prefix)) |
+| A `deletionPolicy` parameter | keep it and map it ([deletionPolicy](references/breaking-changes.md#deletionpolicy)) |
+| Each non-`default` `providerConfigRef` | keep it as a `ClusterProviderConfig` reference ([providerConfigRef](references/breaking-changes.md#providerconfigref)) |
+| Is the v1 package installed on a control plane? | assume yes: record the rollout risk |
+
+## Phase 6: Write the plan
+
+Write `.agents/plans/CROSSPLANE_V2_MIGRATION.md` from
+[checklist-template.md](references/checklist-template.md): real file paths, the target version
+for every dependency, and, for stage 5, which tests cover each function and what each test
+should fail on before its function is migrated. Stages that do not apply say so; their numbers
+stay.
+
+## Phase 7: Report
+
+```markdown
+## v2 migration plan: [project]
+
+Plan: `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
+Scope: [n] XRDs, [n] compositions, [n] functions ([languages]), [n] tests, [n] examples;
+[n] dependencies to bump
+Breaking changes that matter here: [3–5, most consequential first]
+Decisions: [each, and whether the user made it or you assumed it]
+Rollout risk: [one line, or "none: not installed anywhere"]
+Next: review the plan, then run `execute-v2-migration`.
+```
+
+## Success criteria
 
 Checks for you before you report, not a report format (`control-plane-project-charter` §4:
-report the effect, not the intent). The skill completes successfully when:
+report the effect, not the intent).
 
-1. Confirmed v1 configuration (or exited gracefully if not)
-2. Discovered all XRDs, functions, tests, examples
-3. Verified dependencies via sub-agent
-4. Analyzed all components for breaking changes
-5. Generated checklist at `.agents/plans/CROSSPLANE_V2_MIGRATION.md`
-6. Displayed summary with metrics and next steps
-
----
+- Every XRD, composition, function, test and example is in the plan, or named as needing no
+  change.
+- Every dependency has a verified target version, or is marked unverified with the reason.
+- Every assumed decision is labelled as an assumption.
+- No file outside `.agents/plans/` changed (`git status`).
 
 ## References
 
-- [knowledge.md](references/knowledge.md) — read for the detection and analysis commands, the
-  dependency-check prompt, the before/after examples of each breaking change, and the
-  checklist template (Phase 3), before you write the plan.
-- [Crossplane v2 Upgrade Guide](https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/)
-- [What's New in Crossplane v2](https://docs.crossplane.io/latest/whats-new/)
+- [breaking-changes.md](references/breaking-changes.md) — read in Phase 4, before you judge a
+  file: every v1 → v2 change, language-neutral, with before/after YAML.
+- [checklist-template.md](references/checklist-template.md) — read in Phase 6: the plan's
+  shape and its eight stages.
+- [Crossplane v2 upgrade guide](https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/)
+  and [What's new in v2](https://docs.crossplane.io/latest/whats-new/).
