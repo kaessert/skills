@@ -42,8 +42,8 @@ up ctp list --kubeconfig "$KCFG"
 # 3. Build project
 up project build
 
-# 4. Run composition tests
-up test run tests/*
+# 4. Run composition tests (test-* only: tests/* also runs every e2e program, even without --e2e)
+up test run "tests/test-*"
 ```
 
 **Stop execution if ANY step fails.**

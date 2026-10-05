@@ -68,25 +68,26 @@ fails ends the run — it does not downgrade to a warning you carry into Phase 3
 Check, in this order, stopping at the first failure:
 
 ```bash
-up ctx . --short          # 1. context resolves at all
-up project build          # 2. the project builds
-up test run tests/*       # 3. composition tests pass
+up ctx . --short             # 1. context resolves at all
+up project build             # 2. the project builds
+up test run "tests/test-*"   # 3. composition tests pass
 ```
 
-Then the credentials the E2E test needs. Read the test module to find which variables it
-reads, and confirm each one is actually set:
+Step 3 is `test-*`, not `tests/*`: `up test run` runs every matched dir's program, e2e ones
+too, even without `--e2e`, and fails at `✗ Parsing tests` when an e2e input is unset.
+
+Then the credentials: list what the test programs read, in any language, and check each:
 
 ```bash
-grep -o 'UP_[A-Z0-9_]*' tests/<test-name>/test/__main__.py | sort -u
+grep -rhoE 'UP_[A-Z0-9_]+' tests/e2etest-*/ | sort -u
 # then, for each:
 [ -n "${UP_AWS_ACCESS_KEY_ID:-}" ] || echo "MISSING: UP_AWS_ACCESS_KEY_ID"
 ```
 
-Manifest generation runs in a container that receives **only `UP_`-prefixed environment
-variables** and cannot see `~/.aws`. A test reading `AWS_ACCESS_KEY_ID`, or reading a
-`UP_` name you have not exported, generates a Secret containing an empty string. That
-failure does not surface until a control plane has been provisioned and the provider
-rejects the credential — several minutes and real resources later.
+KCL and Python programs see **only `UP_`-prefixed variables** and no `~/.aws`; a Go program
+runs locally and can read any name, so check its `os.Getenv` calls too. An unset variable the
+program does not fail on becomes an empty Secret, which surfaces only when the provider
+rejects it — after a control plane and real resources exist.
 
 Then, when the target is a Space, the repository the package will be pushed to. This is a
 one-second check that predicts a failure otherwise costing two control-plane creations:
