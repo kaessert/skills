@@ -119,7 +119,7 @@ Update these tests to Crossplane v2 before the function they cover is migrated:
 The plan's items for them: <items 5.n, verbatim>
 What changes in a v2 test: plan-v2-migration breaking-changes.md, section "Tests".
 
-Do not touch functions/<name>. Add providerConfigRef, managementPolicies, deletionPolicy or a
+Do not touch functions/<name>. Add providerConfigRef, managementPolicies or a
 namespace to an expected resource only where the plan says the function sets it.
 
 Run `up test run "tests/<test>"` for each. Each must fail, and the failure must name a v2
@@ -171,10 +171,12 @@ the test name and its error lines.
 ```text
 Project root: <path>. Load the `e2e-test-configuration` skill and `control-plane-project-charter`.
 The user approved creating cloud resources for this run. Run these E2E tests: <names, from
-ls -1d tests/e2etest-*>.
+ls -1d tests/e2etest-*> on <local kind | Space <space>/<group>>[, with --public].
 
 Report: passed/total; for each failure, the reason with the resource state and logs.
 ```
+
+Add `with --public` only when the user chose it; without a target the E2E skill stops.
 
 ## When a step fails
 
@@ -182,7 +184,7 @@ Report: passed/total; for each failure, the reason with the resource state and l
 |---|---|
 | No plan | Stop: run `plan-v2-migration` first. |
 | Branch `migrate-to-v2` exists | A previous run. Check it out and resume with `continue` (interactive: ask first). Never delete it without the user's say-so. |
-| `up project build` fails in stage 1 | Check the models for the `.m.` groups (stage 1 table), run `up dep update-cache` again and rebuild. Still failing: stop and report the dependency versions. |
+| `up project build` fails in stage 1 | Check the models for the `.m.` groups (stage 1 table), run `up dep update-cache` again and rebuild. Still no `.m.` models: remove the generated `.up/` (gitignored, the build regenerates it) and rebuild. Still failing: stop and report the dependency versions. |
 | An edit's target is not where the plan says | Re-read the file. Already v2: tick it. Otherwise stop and report the file and item. |
 | A test sub-agent cannot get RED for the right reason | The test or the plan item is wrong: report it; do not migrate the function against it. |
 | A sub-agent reports FAILURE | One retry, with the failure in the brief (interactive: offer it). Fails again: stop and report; interactive options are retry, skip (fix later by hand), abort. |

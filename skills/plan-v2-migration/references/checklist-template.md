@@ -2,8 +2,8 @@
 
 Write the plan to `.agents/plans/CROSSPLANE_V2_MIGRATION.md` in this shape. Fill every
 bracket from the analysis, name real files, and point each item at its section of
-[breaking-changes.md](breaking-changes.md) instead of restating it. Leave out the items and
-stages that do not apply, but keep the stage numbers: `execute-v2-migration` runs the stages by
+[breaking-changes.md](breaking-changes.md) instead of restating it. Leave out items that do not
+apply; a stage that does not apply keeps its heading with `None: <why>`, so the stage numbers stay: `execute-v2-migration` runs the stages by
 number, in this order.
 
 ```markdown

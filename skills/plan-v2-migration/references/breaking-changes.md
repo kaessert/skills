@@ -263,8 +263,8 @@ spec:
 
 - **Composition tests:** the XR input changes like an example (namespace, `spec.crossplane`,
   Kind as kept). Expected managed resources use the `.m.` `apiVersion` at the version the models
-  show. Do not add `providerConfigRef`, `managementPolicies`, `deletionPolicy` or a namespace to
-  an expected resource unless the function sets it — what a render shows of the CRD defaults
+  show. Do not add `providerConfigRef`, `managementPolicies` or a namespace to
+  an expected resource (a namespaced MR has no `deletionPolicy`) unless the function sets it — what a render shows of the CRD defaults
   differs by language (`control-plane-project-charter` `charter/v2-resources.md`). Assert a
   composed connection `Secret` with `observedResources`.
 - **Test code** in KCL, Python or Go switches its imports the way the function does.

@@ -121,8 +121,8 @@ Unattended: take the default and write it into the plan as an assumption.
 Write `.agents/plans/CROSSPLANE_V2_MIGRATION.md` from
 [checklist-template.md](references/checklist-template.md): real file paths, the target version
 for every dependency, and, for stage 5, which tests cover each function and what each test
-should fail on before its function is migrated. Stages that do not apply say so; their numbers
-stay.
+should fail on before its function is migrated. A stage that does not apply keeps its heading with
+`None: <why>`.
 
 ## Phase 7: Report
 

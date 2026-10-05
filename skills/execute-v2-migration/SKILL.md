@@ -91,8 +91,9 @@ The build and every composition test through `verify-configuration`; then render
 and read it. **Checkpoint:** all composition tests pass. If not, stop: no E2E, report the
 failures, resume with `continue` after the fix.
 
-E2E tests create cloud resources. Interactive: ask once whether to run them. Unattended: do not
-run them unless the request that started you said to; report them as not run.
+E2E tests create cloud resources. Interactive: ask once whether to run them and on which target
+(local kind or a Space group). Unattended: do not run them unless the request that started you
+said to and named the target; otherwise report them as not run.
 
 ## Stage 8: Documentation
 
