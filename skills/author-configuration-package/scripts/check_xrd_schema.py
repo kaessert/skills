@@ -6,6 +6,7 @@ Usage:
     python3 check_xrd_schema.py apis/*/definition.yaml
     python3 check_xrd_schema.py --min-corpus 3 apis/tiny/definition.yaml
     python3 check_xrd_schema.py --exceptions xrd-schema-exceptions.yaml apis/*/definition.yaml
+    python3 check_xrd_schema.py --report-only apis/*/definition.yaml
 
 Collisions, allowlist casing, group stutter, enum casing, missing descriptions,
 unbounded lists and printer columns Crossplane already appends are all greppable
@@ -51,20 +52,39 @@ What this reports as REVIEW rather than FAIL, because the call is semantic:
     Both shapes are prefix-anchored matches on the group.
   * Booleans, and strings with no enum, pattern, maxLength or format.
 
-Enum casing has one recorded escape hatch. Values that mirror an upstream API
+Some findings are not yours to fix. Enum values that mirror an upstream API
 verbatim (`aurora-postgresql`, `udp`) are not yours to rename when consumers
-pass them through unchanged. List such fields in an exceptions file, each with a
-reason:
+pass them through unchanged, and an API that has already shipped (a frozen or
+brownfield API) cannot gain a description, a list type or a bound without a new
+version. Record each such finding in an exceptions file, under its rule class,
+with a reason:
 
     enumCasing:
       - field: spec.parameters.engine
         reason: AWS RDS engine names, passed through to the provider verbatim
+    maxItems:
+      - field: status.subnetIds
+        reason: frozen API, shipped without a bound
 
-`field` is the path the finding prints, without the file and version. The file
-is read from --exceptions, or from ./xrd-schema-exceptions.yaml when it exists.
-Excepted findings print as EXCEPTED with their reason and do not fail the run.
-An entry without a reason is an input error (exit 2), and an entry that no
-longer matches a finding is reported for REVIEW, so stale exceptions surface.
+The rule classes and what `field` names for each:
+
+    enumCasing, description, listType, maxItems, lowerCamel, fieldCasing
+        the field path the finding prints, without the file and version
+    kindAcronym     the Kind
+    printerColumn   the column name (READY)
+    collision       the spellings as printed (ProjectId / projectID)
+
+`uniqueItems` has no exception: the API server rejects the whole CRD.
+
+The file is read from --exceptions, or from ./xrd-schema-exceptions.yaml when it
+exists. Excepted findings print as EXCEPTED with their reason and do not fail
+the run. An entry without a reason, or under an unknown rule class, is an input
+error (exit 2), and an entry that no longer matches a finding is reported for
+REVIEW, so stale exceptions surface.
+
+--report-only prints the same report and exits 0 even with findings: use it to
+read a frozen API's state, not as a gate. Extraction and input errors still
+exit 2.
 
 What it does not look at all, and why it does not try:
 
@@ -82,7 +102,6 @@ from __future__ import annotations
 import argparse
 import glob
 import os
-import re
 import sys
 
 try:
@@ -159,35 +178,68 @@ XRD_KINDS = ("CompositeResourceDefinition", "CustomResourceDefinition")
 
 DEFAULT_EXCEPTIONS = "xrd-schema-exceptions.yaml"
 
-# `<file>[<version>].<field>: enum value '<v>' is not CamelCase ...`
-ENUM_CASING_RE = re.compile(r"^.*?\]\.(?P<field>[^:]+): enum value .* is not CamelCase")
+# Rule classes a finding can be excepted under, keyed as in the exceptions
+# file. Every FAIL carries one of these or "uniqueItems", which is never
+# excepted: the API server rejects the whole CRD, so no reason makes it work.
+EXCEPTABLE_RULES = (
+    "enumCasing",
+    "description",
+    "listType",
+    "maxItems",
+    "lowerCamel",
+    "fieldCasing",
+    "kindAcronym",
+    "printerColumn",
+    "collision",
+)
+NEVER_EXCEPTED = {
+    "uniqueItems": "the API server rejects the whole CRD; use x-kubernetes-list-type: set",
+}
 
 
 class ExceptionsError(Exception):
     """The exceptions file cannot be used as written."""
 
 
+def field_key(where):
+    """`<file>[<version>].spec.x` -> `spec.x`: the path an exception names."""
+    return where.split("].", 1)[1] if "]." in where else where
+
+
 def load_exceptions(path):
-    """Return {field: reason} for enum-casing exceptions in `path`."""
+    """Return {rule: {field: reason}} for the exceptions in `path`."""
     with open(path, encoding="utf-8") as fh:
         doc = yaml.safe_load(fh) or {}
     if not isinstance(doc, dict):
-        raise ExceptionsError(f"{path}: expected a mapping with an enumCasing list")
-    entries = doc.get("enumCasing") or []
-    if not isinstance(entries, list):
-        raise ExceptionsError(f"{path}: enumCasing must be a list")
+        raise ExceptionsError(
+            f"{path}: expected a mapping of rule class to a list of {{field, reason}}"
+        )
     out = {}
-    for i, e in enumerate(entries):
-        field = (e or {}).get("field") if isinstance(e, dict) else None
-        reason = (e or {}).get("reason") if isinstance(e, dict) else None
-        if not isinstance(field, str) or not field.strip():
-            raise ExceptionsError(f"{path}: enumCasing[{i}] has no field")
-        if not isinstance(reason, str) or not reason.strip():
+    for rule, entries in doc.items():
+        if rule in NEVER_EXCEPTED:
             raise ExceptionsError(
-                f"{path}: enumCasing[{i}] ({field}) has no reason -- an exception "
-                "nobody can explain is a defect nobody fixed"
+                f"{path}: {rule} cannot be excepted -- {NEVER_EXCEPTED[rule]}"
             )
-        out[field.strip()] = reason.strip()
+        if rule not in EXCEPTABLE_RULES:
+            raise ExceptionsError(
+                f"{path}: unknown rule class {rule!r} -- use one of "
+                + ", ".join(EXCEPTABLE_RULES)
+            )
+        entries = entries or []
+        if not isinstance(entries, list):
+            raise ExceptionsError(f"{path}: {rule} must be a list")
+        rule_out = out.setdefault(rule, {})
+        for i, e in enumerate(entries):
+            field = e.get("field") if isinstance(e, dict) else None
+            reason = e.get("reason") if isinstance(e, dict) else None
+            if not isinstance(field, str) or not field.strip():
+                raise ExceptionsError(f"{path}: {rule}[{i}] has no field")
+            if not isinstance(reason, str) or not reason.strip():
+                raise ExceptionsError(
+                    f"{path}: {rule}[{i}] ({field}) has no reason -- an exception "
+                    "nobody can explain is a defect nobody fixed"
+                )
+            rule_out[field.strip()] = reason.strip()
     return out
 
 
@@ -279,8 +331,9 @@ def walk(node, path, names, findings, review, in_status):
             names.append((k, child))
 
             if isinstance(v, dict):
+                key = field_key(child)
                 if not v.get("description"):
-                    findings.append(f"{child}: no description")
+                    findings.append(("description", key, f"{child}: no description"))
 
                 t = v.get("type")
                 if t == "string" and not any(
@@ -295,33 +348,41 @@ def walk(node, path, names, findings, review, in_status):
                     )
                 if t == "array":
                     if "x-kubernetes-list-type" not in v:
-                        findings.append(
+                        findings.append((
+                            "listType",
+                            key,
                             f"{child}: array with no x-kubernetes-list-type (atomic by default: "
-                            "duplicates accepted, server-side apply clobbers)"
-                        )
+                            "duplicates accepted, server-side apply clobbers)",
+                        ))
                     if "maxItems" not in v:
-                        findings.append(
+                        findings.append((
+                            "maxItems",
+                            key,
                             f"{child}: array with no maxItems (CEL cost is budgeted against "
-                            "the declared maximum)"
-                        )
+                            "the declared maximum)",
+                        ))
                 # Not style. The API server refuses to create the CRD at all:
                 # "uniqueItems cannot be set to true since the runtime
                 # complexity becomes quadratic" (apiextensions-apiserver
                 # validation.go). It is the obvious way to write "duplicates
                 # are rejected", and the correct one is list-type: set.
                 if v.get("uniqueItems") is True:
-                    findings.append(
+                    findings.append((
+                        "uniqueItems",
+                        key,
                         f"{child}: uniqueItems: true is forbidden in a CRD schema -- the API "
                         "server rejects the whole CRD (\"runtime complexity becomes "
-                        "quadratic\"). Use x-kubernetes-list-type: set"
-                    )
+                        "quadratic\"). Use x-kubernetes-list-type: set",
+                    ))
                 for ev in v.get("enum", []) or []:
                     if not isinstance(ev, str) or ev in ENUM_PROPER_NOUNS:
                         continue
                     if not ev[:1].isupper():
-                        findings.append(
-                            f"{child}: enum value {ev!r} is not CamelCase with an initial capital"
-                        )
+                        findings.append((
+                            "enumCasing",
+                            key,
+                            f"{child}: enum value {ev!r} is not CamelCase with an initial capital",
+                        ))
 
             walk(v, child, names, findings, review, in_status)
 
@@ -331,7 +392,11 @@ def walk(node, path, names, findings, review, in_status):
 
 
 def check(path):
-    """Return (names, findings, review, kind_count) for one YAML file."""
+    """Return (names, findings, review, kind_count) for one YAML file.
+
+    Each finding is a (rule, key, text) tuple: the rule class and key an
+    exception names, and the line the report prints.
+    """
     with open(path, encoding="utf-8") as fh:
         docs = [d for d in yaml.safe_load_all(fh) if isinstance(d, dict)]
 
@@ -356,12 +421,14 @@ def check(path):
         if kind:
             kinds += 1
             for w, want in kind_acronym_violations(kind):
-                findings.append(
+                findings.append((
+                    "kindAcronym",
+                    kind,
                     f"{path}: Kind {kind!r} carries mis-cased acronym {w!r} (want {want!r}). "
                     "A Kind is the GVK and spec.names.kind -- renaming it stops the CRD "
                     "serving the old name and every stored object becomes unreadable. "
-                    "This is not a rename you can make later."
-                )
+                    "This is not a rename you can make later.",
+                ))
 
         for v in spec.get("versions") or []:
             vn = v.get("name")
@@ -383,10 +450,12 @@ def check(path):
                 for c in (v.get("additionalPrinterColumns") or [])
             }
             for dup in sorted(cols & CROSSPLANE_COLUMNS):
-                findings.append(
+                findings.append((
+                    "printerColumn",
+                    dup,
                     f"{path}[{vn}]: printer column {dup} is already appended by Crossplane "
-                    "-- it will print twice"
-                )
+                    "-- it will print twice",
+                ))
 
         # Group stutter, checked against the GROUP's first label only,
         # prefix-anchored, and REVIEW rather than FAIL. It cannot tell apart
@@ -417,19 +486,21 @@ def check(path):
     return names, findings, review, kinds
 
 
-def run(patterns, min_corpus=DEFAULT_MIN_CORPUS, out=None, exceptions=None):
+def run(patterns, min_corpus=DEFAULT_MIN_CORPUS, out=None, exceptions=None,
+        report_only=False):
     """Check every file matching `patterns`. Returns an exit code.
 
     `exceptions` is a path to an exceptions file. None means use
     DEFAULT_EXCEPTIONS from the current directory when it exists.
+    `report_only` exits clean despite findings; errors still exit 2.
     """
     out = out or sys.stdout
     if exceptions is None and os.path.exists(DEFAULT_EXCEPTIONS):
         exceptions = DEFAULT_EXCEPTIONS
-    excepted_fields = {}
+    excepted_rules = {}
     if exceptions:
         try:
-            excepted_fields = load_exceptions(exceptions)
+            excepted_rules = load_exceptions(exceptions)
         except (OSError, yaml.YAMLError, ExceptionsError) as e:
             print(f"EXCEPTIONS ERROR: {e}", file=out)
             return EXIT_NO_CORPUS
@@ -472,18 +543,19 @@ def run(patterns, min_corpus=DEFAULT_MIN_CORPUS, out=None, exceptions=None):
         seen.setdefault(n.lower(), set()).add(n)
     for _, spellings in sorted(seen.items()):
         if len(spellings) > 1:
-            all_findings.append(
-                f"one concept, two spellings: {' / '.join(sorted(spellings))}"
-            )
+            both = " / ".join(sorted(spellings))
+            all_findings.append(("collision", both, f"one concept, two spellings: {both}"))
 
     # 2. Field casing: an all-caps initialism, which the field surface never
     #    uses. Registry-free, and invisible to (1) when the two spellings live
     #    on different sides of the composition rather than in one schema.
     for n, where in all_names:
         if n[:1].isupper():
-            all_findings.append(
-                f"{where}: field name {n!r} is not lowerCamel -- it must start lowercase"
-            )
+            all_findings.append((
+                "lowerCamel",
+                field_key(where),
+                f"{where}: field name {n!r} is not lowerCamel -- it must start lowercase",
+            ))
         for w, want in field_casing_violations(n):
             # Detection is registry-free; the table only picks the advice. A
             # token nobody can expand is an invented abbreviation, and
@@ -500,27 +572,28 @@ def run(patterns, min_corpus=DEFAULT_MIN_CORPUS, out=None, exceptions=None):
                     f"{w!r} is not an acronym with a written-down expansion, so expand it "
                     f"into a word instead and the casing question disappears"
                 )
-            all_findings.append(
-                f"{where}: field name {n!r} canonicalises {w!r} -- {fix}"
-            )
+            all_findings.append((
+                "fieldCasing",
+                field_key(where),
+                f"{where}: field name {n!r} canonicalises {w!r} -- {fix}",
+            ))
 
-    excepted, used = [], set()
-    if excepted_fields:
-        kept = []
-        for f in all_findings:
-            m = ENUM_CASING_RE.match(f)
-            if m and m.group("field") in excepted_fields:
-                field = m.group("field")
-                used.add(field)
-                excepted.append(f"{f} -- {excepted_fields[field]}")
-            else:
-                kept.append(f)
-        all_findings = kept
-        for field in sorted(set(excepted_fields) - used):
-            all_review.append(
-                f"{exceptions}: enumCasing exception for {field!r} matches no finding -- "
-                "remove it, or fix the field path"
-            )
+    excepted, used, kept = [], set(), []
+    for rule, key, text in all_findings:
+        reason = excepted_rules.get(rule, {}).get(key)
+        if reason is None:
+            kept.append(text)
+        else:
+            used.add((rule, key))
+            excepted.append(f"{text} -- {reason}")
+    all_findings = kept
+    for rule in EXCEPTABLE_RULES:
+        for key in sorted(set(excepted_rules.get(rule, {}))):
+            if (rule, key) not in used:
+                all_review.append(
+                    f"{exceptions}: {rule} exception for {key!r} matches no finding -- "
+                    "remove it, or fix the field path"
+                )
 
     for f in sorted(set(all_findings)):
         print("FAIL:   " + f, file=out)
@@ -531,9 +604,12 @@ def run(patterns, min_corpus=DEFAULT_MIN_CORPUS, out=None, exceptions=None):
     print(
         f"\ncorpus: {len(all_names)} field names, {kinds} kind(s), {len(paths)} file(s); "
         f"{len(set(all_findings))} failure(s), {len(set(all_review))} to review"
-        + (f", {len(set(excepted))} excepted" if excepted else ""),
+        + (f", {len(set(excepted))} excepted" if excepted else "")
+        + ("; report only, findings do not fail the run" if report_only else ""),
         file=out,
     )
+    if report_only:
+        return EXIT_CLEAN
     return EXIT_FINDINGS if all_findings else EXIT_CLEAN
 
 
@@ -563,12 +639,25 @@ def main(argv=None):
         "--exceptions",
         metavar="FILE",
         help=(
-            f"enum-casing exceptions, each with a reason (default: ./{DEFAULT_EXCEPTIONS} "
+            f"exceptions by rule class, each with a reason (default: ./{DEFAULT_EXCEPTIONS} "
             "when it exists)"
         ),
     )
+    ap.add_argument(
+        "--report-only",
+        action="store_true",
+        help=(
+            "print every finding but exit 0 despite them, e.g. to read a frozen API; "
+            "extraction and input errors still exit 2"
+        ),
+    )
     args = ap.parse_args(argv)
-    return run(args.paths, min_corpus=args.min_corpus, exceptions=args.exceptions)
+    return run(
+        args.paths,
+        min_corpus=args.min_corpus,
+        exceptions=args.exceptions,
+        report_only=args.report_only,
+    )
 
 
 if __name__ == "__main__":

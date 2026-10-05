@@ -15,6 +15,7 @@ be wrong in ways that look exactly like compliance:
 
 from __future__ import annotations
 
+import contextlib
 import io
 import os
 import shutil
@@ -446,3 +447,99 @@ class CheckXrdSchemaTest(unittest.TestCase):
         self.addCleanup(os.chdir, cwd)
         _code, output = run([FIXTURES / "bad.yaml"])
         assert "EXCEPTED: " in output and "spec.packageType" in output
+
+    # ---------------------------------------------------------------------------
+    # Exceptions by rule class, and --report-only: a frozen or brownfield API
+    # ---------------------------------------------------------------------------
+
+    def test_every_rule_class_can_be_excepted_by_its_key(self):
+        """A frozen API's findings are permanent; each class takes its own key."""
+        exc = self.exceptions_file(
+            "lowerCamel:\n"
+            "  - {field: spec.ProjectId, reason: frozen}\n"
+            "maxItems:\n"
+            "  - {field: spec.adminsSG, reason: frozen}\n"
+            "listType:\n"
+            "  - {field: spec.adminsSG, reason: frozen}\n"
+            "fieldCasing:\n"
+            "  - {field: spec.adminsSG, reason: frozen}\n"
+            "  - {field: spec.projectID, reason: frozen}\n"
+            "  - {field: spec.backendPoolID, reason: frozen}\n"
+            "description:\n"
+            "  - {field: spec.artifactoryRepositoryName, reason: frozen}\n"
+            "enumCasing:\n"
+            "  - {field: spec.packageType, reason: frozen}\n"
+            "  - {field: spec.tlsParameters.minVersion, reason: frozen}\n"
+            "printerColumn:\n"
+            "  - {field: READY, reason: frozen}\n"
+            "kindAcronym:\n"
+            "  - {field: HttpLoadbalancer, reason: frozen}\n"
+            "collision:\n"
+            "  - {field: ProjectId / projectID, reason: frozen}\n"
+        )
+        code, output = run([FIXTURES / "bad.yaml", FIXTURES / "kind.yaml"], exceptions=exc)
+        assert code == c.EXIT_CLEAN, output
+        assert "FAIL:" not in output
+        assert "0 failure(s)" in output and "12 excepted" in output
+        assert "matches no finding" not in output
+
+    def test_an_exception_covers_its_own_rule_class_only(self):
+        """Excepting maxItems on a field must leave its listType finding failing."""
+        exc = self.exceptions_file(
+            "maxItems:\n  - {field: spec.adminsSG, reason: frozen API, shipped unbounded}\n"
+        )
+        code, output = run([FIXTURES / "bad.yaml"], exceptions=exc)
+        assert code == c.EXIT_FINDINGS
+        lines = output.splitlines()
+        assert any(ln.startswith("EXCEPTED: ") and "adminsSG: array with no maxItems" in ln
+                   for ln in lines), output
+        assert any(ln.startswith("FAIL:   ") and "adminsSG: array with no x-kubernetes-list-type"
+                   in ln for ln in lines), output
+
+    def test_stale_exception_in_any_class_is_reported(self):
+        exc = self.exceptions_file(
+            "description:\n  - {field: spec.noSuchField, reason: left over from a rename}\n"
+        )
+        _code, output = run([FIXTURES / "bad.yaml"], exceptions=exc)
+        assert any(
+            ln.startswith("REVIEW:") and "description exception for 'spec.noSuchField'" in ln
+            for ln in output.splitlines()
+        ), output
+
+    def test_unknown_rule_class_is_an_input_error(self):
+        """A misspelt class would silently except nothing; name the valid ones."""
+        exc = self.exceptions_file("maxitems:\n  - {field: spec.adminsSG, reason: frozen}\n")
+        code, output = run([FIXTURES / "bad.yaml"], exceptions=exc)
+        assert code == c.EXIT_NO_CORPUS
+        assert "unknown rule class 'maxitems'" in output and "maxItems" in output
+
+    def test_unique_items_cannot_be_excepted(self):
+        """The API server rejects the CRD outright, so no reason makes it work."""
+        exc = self.exceptions_file("uniqueItems:\n  - {field: spec.routes, reason: frozen}\n")
+        code, output = run([FIXTURES / "trial-gateway.yaml"], exceptions=exc)
+        assert code == c.EXIT_NO_CORPUS
+        assert "uniqueItems cannot be excepted" in output
+
+    def test_report_only_prints_findings_and_exits_clean(self):
+        out = io.StringIO()
+        code = c.run([str(FIXTURES / "bad.yaml")], out=out, report_only=True)
+        output = out.getvalue()
+        assert code == c.EXIT_CLEAN, output
+        assert "FAIL:   " in output
+        assert "report only, findings do not fail the run" in output
+
+    def test_report_only_still_fails_on_extraction_error(self):
+        """Report-only must never turn an empty corpus into a pass."""
+        out = io.StringIO()
+        code = c.run([str(self.tmp() / "nosuch.yaml")], out=out, report_only=True)
+        assert code == c.EXIT_NO_CORPUS
+
+    def test_report_only_flag_on_the_command_line(self):
+        cwd = os.getcwd()
+        os.chdir(self.tmp())  # no ./xrd-schema-exceptions.yaml here
+        self.addCleanup(os.chdir, cwd)
+        with contextlib.redirect_stdout(io.StringIO()):
+            plain = c.main([str(FIXTURES / "bad.yaml")])
+            report_only = c.main(["--report-only", str(FIXTURES / "bad.yaml")])
+        assert plain == c.EXIT_FINDINGS
+        assert report_only == c.EXIT_CLEAN
