@@ -217,7 +217,7 @@ authoring is complete when:
   read)
 - The test follows this file, test-model.md and the matching language file
 - The fields that matter are asserted, not just existence
-- The new assertion was observed to FAIL before the implementation existed, and to pass after
+- The new assertion was observed to fail before the implementation existed, and to pass after
 - The report lists, by spec clause, each requirement no automated check covers
 - The gate passed once the suite was green — the project's own gate if it has one, else
   `verify-configuration`, without a deploy where none is allowed (Phase 6)
