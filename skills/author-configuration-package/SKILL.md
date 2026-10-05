@@ -110,7 +110,7 @@ up example generate --scope=namespace --name example --namespace default \
 # skeleton). Note the directory is plural even though examples/ is singular.
 up composition generate apis/storagebuckets/definition.yaml
 #   -> apis/storagebuckets/composition.yaml (mode: Pipeline + auto-ready step)
-#      and adds function-auto-ready to upbound.yaml dependsOn
+#      and adds crossplane-contrib/function-auto-ready to upbound.yaml dependsOn
 up dep add 'xpkg.upbound.io/upbound/provider-aws-s3:>=v2.0.0'   # always a constraint (below)
 up function generate compose-bucket apis/storagebuckets/composition.yaml --language python
 #   -> functions/compose-bucket/ + inserts its pipeline step into the composition
@@ -120,7 +120,7 @@ up project build
 What this chain gets right, and what to watch:
 
 - **You control the XRD** — `apiVersion: apiextensions.crossplane.io/v2`, `scope: Namespaced`, no `claimNames`, and the `required:`/`default:`/`additionalProperties`/`status` that an inferred schema cannot express. Do not copy a template's XRD as a starting point: the templates are v1.
-- **The composition is `mode: Pipeline`** with an auto-ready step, and its function dependency is added to `upbound.yaml` for you.
+- **The composition is `mode: Pipeline`** with an auto-ready step, and its function dependency is added to `upbound.yaml` for you. It is `crossplane-contrib/function-auto-ready`, at `'>=v0.0.0'`, even when the project already declares another auto-ready function, which then gets a step too (observed with up v0.55.0). **When the project declares its own function set, delete the duplicate step and its dependency, and say so.** Otherwise give the dependency a constraint (below).
 - ⚠️ **Build before generating the function.** The models are generated from whatever XRD is on disk, and `up function generate` writes `crossplane-models @ file:./../../.up/python` into the new `pyproject.toml` only once `.up/python` exists. So `up project build` must come between writing the XRD and generating the function — which is what the Critical Build Order below already says.
 - ⚠️ **`up example generate` prompts for scope even when every other flag is supplied.** Without a TTY it prints `ERROR: ... could not open a new TTY`, then writes the file with the namespaced default and exits 0 — a confusing mix of error and success. **Always pass `--scope=namespace`** (or `--scope=cluster`).
 - ⚠️ **Write every open-ended map as `additionalProperties`**, never as fixed properties:
@@ -363,7 +363,7 @@ kubectl apply -f examples/providerconfig.yaml
 
 > **Base/cross-service resources** (`ResourceGroup`, `ProviderConfig`, …) ship in **`provider-family-<cloud>`** (e.g. `provider-family-azure`), **not** the service providers above — service providers depend on the family transitively. See "Resolving Provider/Function Packages" above.
 
-> **Pitfall — external pipeline functions must be declared dependencies.** Your project's own **embedded** functions (built from `functions/`) are wired automatically. But an **external** function `functionRef` (e.g. `crossplane-contrib-function-auto-ready`, `function-patch-and-transform`) that isn't in `upbound.yaml` `dependsOn` and cached (`up dep update-cache`) makes `up test run`'s render fail with `unknown function … is it listed in the render input?`. **Fix by declaring the dependency — do not delete the pipeline step.** (`up test run` *does* render declared external functions — verified.)
+> **Pitfall — external pipeline functions must be declared dependencies.** Your project's own **embedded** functions (built from `functions/`) are wired automatically. But an **external** function `functionRef` (e.g. `crossplane-contrib-function-auto-ready`, `function-patch-and-transform`) that isn't in `upbound.yaml` `dependsOn` and cached (`up dep update-cache`) makes `up test run`'s render fail with `unknown function … is it listed in the render input?`. **Fix by declaring the dependency — do not delete a pipeline step the project needs.** (`up test run` *does* render declared external functions — verified.) The one step to delete is one outside the project's declared function set, such as the duplicate auto-ready step `up composition generate` adds: remove it together with its dependency.
 
 ## Field wizard (Phase 3): you write the XRD, the wizard collects its fields
 
