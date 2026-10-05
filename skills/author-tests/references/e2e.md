@@ -76,12 +76,29 @@ aws_session_token = <placeholder>
 
 A typo such as `session_token` passes every check and fails only at the provider, with `InvalidClientTokenId`.
 Web-identity fields on Spaces: AWS `upbound.webIdentity.roleARN`, Azure `upbound.webIdentity.clientID`, GCP
-`upbound.federation.{providerID, serviceAccount}` plus `projectID`. Never commit a real value.
+`upbound.federation.{providerID, serviceAccount}` plus `projectID`. **Never commit a real value**, and never
+inline long-lived keys in a test: use web identity, or a Secret filled from a `UP_*` variable.
+
+## The ProviderConfig the test creates
+
+`up test generate --e2e` emits `extraResources: []` in every language: the test creates no ProviderConfig
+until you add one. Add the one the composed resources reference:
+
+| Kind | Scope | `metadata.namespace` | When |
+|---|---|---|---|
+| `ClusterProviderConfig` named `default` | cluster | none — omit it | **the default.** A managed resource with no `providerConfigRef` is defaulted to `{kind: ClusterProviderConfig, name: default}` |
+| `ProviderConfig` | namespaced | the XR's (`default`) | only when the composition sets `providerConfigRef.kind: ProviderConfig`; same name it references |
+
+Its `apiVersion` is the provider family's group (`aws.m.upbound.io/v1beta1`), not a service group. A
+mismatch between what the test creates and what the resources reference fails only on the control plane;
+the symptoms are in `control-plane-project-charter` `charter/v2-resources.md`. The language files show the
+syntax only.
 
 ## Go template (`tests/e2etest-<n>/main.go`)
 
 Compiles and parses (`✓ Parsing tests`); its spec mirrors a Go E2ETest that passed on a local control plane
-with up v0.55.0. Rename the placeholders; keep the shape.
+with up v0.55.0, and its `ClusterProviderConfig` entry is checked by compiling and running the program only.
+Rename the placeholders; keep the shape.
 
 ```go
 // Package main generates the E2ETest for <Kind>: apply the example XR, wait for Ready, delete everything.
@@ -125,10 +142,10 @@ func main() {
 		map[string]any{"apiVersion": "v1", "kind": "Secret",
 			"metadata":   map[string]any{"name": "<provider>-creds", "namespace": namespace},
 			"stringData": map[string]any{"credentials": creds}},
-		// The kind and name the composed resources reference. With no providerConfigRef, create
-		// ClusterProviderConfig "default" instead (no metadata.namespace).
-		map[string]any{"apiVersion": "aws.m.upbound.io/v1beta1", "kind": "ProviderConfig",
-			"metadata": map[string]any{"name": "default", "namespace": namespace},
+		// What resources with no providerConfigRef default to. If the composition references a
+		// namespaced ProviderConfig, create that kind and name in the XR's namespace instead.
+		map[string]any{"apiVersion": "aws.m.upbound.io/v1beta1", "kind": "ClusterProviderConfig",
+			"metadata": map[string]any{"name": "default"},
 			"spec": map[string]any{"credentials": map[string]any{"source": "Secret",
 				"secretRef": map[string]any{"namespace": namespace, "name": "<provider>-creds", "key": "credentials"}}}},
 	)
