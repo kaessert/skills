@@ -79,6 +79,11 @@ loop, or a caller that cannot relay a question — decide from the project's own
 which assumption you made, or stop and report the open question as your result. Wherever a
 skill says to ask, read it with this rule.
 
+**Re-read a document before you write from it.** Long runs lose old file and command output.
+Before you write anything derived from a document — a work item, a test expectation, a quote,
+a field value — re-read the section you rely on in that same step. Never quote from memory. If
+the re-read contradicts what you wrote, fix that first.
+
 **Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) — what each context may and may not do, why a fork's only output channel is prose, and how to delegate or run long commands when your harness cannot.
 
 

@@ -36,6 +36,10 @@ otherwise, the project wins: say so in your report.
    whether you saw it fail. If you did not, call the test unproven (§4).
 9. **Name the layer you reached** — render, composition test, local control plane, cloud — and
    never claim one you did not reach. Comments and docs claim no more than the test checks (§4).
+10. **Re-read a document before you write from it.** Long runs lose old output: before you
+    write a work item, a test expectation, a quote or a field value taken from a document,
+    re-read the section you rely on in that step. Never quote from memory; if the re-read
+    contradicts what you wrote, fix it first (charter §1).
 
 ## Phase 0: You run inline, and you are bound by the charter
 

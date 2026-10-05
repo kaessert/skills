@@ -17,6 +17,9 @@ It is a reminder, not a replacement: the reasons and the evidence are in the cha
 - The project's own decisions — design document, work item, gate script — win over skill
   defaults. Say where you departed from a default and why (§2).
 - Never create a group, Space, control plane or cloud resource as a side effect (§9).
+- Long runs lose old output. Before you write anything derived from a document — a work item,
+  a test expectation, a quote, a field value — re-read the section you rely on in that step.
+  Never quote from memory; if the re-read contradicts what you wrote, fix it first (§1).
 
 **Building**
 - Test first: watch every new test fail for the right reason before making it pass. A broken
@@ -54,6 +57,8 @@ It is a reminder, not a replacement: the reasons and the evidence are in the cha
   seen failing. Check one yourself; mutating the expected value does not count (§3, §4).
 - The spec's requirements are met where they depart from skill defaults, and the departure is
   stated (§2).
+- Re-read the spec section before you write a finding from it, never quote from memory, and
+  check every quoted spec sentence verbatim against the spec, wherever it is quoted (§1).
 - Flag `providerConfigRef`, `managementPolicies` or MR `metadata.namespace` as removable unless
   the project's spec or API sets them; flag `providerConfigRef.kind: ProviderConfig` as a bug
   only when no namespaced `ProviderConfig` of that name exists in, or is created in, the XR's
