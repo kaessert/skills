@@ -88,9 +88,15 @@ Run `up project build`. If fails → report error and EXIT.
 
 ### Phase 2: Composition Tests
 
-Run `up test run tests/test-*`. If any fail → report failures and EXIT. If it prints
+Run `up test run "tests/test-*"`. If any fail → report failures and EXIT. If it prints
 `No test files found`, no test ran, though it exits 0 — report that, never a pass
 (`control-plane-project-charter` §8).
+
+Keep the `test-*` glob: `up test run` runs the program of every dir it matches, e2e ones
+too even without `--e2e`, so `tests/*` fails at `✗ Parsing tests` whenever an e2e input is
+unset. `no valid CompositionTests found` means the matched dirs produced no
+`CompositionTest` (e.g. only `e2etest-*` dirs): a wrong glob, not a failing test
+(`control-plane-project-charter` §7).
 
 ### Phase 2b: Read the render, don't just trust the exit code
 
