@@ -543,5 +543,5 @@ step), or `--local` (side-loads, so the pull failure cannot occur, and still cre
 cloud resources).
 
 Full diagnosis, the `kubectl describe` that actually names the error, and the
-kubeconfig-left-pointing-elsewhere trap: see the **verify-configuration** skill,
+kubeconfig-left-pointing-elsewhere trap: verify-configuration's `dev-control-plane.md` reference,
 *"When a run hangs on Waiting for package to be ready"*.

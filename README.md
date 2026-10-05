@@ -112,7 +112,7 @@ More questions it handles:
 | [`execute-v2-migration`](skills/execute-v2-migration/SKILL.md) | Use this skill when user requests to execute or implement a Crossplane v2 migration plan. |
 | [`plan-v2-migration`](skills/plan-v2-migration/SKILL.md) | Use this skill when user requests to migrate, upgrade, or plan migration to Crossplane v2. |
 | [`upbound-hub`](skills/upbound-hub/SKILL.md) | Query and mutate Upbound Hub, the central API for an Upbound Platform deployment, which gives one cross-fleet view of control planes, spaces, realms, types, packages, resources, identity providers, and the image catalog. |
-| [`verify-configuration`](skills/verify-configuration/SKILL.md) | Use this skill when user requests to verify, validate, or check a Crossplane configuration package before committing, or to run, deploy, or try out the project on a control plane ("run the project", "deploy it", "spin it up", "try it on a control plane", "up project run", "dev control plane"). |
+| [`verify-configuration`](skills/verify-configuration/SKILL.md) | Verify a Crossplane configuration package before committing - build it, run its composition tests and read the render, and optionally orchestrate its E2E tests or run the project on a development control plane ("verify the configuration", "validate the project", "is this ready to commit", "run the tests", "run the project", "deploy it", "spin it up", "try it on a control plane", "up project run", "dev control plane"). |
 <!-- END skills-table -->
 
 ## How these skills are built
