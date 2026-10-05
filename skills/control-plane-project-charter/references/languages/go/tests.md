@@ -221,6 +221,10 @@ gofmt -l tests/ && (cd tests/test-<n> && go vet .)
 up test run tests/test-<n> --function-logs     # render.log per test under _output/composition_test/<ts>/
 ```
 
+A plain `up test run` writes no `_output/composition_test/<ts>/`, so the directories already there are from
+earlier runs: re-run with `--function-logs` and read the directory it prints. `--function-logs` is rejected
+together with `--e2e`; an e2e run has no `render.log`.
+
 The `resourceRefs` names (`example-963082b09556`) come from `render.log`. Renders are deterministic, so they
 are stable across runs; copy them, never derive them.
 

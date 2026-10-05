@@ -16,6 +16,8 @@ Three things about that path, each of which has cost a wasted attempt:
 
 - **`--function-logs` is what writes the artifacts.** `--output-dir` alone writes nothing — it
   only changes the base directory. `--function-logs` is also rejected outright with `--e2e`.
+  A plain `up test run` writes no `_output/composition_test/<ts>/`, so any directory already
+  there is stale: re-run with `--function-logs` before reading `render.log`.
 - **Do not construct the path.** The directory carries a `YYYYMMDD-HHMMSS` timestamp you cannot
   know in advance; the run prints it.
 - **One test *directory* produces one subdirectory per `CompositionTest`**, named for the
