@@ -13,9 +13,9 @@ Two XRD versions are two views of the same stored object, so any change must rou
 | Rename a field (`spec.widgets` → `spec.widgetCount`) | Drop a field an older version requires |
 | Move a field (`spec.shape` → `spec.properties.shape`) | Add a required field an older version lacks |
 
-A new version buys you almost nothing, so do not plan to fix the schema in `v1beta1`. `v1alpha1`, before anything depends on it, is the only cheap moment. Every rule below is cheap now and impossible later.
+A new version buys you almost nothing, so do not plan to fix the schema in `v1beta1`: `v1alpha1`, before anything depends on it, is the only cheap moment (§5).
 
-A field can be renamed across versions. **The Kind cannot.** It is the GVK and the CRD's `spec.names.kind`; renaming it stops the CRD serving the old name and every stored object of that type becomes unreadable. `HttpLoadbalancer`, which wants to be `HTTPLoadBalancer`, is cheap to fix before `v1alpha1` ships and effectively permanent after.
+A field can be renamed across versions. **The Kind cannot**: it is the GVK and the CRD's `spec.names.kind`, so a new Kind is a new API, and existing objects are not converted to it. That is why migrating a v1 API keeps its Kind, `X` prefix included, and why a new API should get its Kind right — no `X` prefix, initialisms in full — before `v1alpha1` ships.
 
 If you script a casing fix, match on **word boundaries**: end of string, or followed by an uppercase letter. A bare `ReplaceAll(s, "Api", "API")` reaches inside longer words and rewrites `apiep` (from `api_ep`) to `APIep`.
 
@@ -48,7 +48,7 @@ This is deliberately *not* the Kubernetes core convention. Core spells them `con
 
 The failure is silent either way: a wrong guess is a schema mismatch nobody notices, not an error.
 
-**Get the Kind right, because it is the one you cannot fix.** A field can be renamed across versions; the Kind is the GVK and `spec.names.kind`. `HttpLoadbalancer` should be `HTTPLoadBalancer`: two defects, only one of them mechanical, since no table can see the missing word boundary in `Loadbalancer`.
+**Get the Kind right** (it cannot be renamed, above). `HttpLoadbalancer` should be `HTTPLoadBalancer`: two defects, only one of them mechanical, since no table can see the missing word boundary in `Loadbalancer`.
 
 For the Kind, an **allowlist of tokens that must be upper-cased** is what scales, each written with the expansion it stands for. The allowlist is inverted from the intuitive design, and the inversion is the reason it works. A *registry* of canonical initialisms, used to decide what casing is wrong, fires on every name it does not know, so nearly every hit is a gap in the registry rather than a defect, and the check gets switched off. An allowlist used the other way can only ever produce a **missed defect**, never a false alarm. An entry nobody can expand does not belong in it.
 
@@ -67,7 +67,7 @@ So run both. Neither subsumes the other.
 
 ## Constrain every string, and say what it is
 
-A field with only `type: string` and no `description` accepts anything and documents nothing. Descriptions are the API: they are what `kubectl explain` and the console render, so a schema without them cannot be consumed without reading the composition.
+A field with only `type: string` and no `description` accepts anything and documents nothing (§5). Descriptions are what `kubectl explain` and the console render; without them the schema cannot be consumed without reading the composition.
 
 | Add | When |
 |---|---|
@@ -75,8 +75,6 @@ A field with only `type: string` and no `description` accepts anything and docum
 | `enum` | The value is one of a known set |
 | `pattern`, `minLength`, `maxLength` | The backend will reject some strings |
 | `default` | There is a safe value, especially the most restrictive one |
-
-The payoff is where the failure surfaces. Without constraints, a bad value is accepted at `kubectl apply` and fails inside the provider minutes later, with an error the user cannot map back to the field they typed.
 
 **Verify bounds against vendor documentation, not from memory.** Guessing produces confident, wrong constraints in both directions: too tight rejects the user's own valid input, too loose defers the failure again. Backend key rules in particular are rarely what you assume, and they often vary by resource subtype, which a single `pattern` cannot express. Those parts belong in CEL (below).
 
@@ -169,9 +167,7 @@ Without `x-kubernetes-list-type`, a list is atomic: duplicates are accepted, and
 
 ## `status` is the half of the API people forget
 
-Crossplane injects `status.conditions` and nothing else. An empty `status` means a user who created the object cannot learn anything the composition computed: the URL, the key it actually got, the resolved identifier.
-
-They usually cannot derive it either, because composition naming is rarely the object name. Surface what the caller cannot compute:
+Crossplane injects `status.conditions` and nothing else (§5: an empty `status` hides what the composition computed). Callers usually cannot derive the URL, the key it actually got or the resolved identifier themselves, because composition naming is rarely the object name. Surface what the caller cannot compute:
 
 ```yaml
 status:
