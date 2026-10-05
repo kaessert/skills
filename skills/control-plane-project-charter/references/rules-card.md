@@ -26,6 +26,8 @@ It is a reminder, not a replacement: the reasons and the evidence are in the cha
   test is not RED, even when it exits 1 — that includes a bug in the test's own logic (§3).
 - Backfilling a test for working code: mutate the implementation, never the test's expected
   value, see the test go red, then revert (§3).
+- Every value the function passes through gets, in at least one test, a value that is not the
+  default and no sibling field shares; otherwise a hard-coded constant stays green (§3).
 - New tests use the language of the existing `CompositionTest`/`E2ETest` dirs, else the
   composition language, else YAML. A program printing `items: []` is no test and sets
   nothing (§10).

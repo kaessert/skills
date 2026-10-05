@@ -255,6 +255,19 @@ func TestRunFunction(t *testing.T) {
 }
 ```
 
+A requirement on *every* composed resource (a label, a policy, a config ref, a region) goes in one loop over
+the whole desired state, inside the `t.Run` above, so a resource that misses it cannot hide behind
+per-resource expectations. Here every resource carries the XR's region:
+
+```go
+for name, r := range rsp.GetDesired().GetResources() {
+	sp, _ := r.GetResource().AsMap()["spec"].(map[string]any)
+	if fp, _ := sp["forProvider"].(map[string]any); fp["region"] != "eu-central-1" {
+		t.Errorf("%s: forProvider.region: want eu-central-1, got %v", name, fp["region"])
+	}
+}
+```
+
 The unit test supplements `up test run`; it never replaces it. It does not run the composition pipeline,
 the XRD defaults, or the other functions.
 

@@ -47,3 +47,11 @@ claim with evidence behind it. *"Coverage: complete"* is not.
 
 If a mutation you expected to break the test leaves the suite green, the test does not cover
 what you thought — say so rather than reporting the coverage.
+
+**Check that each pass-through input is distinguishing.** For every field the function copies
+from the XR (region, a config name, a CIDR, the XR's own name), hard-code the field to the
+test's input value — the default, where a test relies on it — and run the suite. If it stays
+green, every test feeds that same value and the input isn't distinguishing: give one test a
+value that differs from the default and from every sibling field, and see it go red under the
+same mutation. Reading a sibling field instead (the XR name in place of the config name) must
+go red too.

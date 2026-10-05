@@ -73,13 +73,14 @@ test, run it, read the failure, then implement. It is not repeated here — read
 the table of which failures count as RED and the deliberate-mutation technique for backfill.
 
 **What is specific to this skill** is that you are the one writing the assertion that has to
-fail. Three things make that assertion bite:
+fail. Four things make that assertion bite:
 
 | | |
 |---|---|
 | **Assert the field, not the existence.** | `assertResources` is partial and positive. An entry naming only `kind` passes against any resource of that kind, whatever it contains. Name the field you are adding. |
 | **Assert on the composite too.** | Every `status` field the function writes needs an assertion on the XR itself. It is the only programmatic check on composition outputs. |
 | **Cover the minimal XR.** | Use the inline `xr` field with every optional property omitted. That is the shape a real user writes first, and the one the scaffold never generates. |
+| **Use distinguishing inputs.** | Every parameter the function passes through (region, config names, CIDRs, the XR's own name, …) gets a non-default value, unique across fields, in at least one test; a required field with no default needs two tests with different values. An input equal to the default or to a sibling field can't tell pass-through from a hard-coded constant. Backfill check: charter `tdd.md`. |
 
 Run it directly — `up test run "tests/<t>"` — not through `verify-configuration`, which builds
 the package and runs the whole suite, and is not an inner loop. If it prints
@@ -94,6 +95,16 @@ not search the CLI for one.
 |---|---|
 | A composed **resource** | Assert the composite's `spec.crossplane.resourceRefs` as the exact list from `render.log`. Lists match exactly, so a surplus resource fails it. The templates in the charter's `languages/go/tests.md` and `languages/go-templating.md` show this guard; detail in its `charter/evidence.md` |
 | A **field** | Not expressible in a composition test. Use a unit test on the function's desired state, in the function's own language (Go: `go test ./...` in `functions/<n>/`), or confirm it once in `render.log` and report it as not asserted |
+
+### Asserting a requirement on every resource
+
+When a requirement applies to *every* composed resource (a label, a policy, a config ref, a
+region), assert it in one test that ranges over all desired resources, not in per-resource
+expectations: those inherit each row's omissions, so a resource that misses it stays green.
+The tier that can range is a function unit test over the desired state (Go sketch: the
+charter's `languages/go/functions.md`, unit-test template). A CompositionTest cannot iterate
+over the render; it fits only when one helper adds the requirement to every expectation and
+there is one expectation per entry of the exact `resourceRefs` list.
 
 ## Checking what is not a render
 
