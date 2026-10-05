@@ -39,7 +39,8 @@ references:
 which language a project is written in or which skill you happen to be: how to behave as an
 agent, how to develop, what Crossplane v2 actually requires, and how to report what you did.
 
-Language-specific syntax lives in [`languages/`](references/languages/) — one file per language. Skill
+Language-specific syntax lives in [`languages/`](references/languages/) — one file per language,
+indexed by [`languages/README.md`](references/languages/README.md); §10 says which to read. Skill
 workflows live in each skill's `SKILL.md`. Nothing in this file is language-specific, and
 nothing in it is optional.
 
