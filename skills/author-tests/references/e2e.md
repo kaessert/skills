@@ -1,0 +1,187 @@
+# Writing an E2ETest
+
+Read before writing or changing any `E2ETest`, in any language. Facts are from the up v0.55.0 source and
+runs, and could change between versions. Running one (target, monitoring, report) is `e2e-test-configuration`'s
+job.
+
+## Fields
+
+An `E2ETest` has **no** `compositionPath`, `xrdPath` or `xr`. It applies real manifests to a fresh control
+plane and waits for conditions.
+
+| Field | Meaning | Unset |
+|---|---|---|
+| `metadata.name` | test name; the control plane is `<project>-uptest-<name>` by default | the Go scaffold leaves `""`: set it |
+| `spec.crossplane` | `autoUpgrade.channel: Stable\|Rapid` (no pinned version), or a deliberately pinned *current* `version`. A local control plane ignores the channel | latest matching version; the Go scaffold omits the block |
+| `spec.defaultConditions` | condition **types** every manifest must reach (below) | scaffolds set `["Ready"]` |
+| `spec.manifests` | resources under test, ≥1, usually the XR. The only objects asserted | — |
+| `spec.extraResources` | Namespace, credential Secret, ProviderConfig: applied after the package is ready, **never asserted** | — |
+| `spec.initResources` | applied before the package is installed (ImageConfig, DeploymentRuntimeConfig) | — |
+| `spec.timeoutSeconds` | sized to what you provision: a couple of resources ~900s, an EKS cluster with add-ons 3600–5400s | **no default: set it explicitly** (omitting it may panic the CLI). The Go scaffold writes 300, the others 4500 |
+| `spec.cleanupTimeoutSeconds` | proportional to teardown time | 600 |
+| `spec.setupTimeoutSeconds` | control plane creation, package install, resources | 600 |
+| `spec.skipDelete` | **always `false`** | `false` |
+
+## `defaultConditions` lists condition types, not expressions
+
+Each entry becomes this assertion on every object in `spec.manifests` (not composed resources, not
+`extraResources`):
+
+```text
+((conditions[?type == '<entry>'])[0]).status == "True"
+```
+
+It checks one condition type for `status: "True"` and nothing else: no reason, message or field value. The
+generated model calls each entry "a string expression"; that is wrong. Observed with up v0.55.0:
+
+| Entry | Result |
+|---|---|
+| `Ready` (add `Synced` only to gate on sync) | the intended check |
+| a status path or any non-type string | the assert fails: `field not found in the input object` |
+| anything with operators | fails within a second: `SyntaxError: Expected TOKRbracket, …` |
+
+The last two are broken tests, not RED.
+
+## Status values cannot be asserted
+
+An `E2ETest` has no field that checks a value such as `status.vpcId`; `assertResources` exists only on
+`CompositionTest`, which is render-only. The supported route:
+
+1. Prove status derivation with a `CompositionTest` whose `observedResources` mock the provider's status,
+   asserting the composite's `status`, plus a function unit test.
+2. Report the e2e layer as **"Ready only"**: the live value is not asserted.
+
+uptest's `uptest.upbound.io/pre-assert-hook` / `post-assert-hook` manifest annotations run a local script, but
+the path resolves against the temp dir `up` writes the manifests to (uptest `internal/tester.go:343`; up
+`cmd/up/test/e2etest.go:242, 278`), where the script does not exist. An advanced, fragile option with no tested
+path pattern: not the default, and if you try it, say so in the report.
+
+## Credentials depend on the target
+
+| Target | ProviderConfig `credentials` |
+|---|---|
+| Spaces control plane | `source: Upbound` (web identity). The only `up` command that generates it, `up controlplane oidc-auth aws`, requires a Spaces control plane context. Each test gets its own control plane, so the trust policy needs a wildcard subject (inference, untested) |
+| Local control plane (`--local`, kind) | static Secret: `source: Secret` plus `secretRef: {namespace, name, key}`. `secret:` is rejected as `field not declared in schema` |
+
+Other providers use the same structure with their own credential format as the Secret's value. For AWS the
+value is a credentials file, exported whole under a `UP_` name such as `UP_AWS_CREDENTIALS` (KCL and Python
+programs see only `UP_*` variables; charter §7):
+
+```ini
+[default]
+aws_access_key_id = <placeholder>
+aws_secret_access_key = <placeholder>
+aws_session_token = <placeholder>
+```
+
+A typo such as `session_token` passes every check and fails only at the provider, with `InvalidClientTokenId`.
+Web-identity fields on Spaces: AWS `upbound.webIdentity.roleARN`, Azure `upbound.webIdentity.clientID`, GCP
+`upbound.federation.{providerID, serviceAccount}` plus `projectID`. Never commit a real value.
+
+## Go template (`tests/e2etest-<n>/main.go`)
+
+Compiles and parses (`✓ Parsing tests`); its spec mirrors a Go E2ETest that passed on a local control plane
+with up v0.55.0. Rename the placeholders; keep the shape.
+
+```go
+// Package main generates the E2ETest for <Kind>: apply the example XR, wait for Ready, delete everything.
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+
+	"k8s.io/utils/ptr"
+	"sigs.k8s.io/yaml"
+
+	metav1 "dev.upbound.io/models/io/k8s/meta/v1"
+	metav1alpha1 "dev.upbound.io/models/io/upbound/dev/meta/v1alpha1"
+)
+
+const (
+	exampleXR = "../../examples/<kind>/example.yaml" // CWD is tests/e2etest-<n>/
+	namespace = "default"                            // the example XR's metadata.namespace
+	credsVar  = "UP_AWS_CREDENTIALS"                 // INI file contents; UP_ by convention
+)
+
+func main() {
+	// Fail before a control plane exists. Safe because the composition gate is "tests/test-*".
+	creds := os.Getenv(credsVar)
+	if creds == "" {
+		fail("%s is not set: export it before running this e2e test", credsVar)
+	}
+	raw, err := os.ReadFile(exampleXR)
+	if err != nil {
+		fail("reading %s: %v", exampleXR, err)
+	}
+	var xr map[string]any
+	if err := yaml.Unmarshal(raw, &xr); err != nil || len(xr) == 0 {
+		fail("parsing %s: %v", exampleXR, err)
+	}
+	manifests := resourcesToItems[metav1alpha1.E2ETestSpecManifestsItem](xr)
+	extra := resourcesToItems[metav1alpha1.E2ETestSpecExtraResourcesItem](
+		map[string]any{"apiVersion": "v1", "kind": "Namespace", "metadata": map[string]any{"name": namespace}},
+		map[string]any{"apiVersion": "v1", "kind": "Secret",
+			"metadata":   map[string]any{"name": "<provider>-creds", "namespace": namespace},
+			"stringData": map[string]any{"credentials": creds}},
+		// The kind and name the composed resources reference. With no providerConfigRef, create
+		// ClusterProviderConfig "default" instead (no metadata.namespace).
+		map[string]any{"apiVersion": "aws.m.upbound.io/v1beta1", "kind": "ProviderConfig",
+			"metadata": map[string]any{"name": "default", "namespace": namespace},
+			"spec": map[string]any{"credentials": map[string]any{"source": "Secret",
+				"secretRef": map[string]any{"namespace": namespace, "name": "<provider>-creds", "key": "credentials"}}}},
+	)
+	test := metav1alpha1.E2ETest{
+		APIVersion: ptr.To(metav1alpha1.E2ETestAPIVersionmetaDevUpboundIoV1Alpha1),
+		Kind:       ptr.To(metav1alpha1.E2ETestKindE2ETest),
+		Metadata:   &metav1.ObjectMeta{Name: ptr.To("<n>")},
+		Spec: &metav1alpha1.E2ETestSpec{
+			Crossplane: &metav1alpha1.E2ETestSpecCrossplane{AutoUpgrade: &metav1alpha1.E2ETestSpecCrossplaneAutoUpgrade{
+				Channel: ptr.To(metav1alpha1.E2ETestSpecCrossplaneAutoUpgradeChannelStable)}},
+			DefaultConditions:     &[]string{"Ready"}, // condition types, never expressions
+			Manifests:             &manifests,
+			ExtraResources:        &extra,
+			TimeoutSeconds:        ptr.To(1200), // sized to what this provisions
+			CleanupTimeoutSeconds: ptr.To(600),
+			SkipDelete:            ptr.To(false),
+		},
+	}
+	out, err := yaml.Marshal(map[string]any{"items": []any{test}})
+	if err != nil {
+		fail("encoding YAML: %v", err)
+	}
+	fmt.Print(string(out))
+}
+
+func fail(format string, args ...any) {
+	fmt.Fprintf(os.Stderr, format+"\n", args...)
+	os.Exit(1)
+}
+```
+
+`resourcesToItems` is the helper from the composition-test template in the charter's `languages/go/tests.md`.
+The E2E run is `up test run "tests/e2etest-<n>" --e2e …`; the composition gate stays `"tests/test-*"`, and both
+go in the project README.
+
+## What happens on the control plane
+
+On any target, in this order:
+
+1. Every matched test program runs (`Parsing tests`) before any control plane exists.
+2. The control plane is created, then `initResources` are applied, then the package is installed and waited for.
+3. `extraResources` are server-side applied: no wait, no condition check.
+4. The manifests are applied and `defaultConditions` asserted within `timeoutSeconds`.
+5. Teardown follows every test, pass or fail: the test's resources, then the control plane.
+   `skipDelete: true` or `--skip-control-plane-cleanup` leaves the control plane up.
+
+`--function-logs` is rejected with `--e2e`: an e2e run writes no `render.log`, so its output and exit code are
+the only record. Choosing the target and running it: `e2e-test-configuration`.
+
+## E2E RED
+
+A valid e2e RED is an **implementation mutation** the control plane rejects or never readies: drop a composed
+resource the others depend on, or break a selector. Run it with a short `timeoutSeconds` (300) so the RED costs
+minutes. Check the failure is the Ready assertion (observed: the expected `Ready` condition against
+`status: {}`), not a credential error, then revert with git and restore the timeout. Editing
+`defaultConditions` or an expected value is not RED, and an unparsable condition is a broken test.

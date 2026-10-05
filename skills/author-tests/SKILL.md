@@ -1,9 +1,10 @@
 ---
 name: author-tests
-description: Use this skill when user requests to implement a feature, write, create, author, modify, refactor or plan refactoring of Crossplane configuration tests (composition tests or E2E tests) in a control-plane project - in any language (KCL, Python, YAML, Go, go-templating). Use this rather than a generic planning mode when the user asks for a plan to refactor composition tests or e2e tests in a crossplane configuration package. Specialized skill focused only on test authoring and modification (not running tests). Detects the test language and applies the right templates and patterns. Always load this skill before writing or changing composition or E2E test files, instead of writing them directly - also when you get there partway through another skill's workflow, such as scaffolding a new package.
+description: Use this skill when user requests to implement a feature, write, create, author, modify, refactor or plan refactoring of Crossplane configuration tests (composition tests or E2E tests) in a control-plane project - in any language (KCL, Python, YAML, Go, go-templating). Use this rather than a generic planning mode when the user asks for a plan to refactor composition tests or e2e tests in a crossplane configuration package. Specialized skill focused only on test authoring and modification (not running tests). Detects the test language and applies the right templates and patterns. Always load this skill before writing or changing composition or E2E test files, instead of writing them directly - also when you get there partway through another skill's workflow, such as scaffolding a new package. Covers writing an E2ETest - defaultConditions, extraResources, E2E credentials (static Secret or web identity) and what an E2ETest can assert.
 license: Apache-2.0
 references:
   - references/knowledge.md
+  - references/e2e.md
 ---
 
 # Crossplane Test Authoring Assistant
@@ -222,10 +223,14 @@ EXECUTE REFACTORING:
 | Composition | ≥60s | `false` (scaffold/lab default) | `test-` | Local render validation, no cloud |
 | E2E | sized to resources (see below) | n/a | `e2etest-` | Real cloud lifecycle |
 
-**E2E timeout is sized to what you provision, not a fixed number.** A couple of Azure resources may be fine at ~900s; a real EKS cluster + add-ons needs 3600-5400s. Under-sizing causes false failures. Set `cleanupTimeoutSeconds` proportionally.
-
-**E2E provider credentials and the `crossplane` block** (track a channel, or pin a *current*
-version): [knowledge.md](references/knowledge.md#provider-credentials-e2e-extraresources).
+**E2E tests: read [e2e.md](references/e2e.md) before writing or changing any `E2ETest`** — fields and
+defaults, credentials per target, a Go template, and what counts as an e2e RED.
+- **`defaultConditions` lists condition types (`Ready`), never expressions or status paths.**
+- **An `E2ETest` cannot assert a status value.** Prove it with an `observedResources`
+  CompositionTest plus a unit test, and report the e2e layer as "Ready only". Never search the
+  `up` binary or the web for another mechanism: e2e.md says what exists.
+- **Set `timeoutSeconds` explicitly**, sized to what you provision. Credentials depend on the
+  target: `source: Upbound` works only on a Spaces control plane.
 
 **CRITICAL**: always use the `.m.` API groups in tests. The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See `control-plane-project-charter` §5 (what a v2 composed resource needs). How the `.m.` is written differs per language — the import path in KCL, Python and Go, the `apiVersion` string in YAML; see the per-language reference.
 
@@ -260,7 +265,7 @@ The training labs use `ClusterProviderConfig`; see
 1. Hardcoded long-lived credentials in E2E tests (use web/injected identity, or a Secret sourced from a `UP_*` env var)
 2. `skipDelete: true` in E2E tests (always clean up)
 3. `timeoutSeconds < 60` for composition tests
-4. Under-sized E2E timeouts (see sizing note above)
+4. Under-sized or unset E2E timeouts (sizing: [e2e.md](references/e2e.md))
 5. Assert resource existence only, with no field assertions
 
 ## Test Organization
@@ -327,6 +332,7 @@ Planning or executing a test refactor: follow
 ## References
 
 - [knowledge.md](references/knowledge.md) - language-agnostic object model, patterns, common mistakes, refactoring template
+- [e2e.md](references/e2e.md) - read before writing or changing any `E2ETest`: fields, `defaultConditions`, status, credentials per target, Go template, e2e RED
 - kcl.md (`control-plane-project-charter` `languages/kcl.md`) - KCL syntax, imports, templates (composition + E2E for AWS/Azure/GCP)
 - python.md (`control-plane-project-charter` `languages/python.md`) - Python SDK test layout, Pydantic dump modes, templates
 - yaml.md (`control-plane-project-charter` `languages/yaml.md`) - raw YAML tests, real-world examples

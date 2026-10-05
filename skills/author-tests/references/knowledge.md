@@ -35,18 +35,7 @@ Every test - in any language - produces one of two objects under `apiVersion: me
 
 ### E2ETest (real cloud lifecycle)
 
-**Different spec from CompositionTest** - it has **no** `compositionPath` / `xrdPath` / `xr`. It applies real manifests to a live control plane and waits for conditions.
-
-| Field | Meaning |
-|-------|---------|
-| `metadata.name` | Test name |
-| `spec.crossplane` | `autoUpgrade.channel: Stable\|Rapid`, optionally `version: <current>` (see [Common Mistakes 2](#2-stale-or-missing-crossplane-block-e2e)) |
-| `spec.defaultConditions` | Conditions every manifest must reach. Default `["Ready"]`; add `"Synced"` only when you specifically want to gate on sync |
-| `spec.manifests` | Resources under test (≥1 required) - typically the XR(s) |
-| `spec.extraResources` | Prerequisites applied first: the `ProviderConfig` the XR references, and any credential `Secret` |
-| `spec.timeoutSeconds` | Sized to the resources provisioned (see SKILL.md sizing note) |
-| `spec.cleanupTimeoutSeconds` | Proportional to teardown time |
-| `spec.skipDelete` | **Always `false`** |
+Field table, defaults, what `defaultConditions` accepts and what an `E2ETest` cannot assert: [e2e.md](e2e.md).
 
 ---
 
@@ -63,44 +52,9 @@ The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" an
 
 ### Provider credentials (E2E `extraResources`)
 
-Prefer Upbound-injected / web identity over static Secrets.
-
-| Provider | ProviderConfig API Group | Web-identity field |
-|----------|--------------------------|--------------------|
-| AWS | `aws.m.upbound.io/v1beta1` | `webIdentity.roleARN` |
-| Azure | `azure.m.upbound.io/v1beta1` | `webIdentity.clientID` |
-| GCP | `gcp.m.upbound.io/v1beta1` | `federation.providerID` + `serviceAccount` |
-
-**AWS** - web identity:
-```yaml
-credentials:
-  source: Upbound
-  upbound:
-    webIdentity:
-      roleARN: arn:aws:iam::123456789012:role/provider-aws
-```
-
-**Azure** - web identity:
-```yaml
-credentials:
-  source: Upbound
-  upbound:
-    webIdentity:
-      clientID: "00000000-0000-0000-0000-000000000000"
-```
-
-**GCP** - workload identity federation:
-```yaml
-projectID: YOUR_GCP_PROJECT
-credentials:
-  source: Upbound
-  upbound:
-    federation:
-      providerID: projects/NUMBER/locations/global/workloadIdentityPools/POOL/providers/PROVIDER
-      serviceAccount: SA@PROJECT.iam.gserviceaccount.com
-```
-
-If a project genuinely requires a static-Secret ProviderConfig, use `source: Secret` with a `Secret` in `extraResources` (Python E2E example in python.md (`control-plane-project-charter` `languages/python.md`) shows the pattern; source the value from an env var into `stringData`, as the training labs do). The env var **is named `UP_*`**. For KCL and Python that is required: manifest generation runs in a container that receives only `UP_`-prefixed variables and has no `~/.aws`, so `AWS_ACCESS_KEY_ID` and friends arrive empty. Go runs the program locally and sees every variable (go-templating renders inside `up` and reads its environment), but use `UP_*` there too so the test ports across languages — see the container boundary (`control-plane-project-charter` §7). A program that exits on a missing variable also runs, and fails, under a plain `up test run "tests/*"`: the composition gate is `up test run "tests/test-*"` (same section). Never inline real long-lived credentials.
+Which credential source works on which target (web identity only on a Spaces control plane, a static
+`source: Secret` with `secretRef` on a local one), the AWS credentials-file format and the `UP_*` variable:
+[e2e.md](e2e.md#credentials-depend-on-the-target).
 
 ### Two ProviderConfig kinds (v2)
 
@@ -150,7 +104,7 @@ Language-neutral mistakes. (KCL import-syntax and Python dump-mode mistakes live
 
 ### 1. Wrong ProviderConfig authentication
 **Wrong:** Hardcoded long-lived keys inlined in the test.
-**Right:** Web identity / injected identity (`source: Upbound`) where available; otherwise a `source: Secret` ProviderConfig whose value is sourced from a **`UP_`-prefixed** env var into `stringData` (the training-lab pattern; the prefix is what gets it into a KCL or Python generation container, and keeps a Go test portable). Never commit real keys.
+**Right:** Web identity / injected identity (`source: Upbound`) on a Spaces control plane; otherwise (e.g. a local one) a `source: Secret` ProviderConfig whose value is sourced from a **`UP_`-prefixed** env var into `stringData` (the training-lab pattern; the prefix is what gets it into a KCL or Python generation container, and keeps a Go test portable). Never commit real keys.
 
 ### 2. Stale or missing crossplane block (E2E)
 **Wrong:** Copying a pinned `version:` from an old example (rots immediately).
