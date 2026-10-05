@@ -215,6 +215,12 @@ mkdir -p apis/{resource}
 
 ### Phase 3: XRD Schema Wizard
 
+Only when there is no spec to read the fields from. You still write the XRD by hand; the
+wizard collects its fields. Ask in a loop until the user says done, and write the OpenAPIv3
+schema into `apis/<plural>/definition.yaml` as you go.
+
+**Add reasonable validation — but keep the draft valid.** Sensible enhancements are encouraged (accurate types, `required`, descriptions, a CIDR `pattern`, well-scoped `enum`s/defaults). The one rule: any constraint must still **accept the values in the user's XR draft** — never add validation that rejects the user's own example (e.g. a lowercase `location` enum that accepts only `westeurope` and rejects the draft's `West Europe`). If a reasonable constraint would conflict with a draft value, normalize the value or relax the constraint — or ask.
+
 **Loop structure:**
 
 ```text
@@ -500,6 +506,29 @@ Before handing off, verify:
 ---
 
 ## Integration Points
+
+### Post-scaffolding hand-off
+
+After the final build, report what ran and what it printed, not a checklist
+(`control-plane-project-charter` §4: report the effect, not the intent):
+
+```markdown
+## Package scaffolding: {project-name}
+
+**Resource:** {Kind} ({api-group}/{version}) · **Language:** {language}
+
+**Ran:**
+- `up project build` → exit {code}; package {path under _output/}
+- `check_xrd_schema.py apis/*/definition.yaml` → exit {code}; {findings, or none}
+
+**Layer reached:** package build. Nothing rendered, no tests run, nothing deployed.
+**Assumed / not verified:** {e.g. Kinds confirmed from the generated models; ProviderConfig not applied}
+
+### Next steps
+1. Tests and composition logic, test first: `author-tests` writes the failing test,
+   `author-composition` makes it pass (`functions/{resource}/`)
+2. Gate: the project's own gate if it has one, else `verify-configuration`
+```
 
 ### Hand-off to author-tests and author-composition, test first
 
