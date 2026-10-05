@@ -22,7 +22,7 @@ to build and test one when the `up` CLI cannot.
 > | Scaffold | copy the files below (the layout of [`crossplane/function-template-typescript`](https://github.com/crossplane/function-template-typescript)) |
 > | Image | `npm ci && npm run build`, then `docker buildx build` into one OCI tarball per architecture ([Build and test](#build-and-test)) |
 > | Packaging | declare the function in `upbound.yaml` as a `Tarball` source, so `up` packages your image instead of looking for a builder |
-> | Tests | YAML, the fallback test language ([`README.md`](README.md)) |
+> | Tests | YAML, the fallback test language ([charter §10](../../SKILL.md#10-language-dispatch)) |
 >
 > Say in your report which steps you did by hand, so the gap stays visible.
 

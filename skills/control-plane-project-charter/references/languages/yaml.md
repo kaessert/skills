@@ -3,7 +3,7 @@
 Raw-YAML tests, with real examples. YAML is a test language only: there are no YAML composition
 functions. It shows the test object model with no language in the way, which is why the other
 language references point here for it. When to write tests in YAML rather than the composition
-language is in [`README.md`](README.md).
+language: [charter §10](../../SKILL.md#10-language-dispatch).
 
 | | |
 |---|---|

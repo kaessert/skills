@@ -101,5 +101,5 @@ replace dev.upbound.io/models => ../../.up/go/models
 
 Go tests produce the same `CompositionTest` and `E2ETest` objects as every other language;
 [`yaml.md`](yaml.md) shows that object model with no language in the way. Which language new
-tests use is in [`README.md`](README.md); go-templating tests (`*.gotmpl`) are a different
+tests use: [charter §10](../../SKILL.md#10-language-dispatch). go-templating tests (`*.gotmpl`) are a different
 language: [`go-templating.md`](go-templating.md).
