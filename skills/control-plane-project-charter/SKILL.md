@@ -220,20 +220,26 @@ cause you already knew.
 ### The `.m.` API groups
 
 Compositions target the `.m.` provider API groups. **`.m.` is for *modern*, not
-"naMespaced"** — the groups hold the namespaced managed resources *and* the cluster-scoped
-`ClusterProviderConfig` they default to, which is why the "namespaced" reading cannot be right.
+"naMespaced"** (Crossplane's upgrade guide: "The `.m.` indicates modern namespaced managed
+resources"). The groups hold the namespaced managed resources *and* the cluster-scoped
+`ClusterProviderConfig` they default to, in the bare `aws.m.upbound.io` — so the "namespaced"
+reading cannot be right.
 
 | Aspect | Use this | Not this |
 |---|---|---|
 | Managed resource `apiVersion` | `<service>.<cloud>.m.upbound.io/v1beta1` (Upbound providers) or `<...>.m.crossplane.io/v1beta1` (community) | the same group without `.m.` |
-| XRD | `apiextensions.crossplane.io/v2` + `scope: Namespaced` | `v1` + cluster-scoped |
+| A new XRD | `apiextensions.crossplane.io/v2` + `scope: Namespaced`; Kind without an `X` prefix, no `claimNames` | `v1`, cluster-scoped, `claimNames` |
 | **Composition** | **stays `apiextensions.crossplane.io/v1`** | there is no `v2` Composition — do not bump it |
+
+**These rules are for a v2 project.** A v1 project — which is what every `up project init`
+template produces (§10) — keeps its v1 APIs and its Kinds; migrating it is separate work
+(`plan-v2-migration`).
 
 **Write the XRD yourself** rather than inferring it from an example with `up xrd generate`: an
 example carries values, never constraints, so an inferred schema loses every `required:`,
 `default:`, open-ended map and `status` field you meant to have.
-[`charter/v2-resources.md`](references/charter/v2-resources.md) has the verified v2 skeleton and the
-model-quality comparison.
+[`charter/v2-resources.md`](references/charter/v2-resources.md) has the v2 skeleton and what
+inference does to the generated model.
 
 **Then design the schema, do not just transcribe fields.** A schema that parses can still be
 one nobody can consume: no `description` means `kubectl explain` documents nothing, no `enum`
@@ -252,7 +258,8 @@ best noise and at worst breaks the resource.
 | Field | Do you set it? (the default; the project may override) | Verified behaviour |
 |---|---|---|
 | `metadata.namespace` | **No** | **If the XR is namespaced**, Crossplane overwrites it with the XR's namespace (`if xr.GetNamespace() != "" { cd.SetNamespace(...) }`), so a function setting a *different* namespace is silently overridden, not merged with. A **cluster-scoped** XR is the exception — its composed resources keep the namespace the function sets, which is how a cluster XR targets one. (A namespaced XR composing a cluster-scoped kind is a hard error, not a namespace question.) |
-| `managementPolicies` | **No** | The namespaced MR spec carries `+kubebuilder:default={"*"}`, so the API server fills it in. Set it only for a genuinely different policy — e.g. `["Create","Observe","Update","LateInitialize"]` to orphan on delete, which for a namespaced MR is the *only* way to orphan: there is no `deletionPolicy` field on the namespaced spec at all — or when the project's API exposes it as a parameter. |
+| `managementPolicies` | **No** | The namespaced MR spec carries `+kubebuilder:default={"*"}`, so the API server fills it in, and that default deletes the external resource with the MR. Never write `["*"]` yourself. Set it only for a different policy — `["Create","Observe","Update","LateInitialize"]` to orphan on delete — or when the project's API exposes it as a parameter. |
+| `deletionPolicy` | **No** | The namespaced MR spec has no such field. To orphan, use `managementPolicies` (above); to delete, set nothing. A v1 API's `deletionPolicy` parameter maps the same way (`plan-v2-migration`). |
 | `providerConfigRef` | Omit it if and only if `ClusterProviderConfig/default` exists and is the right one | The same struct, the same way: `+kubebuilder:default={"kind":"ClusterProviderConfig","name":"default"}`. |
 | `metadata.name` | Only for a stable external name | Otherwise Crossplane generates `<prefix>-<sha256(xr-uid + composition-resource-name)[:12]>`, where the prefix comes from the `crossplane.io/composite` label, truncated to 63 chars. Deterministic for one XR instance, **not** across re-creations — and it falls back to a random 5-char suffix when the composition-resource-name annotation or the controller ownerRef is missing. Inside a *render* it is fully deterministic and safe to assert — see §8. |
 | `crossplane.io/composition-resource-name` | Never by hand | It comes from the key you store the resource under. |
@@ -268,12 +275,11 @@ that name exists in, or is created in, the XR's namespace.
 **The table is about the composed resource's own metadata, not about objects inside
 `forProvider`.** A Kubernetes object embedded in a managed resource — the `manifest` of a
 provider-kubernetes `Object`, for instance — is input to the provider, and nothing fills in its
-namespace. Set it explicitly, normally to the XR's namespace. Observed with provider-kubernetes
-v1.3.3 on a local control plane: a manifest without `metadata.namespace` leaves the `Object`
-`Synced=False` with `an empty namespace may not be set when a resource name is provided`, while
-the composition tests passed, because they asserted the same omission.
+namespace. Set it explicitly, normally to the XR's namespace: without it a provider-kubernetes
+`Object` stays `Synced=False` with `an empty namespace may not be set when a resource name is
+provided` (v1.3.3), and composition tests that assert the same omission stay green.
 
-**Detail:** [`charter/v2-resources.md`](references/charter/v2-resources.md) — what these CRD defaults do to a render (it differs by language), when a `providerConfigRef` is genuinely warranted, and the two greps that catch a hardcoded one.
+**Detail:** [`charter/v2-resources.md`](references/charter/v2-resources.md) — what these CRD defaults do to a render (it differs by language), when a `providerConfigRef` is genuinely warranted, what a missing or wrong ProviderConfig looks like on a control plane, and the two greps that catch a hardcoded one.
 
 ## 6. The provider schema is a lower bound, not the constraint set
 
@@ -391,4 +397,4 @@ markers `up` itself checks, and which reference to read for functions and for te
    language) and projects with no embedded function. `up project init` does not accept
    `--test-language yaml`; scaffold YAML tests with `up test generate <n> --language yaml`.
 
-**Detail:** [`charter/generators.md`](references/charter/generators.md) — the accepted `--language` slugs, what each generator actually emits (`up project init` produces a **v1** project; `up test generate` prepends `test-`; `up composition generate` wires only auto-ready), and why the XRD is the one file you author by hand.
+**Detail:** [`charter/generators.md`](references/charter/generators.md) — the accepted `--language` slugs, what each generator actually emits (`up project init` produces a **v1** project; `up test generate` prepends `test-`; `up composition generate` wires only auto-ready; `up xrd generate` drops every constraint).

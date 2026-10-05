@@ -1,35 +1,15 @@
 # Crossplane v2 resources: the detail
 
-Authoring the XRD, what the CRD defaults do to a render, and choosing a ProviderConfig. [`control-plane-project-charter` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) states the rules; this carries the tables, the skeleton and the evidence.
+Authoring the XRD, what the CRD defaults do to a render, choosing a ProviderConfig, and what a
+missing one looks like. [`control-plane-project-charter` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) states the rules.
 
 ---
 
-## Why `.m.` is "modern", not "namespaced"
+## Authoring the XRD
 
-Crossplane's own upgrade guide is the source, and it is easy to misread:
-
-> The `.m.` indicates modern namespaced managed resources.
-> — *Crossplane docs, "Upgrade to Crossplane v2"*
-
-"Modern" is the adjective on `.m.`; "namespaced managed resources" is what the modern groups
-mostly contain. The decisive counter-example is `ClusterProviderConfig`, which is
-`scope=Cluster` and lives in the `.m.` family — in the bare `aws.m.upbound.io`, the parent of
-the `rds.aws.m.upbound.io`-style managed-resource groups. If `.m.` itself meant "namespaced",
-"use the `.m.` group" and "use a `ClusterProviderConfig`" would contradict each other.
-
----
-
-### Write the XRD yourself
-
-The XRD is the one project file you should author directly rather than generate. `up xrd
-generate` infers a schema from a single example manifest, and an example cannot express the
-things that matter: it has no way to say which fields are required, what the defaults are, that
-a map is open-ended, or that a `status` exists at all. §10 lists what it drops. Everything it
-gets wrong is something you would have to find and repair by reading its output line by line,
-which is more work than writing the file.
-
-Writing it directly is also what produces a *better* generated model. The same API, hand-written
-versus inferred:
+§5 says to write the XRD rather than infer it with `up xrd generate`;
+[`generators.md`](generators.md) lists what inference drops. The difference carries into the
+model `up project build` generates from it — the same API, inferred versus written:
 
 | | inferred from an example | written directly |
 |---|---|---|
@@ -41,20 +21,20 @@ versus inferred:
 `up project build` generates the models from whatever XRD is on disk, so a hand-written one
 needs no extra step.
 
-This is the skeleton — every line of it load-bearing for v2, and none of it guessable from the
-project templates, which are v1 (§10):
+The skeleton for a **new** API. Every line matters for v2, and the project templates do not show
+it, because they are v1 ([`generators.md`](generators.md)):
 
 ```yaml
 apiVersion: apiextensions.crossplane.io/v2      # v2, and there is still no v2 Composition
 kind: CompositeResourceDefinition
 metadata:
-  name: xstoragebuckets.platform.example.com    # <plural>.<group>
+  name: storagebuckets.platform.example.com     # <plural>.<group>
 spec:
   scope: Namespaced                             # v2 replaces claimNames; do not write claimNames
   group: platform.example.com
   names:
-    kind: XStorageBucket
-    plural: xstoragebuckets
+    kind: StorageBucket                         # no X prefix on a new API
+    plural: storagebuckets
   versions:
   - name: v1alpha1
     served: true
@@ -82,14 +62,17 @@ spec:
               bucketArn: {type: string}
 ```
 
-Keep writing the example XR first — it is the render input for tests and the fast tier, and
-drafting the API a user will actually write is what keeps the schema honest. Just do not
-derive the schema from it.
+An existing v1 API keeps its Kind when migrated, `X` prefix included: a new Kind is a new API
+([`xrd-design.md`](xrd-design.md)).
 
-Three things that are false, and are stated confidently often enough to be worth naming:
+Keep writing the example XR first — it is the render input for tests and the fast tier, and
+drafting the API a user will actually write keeps the schema honest. Just do not derive the
+schema from it.
+
+Three claims that are false:
 
 - "Family providers use different APIs than single providers"
-- "The `.m.` stands for monolithic" — or for "naMespaced"
+- "The `.m.` stands for monolithic" (§5: it is *modern*)
 - "`provider-aws-iam` can't use namespaced ProviderConfig"
 
 The import or type path that reaches these APIs is language-specific: see
@@ -100,61 +83,70 @@ regenerate models.
 
 ## What the CRD defaults do to a render
 
-> **These are CRD schema defaults, so whether a render shows them depends on the language.**
-> `up test run` and `crossplane render` have no API server, so no CRD defaulting happens at
-> render time. Two separate things then decide what you see — what `up`'s schema generator
-> bakes into the model, and what the language's serializer emits:
->
-> | Models | `managementPolicies` | `providerConfigRef` | Reaches the render? |
-> |---|---|---|---|
-> | Python | materialized (`= ['*']`) | materialized (`default_factory`) | **No** — `resource.update()` drops model defaults you never assigned (`exclude_defaults` on SDK 0.5.0/0.11.0, `exclude_unset` on 0.14.0) |
-> | KCL | materialized (`= ["*"]`) | not materialized | `managementPolicies` yes |
-> | Go | not materialized | not materialized | no |
->
-> So a Python render reliably shows neither, and a KCL render reliably shows
-> `managementPolicies`. **Both are correct, and neither tells you what the API server will
-> fill in on a real control plane.** Never "fix" a function because a render shows or omits
-> them, and never add them to an *expected* resource in a test — the test-side dump keeps
-> what you set, so the assertion then fails against a render that correctly omits it.
->
-> Both fields come from the same place: the embedded `ManagedResourceSpec` struct in
-> crossplane-apis v2 (`core/v2/resource_namespace.go`), which every namespaced provider MR
-> inlines. They are not two mechanisms.
+`managementPolicies` and `providerConfigRef` are CRD schema defaults. `up test run` and
+`crossplane render` have no API server, so no CRD defaulting happens at render time, and what a
+render shows depends on two things: what `up`'s schema generator bakes into the model, and what
+the language's serializer emits.
 
-> **Do not set `providerConfigRef.kind: "ProviderConfig"` reflexively.** That selects a
-> *namespaced* ProviderConfig in the resource's own namespace — an object nothing in your
-> project creates unless you created it.
->
-> Two cautions about the evidence:
->
-> - **You will find `kind: ProviderConfig` in the project templates**, in E2E tests and in
->   `examples/providerconfig.yaml`. Every current template is a Crossplane **v1** project
->   (see §10), where `ProviderConfig` is the *cluster-scoped* kind. Do not read them as a v2
->   precedent.
-> - **`up test generate --e2e` creates no ProviderConfig at all** — it emits
->   `extraResources: []` in every language. If a test needs one, you add it.
->
-> The failure mode: crossplane-runtime cannot resolve the reference, so `Connect` fails. Expect
-> `Synced=False` and a `CannotConnectToProvider` warning event carrying "cannot get referenced
-> ProviderConfig" — a resource that has been observed but not yet reconciled will show blank
-> conditions, which is easy to mistake for silence. Either way the composition suite passes,
-> and nothing fails until it is on a real control plane.
+| Models | `managementPolicies` | `providerConfigRef` | Reaches the render? |
+|---|---|---|---|
+| Python | materialized (`= ['*']`) | materialized (`default_factory`) | **No** — `resource.update()` drops model defaults you never assigned (`exclude_defaults` on SDK 0.5.0/0.11.0, `exclude_unset` on 0.14.0) |
+| KCL | materialized (`= ["*"]`) | not materialized | `managementPolicies` yes |
+| Go | not materialized | not materialized | no |
+
+So a Python render shows neither, and a KCL render shows `managementPolicies`. Both are
+correct, and neither tells you what the API server fills in on a real control plane. Never
+"fix" a function because a render shows or omits them, and never add them to an *expected*
+resource in a test — the test-side dump keeps what you set, so the assertion then fails against
+a render that correctly omits it.
+
+Both fields come from the same place: the embedded `ManagedResourceSpec` struct in
+crossplane-apis v2 (`core/v2/resource_namespace.go`), which every namespaced provider MR inlines.
+
+---
+
+## Choosing a ProviderConfig
 
 **Omit `providerConfigRef` if and only if `ClusterProviderConfig/default` exists and is the
 right one.** That is the common case. Otherwise set it — when the platform has several
-credentials, when it has a single credential whose `ClusterProviderConfig` is not named
-`default` (omitting the reference there leaves every resource inert), and when the project's
-spec or API sets one. Then make `kind` match an object that exists:
+credentials, when its single `ClusterProviderConfig` is not named `default` (omitting the
+reference there leaves every resource unreconciled), and when the project's spec or API sets
+one. Then make `kind` match an object that exists:
 
 | `kind` | Selects | When |
 |---|---|---|
 | `ClusterProviderConfig` | cluster-scoped config, shared by all namespaces | the v2 default; name it explicitly to pick a non-`default` one |
 | `ProviderConfig` | namespaced config in the resource's namespace | per-namespace credentials — **only if a `ProviderConfig` of that name exists in, or is created in, the XR's namespace** |
 
+Do not set `kind: ProviderConfig` because you found it elsewhere:
+
+- **The project templates use `kind: ProviderConfig`** — in E2E tests and in
+  `examples/providerconfig.yaml`. They are Crossplane **v1** projects, where `ProviderConfig` is
+  the cluster-scoped kind. They are no v2 precedent.
+- **`up test generate --e2e` creates no ProviderConfig at all** — it emits `extraResources: []`
+  in every language. If a test needs one, you add it (author-tests' `e2e.md` reference).
+
 Some languages make `kind` a *required* field when you construct a `providerConfigRef`
 object. That is a constraint on constructing the object, not a reason to construct it.
 
-**Grep your own function before you report.** Two checks, because one regex cannot do both:
+---
+
+## Symptom of a missing or wrong ProviderConfig
+
+The composition suite passes either way; only a control plane shows it. Read the managed
+resource with `kubectl describe <kind> <name> -n <ns>` — conditions **and** events:
+
+| You see | It means |
+|---|---|
+| `Synced=False` and a `CannotConnectToProvider` warning event (`cannot get referenced ProviderConfig …` from Upbound providers) | the reference names a ProviderConfig that does not exist, or the wrong `kind`. Check with `kubectl get clusterproviderconfig,providerconfig -A` |
+| blank conditions | observed but not reconciled yet. Wait, then read it again |
+| no conditions and no events, for minutes | nothing is reconciling the kind: the provider is not installed or not healthy (`kubectl get providers.pkg.crossplane.io`, `INSTALLED` and `HEALTHY`), its pod is not running, or the MR's CRD is not established (`kubectl get crd <plural>.<group>`). Check the ProviderConfig too, but it is not what causes the silence |
+
+---
+
+## Grep your own function before you report
+
+Two checks, because one regex cannot do both:
 
 ```bash
 # 1. The two fields that are not hardcoded on a managed resource unless the project sets them.
@@ -165,9 +157,9 @@ grep -rnE 'providerConfigRef|managementPolicies' functions/
 grep -rnE '(metadata\.)?namespace\s*[:=]' functions/
 ```
 
-**"No output" is not the pass condition.** A well-commented function legitimately mentions
-these fields — the comment explaining why `namespace` is deliberately absent contains the word
-`namespace`. Judge each hit: a hardcoded value on a managed resource is a defect; a
-parameterised, deliberate opt-in, or a value the project's spec requires, is not (§5: these are
-defaults the project may override). Note also that `grep -r` does not follow the `model`
-symlink into the generated schemas — keep it that way, or the output is thousands of lines.
+"No output" is not the pass condition. A well-commented function mentions these fields. Judge
+each hit: a hardcoded value on a managed resource is a defect; a parameterised, deliberate
+opt-in, or a value the project's spec requires, is not (§5). Legitimate namespace hits are a
+cluster-scoped XR choosing one, and objects embedded inside `forProvider`, such as a
+provider-kubernetes `Object` manifest. `grep -r` does not follow the `model` symlink into the
+generated schemas — keep it that way, or the output is thousands of lines.

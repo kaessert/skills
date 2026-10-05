@@ -1,6 +1,6 @@
 # What the CLI generators emit
 
-The accepted `--language` slugs, what each generator actually produces, and the one file you should write yourself. [`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch) states the dispatch rule.
+The accepted `--language` slugs, and what each generator actually produces. [`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch) states the dispatch rule.
 
 ---
 
@@ -19,8 +19,8 @@ path, the pipeline step in the composition — and the layout differs between a
 template-initialised project and a generated one; match what the project already uses rather
 than imposing a preference.
 
-**The XRD is the exception**: it is one declarative file, not a layout, and you should write it
-directly (§5). Nothing wires it up — `up project build` reads whatever is in `apis/`.
+The XRD is the exception (§5): nothing wires it up, and `up project build` reads whatever is in
+`apis/`.
 
 ### What the generators actually emit
 
@@ -29,7 +29,7 @@ directly (§5). Nothing wires it up — `up project build` reads whatever is in 
 | `up project init --template <t> --language <l>` | a **Crossplane v1** project: XRD at `apiextensions.crossplane.io/v1` with `claimNames` and no `scope`, and a function importing the **non-`.m.`** provider models. Establish the project's generation before applying §5 — its rules are for v2 and will break a v1 project. |
 | `up test generate <n>` | `tests/test-<n>/` — the CLI prepends `test-` itself. Passing `test-<n>` gives you `tests/test-test-<n>/`. |
 | `up composition generate <xrd>` | a pipeline of auto-ready steps only. It adds a `crossplane-contrib-function-auto-ready` step and `crossplane-contrib/function-auto-ready` at `'>=v0.0.0'` to `dependsOn`, even when the project already declares an auto-ready function (`upbound/function-auto-ready`), which then gets a step of its own as well (observed with up v0.55.0). When the project declares its own function set, delete the duplicate step and its dependency, and say so in your report. Your function is not wired in; a test pointed at it renders nothing and passes vacuously. `up function generate <n> <composition-path>` inserts the step. |
-| `up xrd generate <example>` | a schema inferred from one example: no `required:`, no `default:`, no `minItems`, no `status` properties, `integer` widened to `number`, an open-ended map frozen into the keys the example used, and an array's item schema taken from the **last** element only. **Write the XRD yourself** (§5) — repairing all of that is more work than authoring it. |
+| `up xrd generate <example>` | a schema inferred from one example: no `required:`, no `default:`, no `minItems`, no `status` properties, `integer` widened to `number`, an open-ended map frozen into the keys the example used, and an array's item schema taken from the **last** element only (§5). |
 
 The `functionRef` name in a composition is `<repository-org>-<repository-name><function-dir>`,
 concatenated with no separator between the repository name and the directory, taken from
