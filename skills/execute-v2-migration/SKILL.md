@@ -72,10 +72,10 @@ find functions -name "*.k" | head -5
 | 0 | Pre-flight + language detection | Directly |
 | 1 | Dependencies + git branch | Directly |
 | 2 | XRD migration | Directly |
-| 3 | Function code migration | Skill → `author-composition` — **inline**, expands into your context |
+| 3 | Function code migration | Skill → `author-composition` — **as a sub-agent**, one per function |
 | 4 | Composition updates | Directly |
 | 5 | Example updates | Directly |
-| 6 | Test updates | Skill → `author-tests` — **inline**, expands into your context |
+| 6 | Test updates | Skill → `author-tests` — **as a sub-agent**, one per test |
 | 7 | File reorganization | Directly (`git mv`) |
 | 8 | Verification | Skill → `verify-configuration`, `e2e-test-configuration` — **as sub-agents**, they report back |
 | 9 | Documentation | User-guided |
@@ -90,13 +90,11 @@ bites with a deliberate mutation instead. Either way the loop is the one in
 a test updated against already-passing code and never observed failing is where the false
 coverage claims come from.
 
-The authoring skills run inline: loading one expands its guidance into **your**
-context rather than spawning a separate agent, so you keep everything it discovers and it
-keeps everything you have already established — the project root, the language, the
-provider family. Do not re-brief it on what is already in this conversation. The two
-verification skills run as sub-agents because their output is long and disposable: hand each
-to a sub-agent that loads it, and wait for its result rather than being notified later. If
-your harness has no sub-agents, follow each brief yourself instead
+Every skill phase hands its work to a sub-agent that loads the skill, with the brief from
+[knowledge.md](references/knowledge.md#sub-agent-prompts), and waits for its result rather
+than being notified later. The brief must stand on its own: name the project root, the
+language, the provider family and the files, since the sub-agent does not see this
+conversation. If your harness has no sub-agents, follow each brief yourself instead
 (`control-plane-project-charter` §1).
 
 ---
