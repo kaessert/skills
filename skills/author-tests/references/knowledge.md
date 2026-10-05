@@ -48,7 +48,7 @@ Field table, defaults, what `defaultConditions` accepts and what an `E2ETest` ca
 | **Namespaced** | `aws.m.upbound.io/v1beta1` | Always |
 | Cluster-scoped | `aws.upbound.io/v1beta1` | Never |
 
-The `.m.` marks the **modern** (Crossplane v2) API group — not "naMespaced" and not "monolithic". It holds the namespaced managed resources *and* the cluster-scoped `ClusterProviderConfig` they default to, which is why "m = namespaced" cannot be right. See `control-plane-project-charter` §5. How the `.m.` is expressed depends on language (import path for KCL/Python, `apiVersion` string for YAML) — see the per-language references.
+What the `.m.` groups are: `control-plane-project-charter` §5. How the `.m.` is expressed depends on language (import path for KCL, Python and Go, `apiVersion` string for YAML) — see the per-language references.
 
 ### Provider credentials (E2E `extraResources`)
 
