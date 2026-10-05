@@ -73,33 +73,13 @@ See [knowledge.md](references/knowledge.md) for detailed before/after examples.
 
 **If NOT v1**: Report to user and exit gracefully.
 
-```bash
-# Detection commands
-grep -q "meta.dev.upbound.io/v1alpha1" upbound.yaml
-find apis -name "definition.yaml" -exec grep -l "apiextensions.crossplane.io/v1" {} \;
-grep -r "\.aws\.\|\.azure\.\|\.gcp\." functions/ | grep -v "\.m\."
-```
+The commands: [knowledge.md](references/knowledge.md#detect-v1-configuration).
 
 ### Phase 0.5: Discover Project Structure
 
-**Goal**: Map all components that need migration.
-
-```bash
-# Project name
-yq '.metadata.name' upbound.yaml
-
-# XRDs
-find apis -name "definition.yaml" -exec dirname {} \; | sort
-
-# Functions
-ls -1d functions/*/ 2>/dev/null
-
-# Tests
-ls -1d tests/test-*/ tests/e2etest-*/ 2>/dev/null
-
-# X-prefix directories (need renaming)
-ls -1d functions/x* tests/test-x* tests/e2etest-x* 2>/dev/null
-```
+**Goal**: Map all components that need migration: the project name, XRDs, functions, tests,
+and the X-prefixed directories that need renaming. The commands:
+[knowledge.md](references/knowledge.md#discover-project-structure).
 
 ### Phase 1: Verify Dependencies (Use a Sub-agent)
 
@@ -107,22 +87,10 @@ ls -1d functions/x* tests/test-x* tests/e2etest-x* 2>/dev/null
 
 **IMPORTANT**: Use a sub-agent to avoid loading large marketplace responses into main context.
 
-**Subagent prompt**:
-```
-Read upbound.yaml and extract all dependencies from spec.dependsOn.
-
-For each PROVIDER:
-1. Check marketplace: https://marketplace.upbound.io/providers/upbound/{name}/{version}#managedResources
-2. Look for "Namespace Scoped ({count})" - count > 0 = v2 compatible
-3. If count = 0, find a compatible version
-
-For each CONFIGURATION:
-1. Find GitHub repo via marketplace
-2. Check definition.yaml for: apiVersion v2 AND scope: Namespaced
-3. If not found, find a compatible version
-
-Return structured report with verification URLs.
-```
+Hand the sub-agent the prompt in
+[knowledge.md](references/knowledge.md#subagent-prompt-template), which also shows the report
+format to expect. If your harness has no sub-agents, follow the prompt yourself
+(`control-plane-project-charter` §1).
 
 Store sub-agent report for Phase 1.2 of the checklist.
 
@@ -246,6 +214,8 @@ report the effect, not the intent). The skill completes successfully when:
 
 ## References
 
+- [knowledge.md](references/knowledge.md) — read for the detection and analysis commands, the
+  dependency-check prompt, the before/after examples of each breaking change, and the
+  checklist template (Phase 3), before you write the plan.
 - [Crossplane v2 Upgrade Guide](https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/)
 - [What's New in Crossplane v2](https://docs.crossplane.io/latest/whats-new/)
-- [Detailed templates and examples](references/knowledge.md)
