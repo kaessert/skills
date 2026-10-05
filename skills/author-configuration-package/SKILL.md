@@ -111,7 +111,7 @@ up example generate --scope=namespace --name example --namespace default \
 up composition generate apis/storagebuckets/definition.yaml
 #   -> apis/storagebuckets/composition.yaml (mode: Pipeline + auto-ready step)
 #      and adds function-auto-ready to upbound.yaml dependsOn
-up dep add xpkg.upbound.io/upbound/provider-aws-s3
+up dep add 'xpkg.upbound.io/upbound/provider-aws-s3:>=v2.0.0'   # always a constraint (below)
 up function generate compose-bucket apis/storagebuckets/composition.yaml --language python
 #   -> functions/compose-bucket/ + inserts its pipeline step into the composition
 up project build
@@ -238,7 +238,9 @@ equivalent.
 **Preferred — Upbound Marketplace MCP** (if one is configured for your agent). It uses your existing `up login` credentials:
 1. `search_packages` — filter by type (provider/function), cloud/family, and tier to find the package + exact `xpkg` ref.
 2. `get_package_version_resources` (or `..._groupkind_resources`) — get the **exact group/kind/version** you'll compose (e.g. `ResourceGroup` → `azure.m.upbound.io/v1beta1`), so the composition uses real Kinds from the start.
-3. `up dep add <ref>` (omit the tag for latest, or pin `:vX.Y.Z`), then `up dep update-cache`.
+3. `up dep add '<ref>:>=vX.Y.Z'`, then `up dep update-cache`. **Always pass a constraint** (the
+   form `up dep add --help` shows): a bare `<ref>` records `version: '>=v0.0.0'`, which accepts
+   any major (observed with up v0.55.0). To cap the major, set `version: ^vX.Y.Z` in `upbound.yaml`.
 
 **Fallback — web search and fetch** (no MCP): search for `site:marketplace.upbound.io <cloud> <service> provider` (functions: `... function`), or fetch a page like `https://marketplace.upbound.io/providers/upbound/provider-azure-network`, and read the ref + latest version off it. Marketplace *pages* list scope/description, not always exact Kinds — confirm Kinds from the generated models after the first build.
 
@@ -446,5 +448,6 @@ skill succeeds when:
 - First build generates models (`.up/<language>/` model tree exists)
 - `up function generate` creates function structure
 - Final build succeeds (`.uppkg` created)
+- No unbounded dependency: every `dependsOn` `version` names the major you built against, never `'>=v0.0.0'`
 - Examples created
 - User guided to language-specific skill

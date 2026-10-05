@@ -54,7 +54,7 @@ spec:
     - apiVersion: pkg.crossplane.io/v1
       kind: Function
       package: xpkg.upbound.io/crossplane-contrib/function-auto-ready
-      version: '>=v0.0.0'
+      version: '>=vX.Y.Z'   # always a constraint; a bare `up dep add <ref>` writes '>=v0.0.0'
     # Providers added here during Phase 4
   description: {description}
   license: Apache-2.0
@@ -489,6 +489,7 @@ spec:
 Before handing off, verify:
 
 - [ ] `upbound.yaml` exists with correct metadata
+- [ ] No unbounded dependency: no `dependsOn` entry at `version: '>=v0.0.0'`
 - [ ] `apis/{resource}/definition.yaml` uses v2, Namespaced
 - [ ] `apis/{resource}/composition.yaml` has correct pipeline order
 - [ ] `functions/{resource}/main.k` exists
