@@ -100,7 +100,7 @@ credentials:
       serviceAccount: SA@PROJECT.iam.gserviceaccount.com
 ```
 
-If a project genuinely requires a static-Secret ProviderConfig, use `source: Secret` with a `Secret` in `extraResources` (Python E2E example in python.md (`control-plane-project-charter` `languages/python.md`) shows the pattern; source the value from an env var into `stringData`, as the training labs do). The env var **must be named `UP_*`**: manifest generation runs in a container that receives only `UP_`-prefixed variables and has no `~/.aws`, so `AWS_ACCESS_KEY_ID` and friends arrive empty — see the container boundary (`control-plane-project-charter`). Never inline real long-lived credentials.
+If a project genuinely requires a static-Secret ProviderConfig, use `source: Secret` with a `Secret` in `extraResources` (Python E2E example in python.md (`control-plane-project-charter` `languages/python.md`) shows the pattern; source the value from an env var into `stringData`, as the training labs do). The env var **is named `UP_*`**. For KCL and Python that is required: manifest generation runs in a container that receives only `UP_`-prefixed variables and has no `~/.aws`, so `AWS_ACCESS_KEY_ID` and friends arrive empty. Go runs the program locally and sees every variable (go-templating renders inside `up` and reads its environment), but use `UP_*` there too so the test ports across languages — see the container boundary (`control-plane-project-charter` §7). A program that exits on a missing variable also runs, and fails, under a plain `up test run "tests/*"`: the composition gate is `up test run "tests/test-*"` (same section). Never inline real long-lived credentials.
 
 ### Two ProviderConfig kinds (v2)
 
@@ -150,7 +150,7 @@ Language-neutral mistakes. (KCL import-syntax and Python dump-mode mistakes live
 
 ### 1. Wrong ProviderConfig authentication
 **Wrong:** Hardcoded long-lived keys inlined in the test.
-**Right:** Web identity / injected identity (`source: Upbound`) where available; otherwise a `source: Secret` ProviderConfig whose value is sourced from a **`UP_`-prefixed** env var into `stringData` (the training-lab pattern; the prefix is what gets it across the generation container's boundary). Never commit real keys.
+**Right:** Web identity / injected identity (`source: Upbound`) where available; otherwise a `source: Secret` ProviderConfig whose value is sourced from a **`UP_`-prefixed** env var into `stringData` (the training-lab pattern; the prefix is what gets it into a KCL or Python generation container, and keeps a Go test portable). Never commit real keys.
 
 ### 2. Stale or missing crossplane block (E2E)
 **Wrong:** Copying a pinned `version:` from an old example (rots immediately).

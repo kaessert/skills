@@ -257,7 +257,7 @@ The training labs use `ClusterProviderConfig`; see
 6. **Run the test directly while authoring** (`up test run "tests/<t>"`); run the gate once the suite is green (Workflow Summary)
 
 ### NEVER DO:
-1. Hardcoded long-lived credentials in E2E tests (use web/injected identity, or a Secret sourced from an env var)
+1. Hardcoded long-lived credentials in E2E tests (use web/injected identity, or a Secret sourced from a `UP_*` env var)
 2. `skipDelete: true` in E2E tests (always clean up)
 3. `timeoutSeconds < 60` for composition tests
 4. Under-sized E2E timeouts (see sizing note above)
@@ -272,7 +272,8 @@ The training labs use `ClusterProviderConfig`; see
 
 **SEPARATE directory when:**
 - Different resource types
-- E2E tests (always separate, `e2etest-` prefix)
+- E2E tests (always separate, `e2etest-` prefix). `up test run` runs every matched dir's program even without
+  `--e2e`, so the composition gate is `up test run "tests/test-*"`; write it in the project README (charter §7)
 - Complex sequential dependencies
 
 ## Phase 0: You run inline, and you are bound by the charter
