@@ -178,7 +178,9 @@ in `crossplane-system` must now exist in the XR's namespace. If the XRD exposes 
 reference with a `namespace`, drop it from `required` and stop reading it.
 
 Do not set `metadata.namespace` on a composed resource either: for a namespaced XR Crossplane
-overwrites it with the XR's (`control-plane-project-charter` §5).
+overwrites it with the XR's. An object embedded in `forProvider`, such as the manifest of a
+provider-kubernetes `Object`, is the exception: nothing fills in its namespace, so set it
+(`control-plane-project-charter` §5).
 
 ## Connection secrets
 
