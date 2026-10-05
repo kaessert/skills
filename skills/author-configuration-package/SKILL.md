@@ -163,6 +163,15 @@ scaffolding from scratch. Two things to know:
   produces. Code you add must match what the project already has.
 - **`--scratch` ignores `--language`** (it logs `... for kcl` regardless). Harmless — the scratch
   template contains no functions — but don't read it as the project's language.
+- **`up project init --directory .` fails with `directory is not empty`** even when the
+  directory holds only `.git`. Init into a temporary directory and move the files across,
+  dotfiles included (observed with up v0.55.0).
+- **The scratch template leaves its own values behind:** `upbound.yaml` `source`
+  (`github.com/upbound/project-template-scratch`), a placeholder `maintainer`,
+  `repository: xpkg.upbound.io/example/<name>`, and `module
+  github.com/upbound/project-template-scratch/tests/<dir>` in generated Go tests' `go.mod`.
+  Set `repository`, `source` and `maintainer` before any generator runs (build order step 0),
+  and fix any test `go.mod` that still names the template.
 
 Templates also leave behind `examples/example/example.yaml` (`kind: Example`, `spec: {}`) which is
 backed by no XRD. Delete it; the real example is `examples/<plural>/example.yaml`.
