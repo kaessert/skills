@@ -26,7 +26,7 @@ otherwise, the project wins: say so in your report.
    broken test is not RED, even when it exits 1: a syntax error, a missing path, a run that
    stops at `✗ Parsing tests`, a bug in the test's own logic (§3).
 4. **Backfilling a test for code that already works: mutate the implementation, never the
-   test's expected value.** See that test go red, then revert (charter `tdd.md`).
+   test's expected value.** See that test go red, then revert (the charter's `charter/tdd.md`).
 5. **In a v2 project, managed resources carry `forProvider` only**, on the `.m.` API groups,
    unless the project's spec or API sets more: no `deletionPolicy`, `managementPolicies` or
    `metadata.namespace`; omit `providerConfigRef` if and only if
@@ -104,12 +104,12 @@ Four things make an assertion bite:
 | **Assert the field, not the existence.** | `assertResources` is partial and positive. An entry naming only `kind` passes against any resource of that kind, whatever it contains. Name the field you are adding. |
 | **Assert on the composite too.** | Every `status` field the function writes needs an assertion on the XR itself. It is the only programmatic check on composition outputs. |
 | **Cover the minimal XR.** | Use the inline `xr` field with every optional property omitted. That is the shape a real user writes first, and the one the scaffold never generates. |
-| **Use distinguishing inputs.** | Every parameter the function passes through (region, config names, CIDRs, the XR's own name, …) gets a non-default value, unique across fields, in at least one test; a required field with no default needs two tests with different values. An input equal to the default or to a sibling field can't tell pass-through from a hard-coded constant. Backfill check: charter `tdd.md`. |
+| **Use distinguishing inputs.** | Every parameter the function passes through (region, config names, CIDRs, the XR's own name, …) gets a non-default value, unique across fields, in at least one test; a required field with no default needs two tests with different values. An input equal to the default or to a sibling field can't tell pass-through from a hard-coded constant. Backfill check: the charter's `charter/tdd.md`. |
 
 - **Define the XR inline** where the format supports it, with `namespace: default` (v2).
 - **Assert list membership on the parsed list**, not by substring matching on a joined string:
   a short token matches inside a longer one (`rt` inside `rta-…`).
-- **Composed-resource names:** never guess one; the naming rule is in charter
+- **Composed-resource names:** never guess one; the naming rule is in the charter's
   `charter/evidence.md` ([test-model.md, mistake 1](references/test-model.md#1-guessed-composed-resource-names)).
 - **Managed resources in a test follow binding rule 5**, written as the import path in KCL,
   Python and Go and as the `apiVersion` string in YAML. Assert `providerConfigRef` and

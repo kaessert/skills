@@ -193,7 +193,7 @@ Then the resource:
 |-------|---------|---------|
 | Resource Kind | VPC, Database | required |
 | Plural name | vpcs, databases | from the Kind |
-| Version | v1alpha1 | `v1alpha1` (charter `xrd-design.md`) |
+| Version | v1alpha1 | `v1alpha1` (the charter's `charter/xrd-design.md`) |
 
 In an existing project, ask instead whether to add a resource or change an existing one.
 

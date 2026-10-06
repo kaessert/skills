@@ -24,7 +24,7 @@ otherwise, the project wins: say so in your report.
    broken test is not RED, even when it exits 1: a syntax error, a missing path, a run that
    stops at `✗ Parsing tests`, a bug in the test's own logic (§3).
 4. **Backfilling a test for code that already works: mutate the implementation, never the
-   test's expected value.** See that test go red, then revert (charter `tdd.md`).
+   test's expected value.** See that test go red, then revert (the charter's `charter/tdd.md`).
 5. **In a v2 project, managed resources carry `forProvider` only**, on the `.m.` API groups,
    unless the project's spec or API sets more: no `deletionPolicy`, `managementPolicies` or
    `metadata.namespace`; omit `providerConfigRef` if and only if
@@ -179,7 +179,7 @@ why each green thing is not evidence).
    `ClusterProviderConfig/default`, with a `kind` naming an object that exists; any field the
    project's spec or API sets. A `namespace` on a composed Secret or ConfigMap of a namespaced
    XR is not legitimate: Crossplane overwrites it.
-3. **The suite satisfies charter `charter/evidence.md` "Coverage"**: one test per input shape,
+3. **The suite satisfies the charter's `charter/evidence.md` "Coverage"**: one test per input shape,
    including a minimal XR via inline `xr`; one test per observed-state branch, saying what it
    proves (your branch logic, given the status you wrote) and what it does not (that a provider
    reports that status); every `status` field the function writes asserted on the composite.

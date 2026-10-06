@@ -28,7 +28,7 @@ otherwise, the project wins: say so in your report.
    broken test is not RED, even when it exits 1: a syntax error, a missing path, a run that
    stops at `✗ Parsing tests`, a bug in the test's own logic (§3).
 4. **Backfilling a test for code that already works: mutate the implementation, never the
-   test's expected value.** See that test go red, then revert (charter `tdd.md`).
+   test's expected value.** See that test go red, then revert (the charter's `charter/tdd.md`).
 5. **In a v2 project, managed resources carry `forProvider` only**, on the `.m.` API groups,
    unless the project's spec or API sets more: no `deletionPolicy`, `managementPolicies` or
    `metadata.namespace`; omit `providerConfigRef` if and only if
@@ -73,7 +73,7 @@ did not wire; the XRD is the one file you write (Phase 3).
 | `up example generate [<xrd>]` | wizard, or an XRD → `examples/<kind-lowercase>/<xr-name>.yaml`; the name defaults to the lowercase Kind (`examples/network/network.yaml`, up v0.55.0). Find the file; don't assume `example.yaml` |
 | `up xrd generate <example.yaml>` | an example XR → an inferred `apis/<plural>/definition.yaml` + language models. Not for the XRD you ship (Phase 3) |
 | `up composition generate <xrd\|xr>` | XRD or XR → `apis/<plural>/composition.yaml`, and adds the required function packages as dependencies |
-| `up function generate <name> [<pipeline-path>]` | → `functions/<name>/…`, and wires it into that composition's pipeline. On an existing `functions/<name>` it prompts to overwrite and, without a TTY, cancels: wire the step by hand (charter `generators.md`) |
+| `up function generate <name> [<pipeline-path>]` | → `functions/<name>/…`, and wires it into that composition's pipeline. On an existing `functions/<name>` it prompts to overwrite and, without a TTY, cancels: wire the step by hand (the charter's `charter/generators.md`) |
 | `up test generate <name> [--e2e]` | → `tests/test-<name>/…` (or `tests/e2etest-<name>/…`) |
 
 The generators disagree on pluralization — `examples/storagebucket/` vs
@@ -94,18 +94,18 @@ first; its Python layout differs from what `up function generate` produces.
   `repository: xpkg.upbound.io/example/<name>`, and `module
   github.com/upbound/project-template-scratch/tests/<dir>` in generated Go tests' `go.mod`.
   **Set `repository`, `source` and `maintainer` before any generator runs** — `spec.repository`
-  names the embedded function in every `functionRef` (charter `generators.md`) — and fix any
-  test `go.mod` that still names the template.
+  names the embedded function in every `functionRef` (the charter's `charter/generators.md`) —
+  and fix any test `go.mod` that still names the template.
 - Templates leave `examples/example/example.yaml` (`kind: Example`, `spec: {}`), backed by no
   XRD. Delete it; the real example is the file `up example generate` writes.
 
 ## Phase 2: Gather the project and resource information
 
 From the spec: project name, API group, cloud, organisation, maintainer; then the resource
-Kind, its plural and its version (`v1alpha1` for a new API, charter `xrd-design.md`); and the
-function language for Phase 7 (`kcl`, `python`, `go`, `go-templating`) — from the spec or an
-existing function, else ask: it is a decision, not a discoverable fact. New tests follow it
-(charter §10).
+Kind, its plural and its version (`v1alpha1` for a new API, the charter's
+`charter/xrd-design.md`); and the function language for Phase 7 (`kcl`, `python`, `go`,
+`go-templating`) — from the spec or an existing function, else ask: it is a decision, not a
+discoverable fact. New tests follow it (charter §10).
 Interactive and not in the spec: ask, with the tables in
 [templates.md](references/templates.md#questions-for-a-new-project).
 
@@ -122,8 +122,8 @@ Interactive and not in the spec: ask, with the tables in
 
 An existing v1 project stays v1 until it is migrated deliberately (`plan-v2-migration`), and a
 migration keeps its existing Kind, `X` prefix included: renaming a Kind is a new API, and
-existing objects are not converted (charter `xrd-design.md`). Don't copy a template's XRD as a
-v2 starting point: the templates are v1.
+existing objects are not converted (the charter's `charter/xrd-design.md`). Don't copy a
+template's XRD as a v2 starting point: the templates are v1.
 
 **The fastest correct route for a new API is example-first:** write the XR you want users to
 write, then write the XRD to match it, then generate the composition from it.

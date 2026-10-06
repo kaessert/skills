@@ -90,7 +90,7 @@ dump-mode mistakes live in their language files.
 **Wrong:** `name: test-vpc` (a guess).
 **Right:** omit `metadata.name` when a kind appears once in the render; when it appears more
 than once, assert each by the name copied from the render, which is deterministic there
-(charter `charter/evidence.md`).
+(the charter's `charter/evidence.md`).
 
 ### 2. A composed resource with no assertion at all
 
@@ -100,7 +100,7 @@ and re-running the suite **passes without testing anything** (verified: a whole 
 new `spec` fields left a 2-test suite at 2/2 PASS).
 **Right:** Every resource a composition can emit needs an assertion, including ones behind a
 condition (give those their own test with the triggering XR or observed state). Cross-check
-against the render, read as charter `charter/evidence.md` says; asserting the composite's
+against the render, read as the charter's `charter/evidence.md` says; asserting the composite's
 `spec.crossplane.resourceRefs` makes a surplus resource fail.
 
 ### 3. Assuming you cannot assert the composite's own `status`
