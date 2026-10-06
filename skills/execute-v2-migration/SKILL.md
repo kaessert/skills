@@ -11,7 +11,7 @@ references:
 Carry out the plan `plan-v2-migration` wrote to `.agents/plans/CROSSPLANE_V2_MIGRATION.md`,
 stage by stage, ticking each item as it is done.
 
-## Mode, and the charter
+## Before you start
 
 **Interactive:** ask only at the points this skill names — the go-ahead, a dirty worktree, an
 existing branch, a retry, E2E tests, README prose. **Unattended:** never ask; take the default
@@ -20,8 +20,6 @@ agent, you are unattended, and prose is your only output channel:
 `control-plane-project-charter` §4 (report the effect, not the intent) binds every summary.
 Load the charter before you start, or read its `SKILL.md` beside this skill's directory: this
 skill does not load it.
-
-## Boundaries
 
 - No plan, no migration: without `.agents/plans/CROSSPLANE_V2_MIGRATION.md`, stop and point
   to `plan-v2-migration`.
@@ -32,8 +30,8 @@ skill does not load it.
   each as a sub-agent with a brief from [phases.md](references/phases.md#sub-agent-briefs).
   Wait for each report. With no sub-agents, follow the brief yourself
   (`control-plane-project-charter` §1).
-- Work on the branch `migrate-to-v2`. Never delete a branch or anything on a control plane, and
-  never rename a function to add a language suffix: its name is the published package name.
+- Never delete a branch or anything on a control plane, and never rename a function to add a
+  language suffix: its name is the published package name.
 
 ## Arguments
 
@@ -58,9 +56,9 @@ Take the languages from the plan, or detect them with `control-plane-project-cha
 
 ## Stage 1: Prepare
 
-Branch, `upbound.yaml` (`apiVersion`, dependency versions, `apiDependencies`), then
-`up dep update-cache` and `up project build`. **Checkpoint:** the build succeeds and the models
-contain the `.m.` groups. Otherwise stop and report.
+Branch (work on `migrate-to-v2`), `upbound.yaml` (`apiVersion`, dependency versions,
+`apiDependencies`), then `up dep update-cache` and `up project build`. **Checkpoint:** the build
+succeeds and the models contain the `.m.` groups. Otherwise stop and report.
 
 ## Stages 2–4: XRDs, compositions, examples
 
