@@ -241,7 +241,7 @@ cause you already knew.
 
 ## 5. Crossplane v2: what a composed resource actually needs
 
-### The `.m.` API groups
+### API groups and versions
 
 Compositions target the `.m.` provider API groups (`.m.` means *modern*, not "naMespaced":
 [`charter/v2-resources.md`](references/charter/v2-resources.md)).
@@ -255,6 +255,8 @@ Compositions target the `.m.` provider API groups (`.m.` means *modern*, not "na
 **These rules are for a v2 project.** A v1 project — which is what every `up project init`
 template produces (§10) — keeps its v1 APIs and its Kinds; migrating it is separate work
 (`plan-v2-migration`).
+
+### The XRD
 
 **Write the XRD yourself** rather than inferring it from an example with `up xrd generate`: an
 example carries values, never constraints, so an inferred schema loses every `required:`,
