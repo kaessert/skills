@@ -51,8 +51,10 @@ spec:
               - region
 ```
 
-Then design it — descriptions, enums, bounds, `status` — with the charter's
-`charter/xrd-design.md`, and run `check_xrd_schema.py` (SKILL.md Phase 3).
+Fields directly under `spec`, or under `spec.parameters` where the project's spec or existing
+XRDs nest them (the charter's `charter/v2-resources.md`). Then design it — descriptions, enums,
+bounds, `status` — with the charter's `charter/xrd-design.md`, and run `check_xrd_schema.py`
+(SKILL.md Phase 3).
 
 ### upbound.yaml
 

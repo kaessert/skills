@@ -68,21 +68,22 @@ spec:
           spec:
             type: object
             properties:
-              parameters:
+              region: {type: string}
+              retentionDays: {type: integer, default: 90}
+              tags:                              # an open-ended map, not fixed properties
                 type: object
-                properties:
-                  region: {type: string}
-                  retentionDays: {type: integer, default: 90}
-                  tags:                          # an open-ended map, not fixed properties
-                    type: object
-                    additionalProperties: {type: string}
-                required: [region]
-            required: [parameters]
+                additionalProperties: {type: string}
+            required: [region]
           status:                                # model it, or your function cannot report
             type: object
             properties:
               bucketArn: {type: string}
 ```
+
+The fields sit directly under `spec` here, as in author-configuration-package's XRD template and
+the function templates (`xr.Spec.Region` in Go). Nesting them under `spec.parameters`, as many
+existing APIs do, is equally valid: the project's spec and its existing XRDs decide, and the
+function and the tests follow the XRD.
 
 An existing v1 API keeps its Kind when migrated, `X` prefix included: a new Kind is a new API
 ([`xrd-design.md`](xrd-design.md)).

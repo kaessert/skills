@@ -194,7 +194,7 @@ project root, under its rule class, with a mandatory `reason`:
 
 ```yaml
 enumCasing:
-  - field: spec.parameters.engine   # the path the FAIL prints, minus file and [version]
+  - field: spec.engine   # the path the FAIL prints, minus file and [version]
     reason: AWS RDS engine names, passed through verbatim
 maxItems:
   - field: status.subnetIds
