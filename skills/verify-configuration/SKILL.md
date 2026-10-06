@@ -13,7 +13,7 @@ Verify that a configuration package is ready for commit: build it, run the compo
 report what ran, and on request orchestrate E2E tests or run the project on a dev control
 plane.
 
-## Mode, and the charter
+## Before you start
 
 **Interactive:** ask only what the project can't tell you. **Unattended** (started as a
 separate agent, or no user in the loop): never ask; act on the brief and state the assumption,
@@ -22,12 +22,11 @@ channel, and `control-plane-project-charter` §4 (report the effect, not the int
 summary. Load the charter before you start, or read its `SKILL.md` beside this skill's
 directory: this skill does not load it.
 
-## Boundaries
-
 - This skill changes no code and fixes nothing: fixes go to the authoring skills, new tests to
   `author-tests`. It runs E2E only through `e2e-test-configuration`.
+- **Asked to run, deploy or try the project:** Phase 5; verification alone stops at Phase 3.
 
-## Local-only projects and projects with their own gate
+### Local-only projects and projects with their own gate
 
 - **The project has its own gate** — a script or make target that builds and runs the
   tests. Run it instead of the phases it covers, and report its command, exit code and output
@@ -60,6 +59,13 @@ directory the run prints). Check that every resource the change should produce i
 render, and that each is asserted. A resource in the render but not in the assertions is a gap
 to report, not a pass.
 
+## Phase 3: Report, then offer E2E
+
+**If failed:** report the failures and stop. Do not offer E2E tests.
+
+**If passed:** report what ran, as a summary rather than full logs
+([report-templates.md](references/report-templates.md)).
+
 Two things a composition run does not prove, so don't report them as verified (charter §8):
 - **Readiness branches** run only in a test that sets `spec.observedResources`, and even then
   prove the branch logic, not that a provider reports that status.
@@ -67,12 +73,6 @@ Two things a composition run does not prove, so don't report them as verified (c
   renders and asserts cleanly and fails only on a real control plane
   (`control-plane-project-charter` `charter/v2-resources.md`).
 
-## Phase 3: Report, then offer E2E
-
-**If failed:** report the failures and stop. Do not offer E2E tests.
-
-**If passed:** report what ran, as a summary rather than full logs
-([report-templates.md](references/report-templates.md)).
 Then E2E, unless the project rules it out:
 
 - **Interactive:** ask whether to run the E2E tests now, later, or not at all because they
@@ -105,8 +105,7 @@ Then E2E, unless the project rules it out:
 
 ## Phase 5: Run it on a dev control plane (when asked to run/deploy)
 
-Only when the user asked to run, deploy, or try the project; verification alone stops at
-Phase 3. **Read [dev-control-plane.md](references/dev-control-plane.md) before any
+**Read [dev-control-plane.md](references/dev-control-plane.md) before any
 `up project run`** and work through its steps: where the context sends the run, the Space
 pre-flight, the choice you hand back when a Space cannot pull, confirming the run reconciled,
 reading the effect back from the provider, and a run that hangs on
@@ -121,7 +120,8 @@ run in flight: in many agents a session's jobs die with it, leaving a half-creat
 **Tear down with `up project stop`** from the project root (what a hand-deleted cluster leaves
 behind: `control-plane-project-charter` `charter/targets.md`).
 
-**Never:**
+### Never
+
 - Run `up project run` without working through the reference's steps.
 - On a Space the control plane cannot pull from, pick the target yourself: no silent
   `--local`, and **never `--public` on your own initiative — it permanently publishes the
