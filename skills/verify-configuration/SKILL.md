@@ -26,8 +26,6 @@ directory: this skill does not load it.
 
 - This skill changes no code and fixes nothing: fixes go to the authoring skills, new tests to
   `author-tests`. It runs E2E only through `e2e-test-configuration`.
-- Build before tests, one phase at a time; a failed build or composition test ends the
-  verification.
 
 ## Local-only projects and projects with their own gate
 
@@ -40,12 +38,14 @@ directory: this skill does not load it.
 
 ## Phase 1: Build
 
-Run `up project build`. If it fails, report the error and stop.
+Run the phases in order, one at a time: a failed build or composition test ends the
+verification. Run `up project build`. If it fails, report the error and stop.
 
 ## Phase 2: Composition tests, and the render
 
 Run `up test run "tests/test-*"`. If any fail, report the failures and stop. If it prints
 `No test files found`, no test ran, though it exits 0: report that, never a pass (charter §8).
+Each run pays a full project build (timings: `control-plane-project-charter` `charter/tdd.md`).
 
 Keep the `test-*` glob: `up test run` runs the program of every dir it matches, e2e ones
 too even without `--e2e`, so `tests/*` fails at `✗ Parsing tests` whenever an e2e input is
@@ -77,11 +77,11 @@ Then E2E, unless the project rules it out:
 
 - **Interactive:** ask whether to run the E2E tests now, later, or not at all because they
   already passed, and on which target (local kind or a Space group) unless the project, its
-  gate or the user already named one. For "later", say E2E is still outstanding before commit.
+  gate or the user already named one; `e2e-test-configuration`'s `local.md` and `space.md`
+  references give the durations per target. For "later", say E2E is still outstanding before
+  commit.
 - **Unattended:** run them only if your brief asks for E2E and names the target; otherwise
   say they were not run, and why.
-
-`e2e-test-configuration`'s `local.md` and `space.md` references give the durations per target.
 
 ## Phase 4: E2E orchestration (if confirmed)
 
@@ -141,8 +141,6 @@ Checks for you, not a report format (report what ran, charter §4):
   and every resource the change produces is in the render and asserted.
 - E2E offered (interactive) or handled as the brief says (unattended), unless the project
   rules it out.
-
-Per-run timings: `control-plane-project-charter` `charter/tdd.md`.
 
 ## References
 
