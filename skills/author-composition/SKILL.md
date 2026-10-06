@@ -125,6 +125,12 @@ Binding rule 3, before any function code; `control-plane-project-charter` §3 ow
 The design you just settled fixes what the function must emit — keys, Kinds, fields. Write
 that as an assertion now, while it states intent.
 
+**Who does what in a run that changes the function.** `author-tests` writes the test (its
+Phases 1–3, and Phase 5 for what no render reaches). This skill runs RED (step 3 below), GREEN
+(Phase 5) and REFACTOR (Phase 6). The gate comes once, after this skill's Phase 6, as
+`author-tests` Phase 6 describes. A run that only adds or changes tests stays in `author-tests`
+throughout.
+
 1. Make sure the XRD and a composition exist so the test has something to point at. Write the
    XRD yourself (`author-configuration-package`; the charter's `charter/v2-resources.md` has the v2 skeleton), scaffold the
    composition with `up composition generate`, which emits only an auto-ready step, and wire

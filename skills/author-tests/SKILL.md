@@ -158,8 +158,10 @@ counts as an e2e RED.
 ## Phase 4: Run it — RED, then GREEN
 
 `control-plane-project-charter` §3 owns the loop (RED → GREEN → REFACTOR), including which
-failures count as RED and deliberate mutation for backfill. This skill owns the RED step: you
-write the assertion that has to fail.
+failures count as RED and deliberate mutation for backfill. This skill writes the assertion
+that has to fail. In a run that also changes the function, `author-composition` Phase 4 says
+which skill runs RED, GREEN and the gate; only when you add or change tests alone are this
+phase and Phase 6 the whole loop.
 
 Run the test directly — `up test run "tests/<t>"` — not through `verify-configuration`, which
 builds the package and runs the whole suite and is not an inner loop. `No test files found`
