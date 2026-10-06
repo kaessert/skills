@@ -1,8 +1,22 @@
 # Writing an E2ETest
 
-Read before writing or changing any `E2ETest`, in any language. Facts are from the up v0.55.0 source and
-runs, and could change between versions. Running one (target, monitoring, report) is `e2e-test-configuration`'s
-job.
+Read before writing or changing any `E2ETest`, in any language. Running one (target, monitoring, report) is
+`e2e-test-configuration`'s job. Facts are from the up v0.55.0 source and runs, and could change between
+versions.
+
+## What happens on the control plane
+
+On any target, in this order:
+
+1. Every matched test program runs (`Parsing tests`) before any control plane exists.
+2. The control plane is created, then `initResources` are applied, then the package is installed and waited for.
+3. `extraResources` are server-side applied: no wait, no condition check.
+4. The manifests are applied and `defaultConditions` asserted within `timeoutSeconds`.
+5. Teardown follows every test, pass or fail: the test's resources, then the control plane.
+   `skipDelete: true` or `--skip-control-plane-cleanup` leaves the control plane up.
+
+`--function-logs` is rejected with `--e2e`: an e2e run writes no `render.log`, so its output and exit code are
+the only record. Choosing the target and running it: `e2e-test-configuration`.
 
 ## Fields
 
@@ -42,22 +56,20 @@ generated model calls each entry "a string expression"; that is wrong. Observed 
 
 The last two are broken tests, not RED.
 
-## Status values cannot be asserted
+## The ProviderConfig the test creates
 
-An `E2ETest` has no field that checks a value such as `status.vpcId`; `assertResources` exists only on
-`CompositionTest`, which is render-only. So a requirement for an e2e check of a live status value is **not
-covered by e2e**: say so, and name the evidence that stands in for it:
+`up test generate --e2e` emits `extraResources: []` in every language: the test creates no ProviderConfig
+until you add one. Add the one the composed resources reference:
 
-1. a `CompositionTest` whose `observedResources` mock the provider's status, asserting the composite's `status`,
-   which proves status derivation;
-2. a function unit test;
-3. a read-back during the run, if you took one, quoted as "read-back, not asserted" (e2e-test-configuration's
-   `local.md` reference).
+| Kind | Scope | `metadata.namespace` | When |
+|---|---|---|---|
+| `ClusterProviderConfig` named `default` | cluster | none — omit it | **the default.** A managed resource with no `providerConfigRef` is defaulted to `{kind: ClusterProviderConfig, name: default}` |
+| `ProviderConfig` | namespaced | the XR's (`default`) | only when the composition sets `providerConfigRef.kind: ProviderConfig`; same name it references |
 
-uptest's `uptest.upbound.io/pre-assert-hook` / `post-assert-hook` manifest annotations run a local script, but
-the path resolves against the temp dir `up` writes the manifests to (uptest `internal/tester.go:343`; up
-`cmd/up/test/e2etest.go:242, 278`), where the script does not exist. An advanced, fragile option with no tested
-path pattern: not the default, and if you try it, say so in the report.
+Its `apiVersion` is the provider family's group (`aws.m.upbound.io/v1beta1`), not a service group. A
+mismatch between what the test creates and what the resources reference fails only on the control plane;
+the symptoms are in `control-plane-project-charter` `charter/v2-resources.md`. The language files show the
+syntax only.
 
 ## Credentials depend on the target
 
@@ -92,21 +104,6 @@ export UP_AWS_CREDENTIALS="$(printf '[default]\naws_access_key_id = %s\naws_secr
 
 A `--local` run started under `umask 077`, a common way to protect a credentials file, never gets its package
 ready (e2e-test-configuration's `local.md` reference). If you must write a file, `chmod 600` that file instead.
-
-## The ProviderConfig the test creates
-
-`up test generate --e2e` emits `extraResources: []` in every language: the test creates no ProviderConfig
-until you add one. Add the one the composed resources reference:
-
-| Kind | Scope | `metadata.namespace` | When |
-|---|---|---|---|
-| `ClusterProviderConfig` named `default` | cluster | none — omit it | **the default.** A managed resource with no `providerConfigRef` is defaulted to `{kind: ClusterProviderConfig, name: default}` |
-| `ProviderConfig` | namespaced | the XR's (`default`) | only when the composition sets `providerConfigRef.kind: ProviderConfig`; same name it references |
-
-Its `apiVersion` is the provider family's group (`aws.m.upbound.io/v1beta1`), not a service group. A
-mismatch between what the test creates and what the resources reference fails only on the control plane;
-the symptoms are in `control-plane-project-charter` `charter/v2-resources.md`. The language files show the
-syntax only.
 
 ## Go template (`tests/e2etest-<n>/main.go`)
 
@@ -197,20 +194,6 @@ The E2E run is `up test run "tests/e2etest-<n>" --e2e …`; the composition gate
 go in the project README. If the project's own gate or spec runs `up test run tests/*`, that run needs the e2e
 inputs set too; say so in the README and the report (the charter's `charter/container.md`).
 
-## What happens on the control plane
-
-On any target, in this order:
-
-1. Every matched test program runs (`Parsing tests`) before any control plane exists.
-2. The control plane is created, then `initResources` are applied, then the package is installed and waited for.
-3. `extraResources` are server-side applied: no wait, no condition check.
-4. The manifests are applied and `defaultConditions` asserted within `timeoutSeconds`.
-5. Teardown follows every test, pass or fail: the test's resources, then the control plane.
-   `skipDelete: true` or `--skip-control-plane-cleanup` leaves the control plane up.
-
-`--function-logs` is rejected with `--e2e`: an e2e run writes no `render.log`, so its output and exit code are
-the only record. Choosing the target and running it: `e2e-test-configuration`.
-
 ## E2E RED
 
 An e2e RED is optional (charter §3): it costs a real control-plane run, so take it when it is cheap, and
@@ -221,3 +204,20 @@ resource the others depend on, or break a selector. Run it with a short `timeout
 minutes. Check the failure is the Ready assertion (observed: the expected `Ready` condition against
 `status: {}`), not a credential error, then revert with git and restore the timeout. Editing
 `defaultConditions` or an expected value is not RED, and an unparsable condition is a broken test.
+
+## Status values cannot be asserted
+
+An `E2ETest` has no field that checks a value such as `status.vpcId`; `assertResources` exists only on
+`CompositionTest`, which is render-only. So a requirement for an e2e check of a live status value is **not
+covered by e2e**: say so, and name the evidence that stands in for it:
+
+1. a `CompositionTest` whose `observedResources` mock the provider's status, asserting the composite's `status`,
+   which proves status derivation;
+2. a function unit test;
+3. a read-back during the run, if you took one, quoted as "read-back, not asserted" (e2e-test-configuration's
+   `local.md` reference).
+
+uptest's `uptest.upbound.io/pre-assert-hook` / `post-assert-hook` manifest annotations run a local script, but
+the path resolves against the temp dir `up` writes the manifests to (uptest `internal/tester.go:343`; up
+`cmd/up/test/e2etest.go:242, 278`), where the script does not exist. An advanced, fragile option with no tested
+path pattern: not the default, and if you try it, say so in the report.
