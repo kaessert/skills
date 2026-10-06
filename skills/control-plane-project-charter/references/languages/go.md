@@ -5,6 +5,11 @@ Everything Go-specific for a control-plane project: composition functions and te
 The language-agnostic rules are in [`control-plane-project-charter`](../../SKILL.md); this file and
 [`go/`](go/) say how Go expresses them.
 
+Go tests produce the same `CompositionTest` and `E2ETest` objects as every other language;
+[`yaml.md`](yaml.md) shows that object model with no language in the way. Which language new
+tests use: [charter §10](../../SKILL.md#10-language-dispatch). go-templating tests (`*.gotmpl`)
+are a different language: [`go-templating.md`](go-templating.md).
+
 | | |
 |---|---|
 | Scaffold a function | `up function generate <n> <composition-path> --language go` — then read [`go/functions.md`](go/functions.md): the generated `fn_test.go` tests nothing, and the generated condition targets a claim |
@@ -98,8 +103,3 @@ replace dev.upbound.io/models => ../../.up/go/models
   forwarded environment and no host mounts.
 - **`up project build` compiles Go** (`go mod tidy` and `ko`), so a function that does not compile
   fails the build; it still does not prove the function runs (charter §8).
-
-Go tests produce the same `CompositionTest` and `E2ETest` objects as every other language;
-[`yaml.md`](yaml.md) shows that object model with no language in the way. Which language new
-tests use: [charter §10](../../SKILL.md#10-language-dispatch). go-templating tests (`*.gotmpl`) are a different
-language: [`go-templating.md`](go-templating.md).
