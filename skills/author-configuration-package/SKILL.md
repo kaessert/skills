@@ -130,15 +130,16 @@ template's XRD as a v2 starting point: the templates are v1.
 write, then write the XRD to match it, then generate the composition from it.
 
 ```bash
-# --scope is required for a non-interactive run (below)
+# Pass --scope, or the command prompts for it: see the first bullet after this block.
 up example generate --scope=namespace --name example --namespace default \
     --api-group platform.example.com --api-version v1alpha1 --kind StorageBucket
 #   -> examples/storagebucket/example.yaml (spec: {}); fill in the spec users should write
 # Write apis/storagebuckets/definition.yaml yourself (plural directory).
-up composition generate apis/storagebuckets/definition.yaml                 # Phase 5
 up dep add 'xpkg.upbound.io/upbound/provider-aws-s3:>=v2.0.0, <v3.0.0'      # Phase 4
+up composition generate apis/storagebuckets/definition.yaml                 # Phase 5
 up project build                                                            # Phase 6
-up function generate compose-bucket apis/storagebuckets/composition.yaml --language python
+up function generate compose-bucket apis/storagebuckets/composition.yaml \
+    --language <lang>                                                       # Phase 7
 up project build                                                            # Phase 9
 ```
 
