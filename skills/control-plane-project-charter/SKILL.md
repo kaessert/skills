@@ -312,18 +312,10 @@ boundary around function rendering.
 | A render | the function produced objects. Not that the API server accepts them, and not that the provider does. |
 | `Ready=True` | the provider reconciled *something*. Read back the field you meant, from the live object, not from the input manifest. |
 
-**`up test generate` emits a stub that does not even run.** `assertResources: []` plus empty
-`xrPath`, `compositionPath` and `xrdPath`, and the empty `compositionPath` fails before any
-assertion is reached:
-
-```
-cannot load Composition from "": not a composition: /
-```
-
-Per §3's table that is a **broken test, not RED** — fill the paths in first.
-
-The vacuous pass is the *next* state: correct paths, and an `assertResources` list you never
-populated. An empty expected list produces no errors, so that test is green and means nothing.
+**A generated test proves nothing until you fill it in.** `up test generate`'s stub has empty
+paths and fails before any assertion: a **broken test, not RED** (§3;
+[`charter/generators.md`](references/charter/generators.md)). With the paths filled in, an
+`assertResources` list you never populated is green and means nothing.
 
 A filled-in single test is not much better: one input shape, asserting only composed
 resources, passes over a function that crashes on a minimal XR and drops three of four status
