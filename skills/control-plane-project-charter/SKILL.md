@@ -144,6 +144,12 @@ This is the plugin's default flow for composition code, tests, and migrations al
 `author-tests` owns the authoring detail; the loop itself is
 here because every skill is bound by it.
 
+**Test-first is for behaviour:** the function, the composition, how status is derived.
+Scaffolding, `upbound.yaml` metadata, dependencies, the XRD, an MRAP and the examples are
+declarative: `up project build`, author-configuration-package's `check_xrd_schema.py` and the
+composition tests that use them check those. Write no test program for them, and don't copy a
+skill's script into the project.
+
 **Why test-first.** The most common false report is coverage for a test that could not have
 failed — *"covers the conditional branch"*, *"Coverage: complete"*. Watching the test fail first
 makes a coverage claim checkable: you saw it catch the absence of the implementation.

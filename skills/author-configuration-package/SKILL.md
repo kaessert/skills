@@ -173,15 +173,14 @@ is `VPC`, that a repeated group prefix may or may not be stutter, that an unboun
 leaves no CEL budget, or that redefining `READY` prints the column twice. XRD versions must
 round-trip, so all of that is permanent from the first version that ships.
 `control-plane-project-charter`'s `charter/xrd-design.md` has the rules; run the mechanical
-ones before the first build:
+ones before the first build, with the script in this skill's directory
+(`<author-configuration-package>`, the directory containing this SKILL.md). Run it from there:
+don't copy it into the project, and don't write a test for the XRD (charter §3).
 
 ```bash
 python3 <author-configuration-package>/scripts/check_xrd_schema.py \
   apis/*/definition.yaml
 ```
-
-`<author-configuration-package>` is this skill's directory: the directory containing this
-SKILL.md.
 
 Exit `0` is clean, `10` is at least one finding, and `2` means it extracted nothing — a corpus
 error, not a pass. `FAIL` lines are defects; `REVIEW` lines (booleans, bare strings) are calls

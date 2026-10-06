@@ -183,10 +183,11 @@ requirement on a file — dependencies in `upbound.yaml`, a frozen XRD surface, 
   accepted an MRAP without its API dependency (up v0.55.0).
   `<author-configuration-package>/scripts/check_xrd_schema.py` checks XRD design, not a frozen
   surface; `<author-configuration-package>` is the directory containing that skill's SKILL.md,
-  beside this skill's directory. Where the project has a gate script, such checks belong there,
-  beside the build and the test run (charter §2: the project's gate wins; `verify-configuration`).
-- **A check is coverage only if it is committed** — under `tests/`, or in the gate script —
-  and run by the gate. A scratch check in `/tmp` is not.
+  beside this skill's directory. Where the project's gate script already runs such checks, they
+  stay there, beside the build and the test run (charter §2: the project's gate wins).
+- **Write no test program or checker for these files, and don't copy a skill's script into the
+  project** (charter §3: test-first is for behaviour). Run `check_xrd_schema.py` from its
+  skill's directory; the build and the composition tests that use the files do the rest.
 - **Never turn a test program into a linter.** A test dir that checks repo files, exits
   non-zero on a mismatch and prints `items: []` adds zero tests. Passing, it drops out of the
   count (alone: `No test files found`, exit 0); failing, it stops at `✗ Parsing tests`, which
