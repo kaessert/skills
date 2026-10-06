@@ -12,14 +12,12 @@ references:
 Analyze a Crossplane v1 configuration package and write the plan that `execute-v2-migration`
 carries out: `.agents/plans/CROSSPLANE_V2_MIGRATION.md`.
 
-## Mode, and the charter
+## Before you start
 
 **Interactive:** ask only what the project can't tell you — here, the decisions in Phase 5.
 **Unattended:** never ask; decide from the spec and state the assumption in the plan, or stop
 and report. Load `control-plane-project-charter` before you start, or read its `SKILL.md`
 beside this skill's directory: this skill does not load it.
-
-## Boundaries
 
 - Analysis only. You write the plan file and nothing else: no code changes, builds, tests or
   commits.
