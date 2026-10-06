@@ -1,14 +1,13 @@
 # Templates: files, questions and reports for a configuration package
 
 The files this skill writes by hand, the questions to ask when the spec does not answer them,
-provider packages by cloud, what to check when a build fails, and the hand-off report. The
+what to check when a build fails, and the hand-off report. The
 order of the work is SKILL.md's phases; function and test syntax is in the charter's
 `languages/` files.
 
 - [Templates](#templates)
 - [Questions for a new project](#questions-for-a-new-project)
 - [XRD field wizard](#xrd-field-wizard)
-- [Provider packages by cloud](#provider-packages-by-cloud)
 - [When a build fails, or the XR never gets Ready](#when-a-build-fails-or-the-xr-never-gets-ready)
 - [Hand-off report](#hand-off-report)
 
@@ -16,45 +15,8 @@ order of the work is SKILL.md's phases; function and test syntax is in the chart
 
 ## Templates
 
-### XRD (new API: v2, Namespaced)
-
-```yaml
-apiVersion: apiextensions.crossplane.io/v2
-kind: CompositeResourceDefinition
-metadata:
-  name: {plural}.{group}
-spec:
-  scope: Namespaced
-  group: {group}
-  names:
-    kind: {Kind}          # the user's Kind: no X prefix, no claimNames
-    plural: {plural}
-  versions:
-  - name: v1alpha1
-    served: true
-    referenceable: true
-    schema:
-      openAPIV3Schema:
-        type: object
-        properties:
-          spec:
-            type: object
-            properties:
-              region:
-                type: string
-                description: "AWS region"
-              cidrBlock:
-                type: string
-                description: "CIDR block for the VPC"
-                default: "10.0.0.0/16"
-            required:
-              - region
-```
-
-Fields directly under `spec`, or under `spec.parameters` where the project's spec or existing
-XRDs nest them (the charter's `charter/v2-resources.md`). Then design it — descriptions, enums,
-bounds, `status` — with the charter's `charter/xrd-design.md`, and run `check_xrd_schema.py`
-(SKILL.md Phase 3).
+The XRD has no template here: write it from the v2 skeleton in the charter's
+`charter/v2-resources.md` (SKILL.md Phase 3).
 
 ### upbound.yaml
 
@@ -87,28 +49,6 @@ spec:
   package: xpkg.upbound.io/upbound/provider-aws-ec2
   version: '>=v2.0.0, <v3.0.0'
 ```
-
-### Composition skeleton (for reading)
-
-The shape `up composition generate` produces. Generate it rather than copying this.
-
-```yaml
-apiVersion: apiextensions.crossplane.io/v1   # there is no v2 Composition
-kind: Composition
-metadata:
-  name: {plural}.{group}
-spec:
-  compositeTypeRef:
-    apiVersion: {group}/{version}
-    kind: {Kind}
-  mode: Pipeline   # the only mode in Crossplane v2
-  pipeline:
-    - functionRef:
-        name: crossplane-contrib-function-auto-ready
-      step: crossplane-contrib-function-auto-ready
-```
-
-`up function generate` adds your function's step before it.
 
 ### .gitignore
 
@@ -233,22 +173,6 @@ descriptions, a CIDR `pattern`, well-scoped enums and defaults are welcome, as l
 constraint still **accepts the values in the user's XR draft**: a lowercase `location` enum
 that accepts only `westeurope` rejects the draft's `West Europe`. If a reasonable constraint
 conflicts with a draft value, normalize the value or relax the constraint, or ask.
-
----
-
-## Provider packages by cloud
-
-Upbound Official family providers, `xpkg.upbound.io/upbound/provider-<cloud>-<service>`. A
-starting list, not a catalogue: resolve the exact package and Kinds as SKILL.md Phase 4 says.
-
-| Cloud | Package → what it holds |
-|---|---|
-| AWS | `ec2` (VPCs, subnets, gateways, instances), `rds` (RDS, Aurora), `s3`, `iam`, `eks`, `lambda`, `sns`, `sqs` |
-| Azure | `compute` (VMs, scale sets), `network` (VNets, subnets, load balancers), `storage`, `containerservice` (AKS), `sql` |
-| GCP | `compute` (VMs, networks, firewalls), `storage`, `container` (GKE), `sql` |
-
-Cross-service basics (`ResourceGroup`, the `ProviderConfig` kinds) are in
-`provider-family-<cloud>`.
 
 ---
 
