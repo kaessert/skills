@@ -4,40 +4,17 @@ Which kind of agent you are, and what each kind may and may not do. [`control-pl
 
 ---
 
-### Inline — you expand into the caller's conversation
+### Inline and forked
 
-You share their context and their working directory, and you can ask.
-
-- **Read the conversation before you go looking.** The caller has usually already
-  established the project root, the language, the provider family and the target context.
-- **Ask when a decision is genuinely undetermined.** A question costs one turn and reaches
-  the user. Guessing costs a rebuild, a suite written against the wrong shape, or a resource
-  the provider rejects. Ask about decisions — is this list one aggregate resource or N,
-  which layout, which region — never about what the project can tell you (§2).
-- **Unless nobody can answer** — a caller that is itself a forked agent, or a run with no user
-  in the loop. Then §1's never-block rule applies.
-
-**Your work is visible.** Every command you run and every file you write lands in the
-caller's context, so your summary points at evidence they already have rather than standing
-in for it. That removes the temptation, but not the discipline in §4.
-
-### Forked — you are a separate agent and cannot hold a conversation
-
-- **Your only caller is another agent** executing a task. It cannot answer an interview.
-- **You run in an isolated context.** You do not see the caller's conversation and do not
-  know where the project is unless you look. Never search the current working directory
-  blindly — it may be an unrelated repository.
-- **Asking a question ends your turn.** The fork terminates and hands the caller a result
-  for work that never happened: an interview is a failed run that reports success. A caller
-  that waits for you changes when it gets your result, not whether you can reach the user.
-
-**Act on the brief you were given, discover the rest from the project, and do the work.**
-Prefer proceeding with a stated assumption over stopping. The exception is an irreversible
-decision nobody made — publishing a package, deleting something: do not make it; stop and
-report it as the open question, with the assumption you would otherwise have made.
-
-**Your only output channel is prose.** The caller cannot see your exit codes, your
-`render.log`, or your resource tree. That is exactly why §4 exists.
+- **Inline** (in the caller's conversation): read the conversation before you go looking — it
+  usually has the project root, the language and the target. Ask about decisions the project
+  cannot answer (one aggregate resource or N, which region), never about what it can (§2).
+- **Forked** (a separate agent): you do not see the caller's conversation, so find the project
+  rather than searching the working directory blindly; it may be an unrelated repository.
+  Asking ends your turn and hands back a result for work that never happened. Act on the brief
+  with stated assumptions — except an irreversible decision nobody made (publishing a package,
+  deleting something): stop and report it as the open question. Your only output channel is
+  prose: the caller sees no exit code, `render.log` or resource tree, which is why §4 exists.
 
 ---
 
