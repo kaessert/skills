@@ -70,11 +70,13 @@ Test resource **dependencies** and **status-driven branches** without a cloud, b
 - Keep `validate: false`: you are deliberately mocking status the schema would not populate.
 - Mock only the status fields the composition reads (e.g. `status.atProvider.state: deployed`,
   a condition `type: Ready, status: "True"`, or a provider-specific contract like
-  `status.eks.clusterArn`). The annotation and condition rules: charter `charter/evidence.md`
-  "Coverage".
+  `status.eks.clusterArn`). What a mock needs to be observed at all (the annotation, and for a
+  namespaced XR its namespace and the render's name) and the condition rules: the charter's
+  `charter/evidence.md`, "Coverage".
 
 This verifies "resource B only renders once resource A is Ready" and "the XR surfaces field X
-once the observed endpoint is known". Multi-step examples: the charter's `languages/yaml.md`.
+once the observed endpoint is known". Examples: the charter's language file for your test
+language (Go: `languages/go/tests.md`, `status-from-observed-bucket`; YAML: `languages/yaml.md`).
 
 ---
 

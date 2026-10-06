@@ -16,7 +16,7 @@ Three parts of it matter, and they are identical in every language:
 | Part | What it is | The mistake it invites |
 |---|---|---|
 | `req.observed.composite` | the XR as it currently exists, including `status` | reading it as a plain map when the language gives you a typed object, or vice versa |
-| `req.observed.resources` | composed resources **that already exist**, keyed by composition key | assuming it is populated. In a composition test it is `{}` unless the test supplies `observedResources` |
+| `req.observed.resources` | composed resources **that already exist**, keyed by composition key | assuming it is populated. In a composition test it is `{}` unless the test supplies `observedResources`, and for a namespaced XR each mock carries the XR's namespace (the charter's `charter/evidence.md`, Coverage) |
 | `rsp.desired.resources["key"]` | what you want to exist, keyed by composition key | treating the key as cosmetic. It becomes `crossplane.io/composition-resource-name`, and Crossplane derives the resource name from it |
 
 **The composition key is an API.** Renaming a key on an existing platform orphans the

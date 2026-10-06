@@ -90,10 +90,19 @@ the omitted branch never renders.
 **never executes** when `observedResources` is empty — it is unexercised, not merely
 unasserted. Supply the observed state explicitly:
 
-- Every observed resource needs the `crossplane.io/composition-resource-name` annotation. It is
-  what keys the resource into the function's observed resources, and the renderer rejects the
-  whole test without it: `encountered composed resource without required
-  "crossplane.io/composition-resource-name" annotation`.
+- Every observed resource needs the `crossplane.io/composition-resource-name` annotation: the
+  renderer rejects the whole test without it (`encountered composed resource without required
+  "crossplane.io/composition-resource-name" annotation`). It is required, but it is **not** what
+  matches a mock to the XR's composed resource.
+- **For a namespaced XR, every `observedResources` entry also needs `metadata.namespace` set to
+  the XR's namespace, and `metadata.name` set to the name the render gave that resource.** Copy
+  the names from `render.log` (run with `--function-logs`, above); they are stable in a render.
+  A mock without the XR's namespace is silently not observed: no error, the function sees no
+  observed resources, and the test fails only on its own assertions, as if the function were
+  wrong (observed with up v0.55.0).
+- **Prove the mocks are used** with a case that fails when they are ignored: assert a value only
+  an observed resource can supply, such as a status field copied from a mock. A case that
+  expects empty or default status passes whether the mocks are observed or not.
 - Without `status.conditions` the resource is observed but **not** ready, which is its own
   useful test case. Add `Ready` and `Synced` conditions with status `True` to drive the ready
   branch.
