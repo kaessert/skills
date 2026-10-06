@@ -35,9 +35,8 @@ So a credential reaches a generated manifest by one portable route: **export it 
 name before the run, and read that name in the test module.**
 
 ```bash
-export UP_AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
-export UP_AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
-up test run "tests/e2etest-<n>" --e2e --control-plane-group=<group>
+export UP_AWS_CREDENTIALS="<credentials file contents>"   # build it as author-tests' e2e.md shows
+up test run "tests/e2etest-<n>" --e2e <target flags>       # --local, or a Space's: e2e-test-configuration
 ```
 
 **Read the variable in a way that fails loudly when it is missing.** A silent fallback to
@@ -52,8 +51,8 @@ executes. A plain `up test run "tests/*"` therefore runs every e2e program too, 
 whenever their inputs are unset. Split the runs by directory prefix instead:
 
 ```bash
-up test run "tests/test-*"                        # composition gate: no e2e program runs
-up test run "tests/e2etest-<n>" --e2e ...         # E2E: fails fast on a missing input
+up test run "tests/test-*"                             # composition gate: no e2e program runs
+up test run "tests/e2etest-<n>" --e2e <target flags>   # E2E: fails fast on a missing input
 ```
 
 Write both commands in the project README, so nobody uses `tests/*` as the gate. **Unless the
