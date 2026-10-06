@@ -60,7 +60,7 @@ of them.
 **Several tests** run one after another, never in parallel, one log each. A failed test does not stop the
 next: each has its own control plane. Stop the rest only when the failure is shared — a precondition, the
 target, or the package install (`Waiting for package to be ready`) would fail every test the same way — and
-list what did not run. `verify-configuration` follows the same rule when it orchestrates.
+list what did not run.
 
 ## Step 2: Preconditions
 
@@ -68,16 +68,12 @@ An `--e2e` run creates a control plane and real cloud resources, so everything c
 precondition that fails ends the run**; it is not a warning you carry forward. In this order, stopping at the
 first failure:
 
-```bash
-up project build             # 1. the project builds
-up test run "tests/test-*"   # 2. composition tests pass
-```
-
-Check 2 is `test-*` by default, not `tests/*`: `up test run` runs every matched dir's program, e2e ones too, even
-without `--e2e`, and fails at `✗ Parsing tests` when an e2e input is unset. If the project's own gate or spec
-runs `up test run tests/*`, use it, with the e2e inputs (check 3) set for that run too, and say so in the report
-(the charter's `charter/container.md`).
-
+1. **The project builds:** `up project build`.
+2. **The composition tests pass:** `up test run "tests/test-*"`. That is `test-*` by default, not `tests/*`:
+   `up test run` runs every matched dir's program, e2e ones too, even without `--e2e`, and fails at `✗ Parsing
+   tests` when an e2e input is unset. If the project's own gate or spec runs `up test run tests/*`, use it, with
+   the e2e inputs (check 3) set for that run too, and say so in the report (the charter's
+   `charter/container.md`).
 3. **Credentials.** List what the test programs read, in any language, and check each:
 
    ```bash
