@@ -19,6 +19,7 @@ SCRIPTS=<author-composition>/scripts
 | Scaffold a test | `up test generate <n> --language python` (add `--e2e`): writes `tests/test-<n>/`; the CLI prepends `test-` itself, so do not pass it |
 | Set up the venv, first | `python3 "$SCRIPTS/setup_venv.py" --project <root>`, right after the first `up project build` ([below](#set-up-the-venv-first)) |
 | Probe the project | `python3 "$SCRIPTS/probe_project.py" --project <root> [<Kind>…]`: layout, import prefix, import lines, class names. Standard library only |
+| A Kind's fields | `python3 "$SCRIPTS/probe_project.py" --project <root> --fields <Kind>`: every `forProvider` field, list fields with misleadingly singular Upjet names (`attribute`, `globalSecondaryIndex`) flagged, and the cross-resource `*Ref`/`*Selector` fields. Its first line reports the project's generation |
 | Fast inner loop | `python3 "$SCRIPTS/run_function.py" --project <root> --minimal examples/<kind>/<xr-name>.yaml`: needs the venv |
 
 ## Where everything is

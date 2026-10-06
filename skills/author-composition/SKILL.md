@@ -51,13 +51,9 @@ work item or gate wins over these: say where you departed.
 
 ## Phase 1: Detect the language and the Crossplane generation — do not ask
 
-**Language.** Detect the *function* language from `functions/` with the table in the charter's
-`languages/README.md` (`control-plane-project-charter/references/languages/`, beside this
-skill's directory), then read the file it names before writing a line: it carries the layout
-detection, the import formula and the bootstrap, all wrong by default if you guess. The test
-language is a separate choice (charter §10; `author-tests` applies it). No functions yet? Take
-the language from `upbound.yaml`, else from an existing function anywhere in the project, else
-ask — this is a decision, not a discoverable fact.
+**Language:** detect it as charter §10 says and read the language file before writing a line;
+its layout, imports and bootstrap are wrong by default if you guess. No functions yet: take it
+from `upbound.yaml`, else an existing function, else ask — a decision, not a discoverable fact.
 
 **Generation**, which governs more of the guidance than the language does:
 
@@ -66,11 +62,9 @@ apis/*/definition.yaml: apiextensions.crossplane.io/v2  → v2: binding rule 4 a
                                                    /v1  → v1: they do not
 ```
 
-A v1 project uses the non-`.m.` provider models and a cluster-scoped `ProviderConfig`. Every
-`up project init` template is v1 today, so a freshly initialised project is v1 and its shipped
-function breaks every v2 rule. Match what the project is (binding rule 4); migrating it is
-`plan-v2-migration`'s work, not cleanup in passing. Python: `probe_project.py` reports the
-generation on its first line and recommends imports accordingly.
+A v1 project — every `up project init` template is one — uses the non-`.m.` models and a
+cluster-scoped `ProviderConfig`, and its shipped function breaks every v2 rule. Match what the
+project is; migrating it is `plan-v2-migration`'s work, not cleanup in passing.
 
 ## Phase 2: Discover — do not ask
 
@@ -85,16 +79,11 @@ The function body stays empty or unchanged.
 | What you need | How to get it — no question required |
 |---|---|
 | **Models missing entirely** (fresh clone) | `.up/` is gitignored and starts empty. Run `up dep update-cache`, then `up project build`; every model import fails until you do |
-| Function layout + import prefix | the language file's detection recipe (Python: `probe_project.py`) |
-| Exact import line and class names per Kind | the language file; Python: the same probe, with the Kinds named |
-| Field names and types on a managed resource | the generated schema. Python: `probe_project.py --fields <Kind>` prints every `forProvider` field, flags list fields with misleadingly singular Upjet names (`attribute`, `globalSecondaryIndex`), and lists cross-resource `*Ref`/`*Selector` fields |
-| Go: import path, types, fields | the generated types under `.up/go/models/` — `languages/go.md` (imports and models) |
+| Function layout, import line, class names, field names and types | the generated models under `.up/<language>/`, read as the language file says |
 
-**Python:** before Phase 3, read the charter's `languages/python.md` and run what it says —
-the venv (`scripts/setup_venv.py`, once, right after the first build; why it comes first is in
-that file), `scripts/probe_project.py` (layout, imports, fields) and `scripts/run_function.py`
-(the fast tier), all in this skill's [`scripts/`](scripts/) directory. The other languages read
-their generated types directly.
+**Python:** before Phase 3, run what the charter's `languages/python.md` says with this skill's
+[`scripts/`](scripts/): `scripts/setup_venv.py`, `scripts/probe_project.py` (layout, imports,
+fields, generation) and `scripts/run_function.py` (the fast tier).
 
 **Never hand-derive an import path and never guess a provider field name.** Both are one
 command away.
@@ -122,23 +111,18 @@ the simplest correct behaviour, say so in your summary, and continue.
 
 ## Phase 4: RED — write the failing test before the implementation
 
-Binding rule 3, before any function code; `control-plane-project-charter` §3 owns the loop.
-The design you just settled fixes what the function must emit — keys, Kinds, fields. Write
-that as an assertion now, while it states intent.
+Binding rule 3, before any function code; charter §3 owns the loop. Write what the design
+fixes — keys, Kinds, fields — as an assertion now, while it states intent.
 
 **Who does what in a run that changes the function.** `author-tests` writes the test (its
-Phases 1–4, Phase 2 for what no render reaches). This skill runs RED (step 2 below), GREEN
+Phases 1–4, Phase 2 for what no render reaches). This skill runs RED (below), GREEN
 (Phase 5) and REFACTOR (Phase 6). The gate comes once, after this skill's Phase 6, as
 `author-tests` Phase 6 describes. A run that only adds or changes tests stays in `author-tests`
 throughout.
 
-1. Author the test via `author-tests`, which reads the same `languages/` file you did.
-2. **Run it and read the failure:** `up test run "tests/<t>"` — expect FAIL, for a reason the
-   charter's §3 table counts as RED.
-3. **Keep the failure text.** It is what makes the coverage claim in your summary checkable.
-
-Adding to a composition that already works has no natural RED: write the new assertion, run
-it, and confirm *it* fails while the others still pass.
+Run the test with `up test run "tests/<t>"` and keep the failure text, for a reason charter §3's
+table counts as RED. Adding to a composition that already works: confirm the new assertion
+fails while the others pass.
 
 ## Phase 5: GREEN — implement until the test passes
 
@@ -165,15 +149,10 @@ It supplements the loop and never replaces it.
 ## Phase 6: REFACTOR and verify — coverage, not a green exit code
 
 With the suite green, tidy the implementation, then add the next failing assertion and go
-round again. This is what "covered" has to mean before you write it down (charter §8 explains
-why each green thing is not evidence).
+round again. Before you call anything covered (charter §8):
 
-1. **Check provider validity, not just v2 conformance** (charter §6: the provider schema is a
-   lower bound). Read the generated model's constraints, then ask the structural question the
-   models cannot answer. Two defects that passed a green suite: `rule.id` optional in the
-   model but required by the AWS provider, and an S3 lifecycle rule with neither `filter` nor
-   `prefix`, rejected with `MalformedXML`. Write in your summary which Kinds you checked, what
-   the schema required, and which API-level rule you could not confirm.
+1. **Check provider validity**, not just v2 conformance, as charter §6 says, and write the
+   result in your summary.
 2. **Grep your own function** with the two greps in the charter's `charter/v2-resources.md`
    and judge each hit rather than counting them. Legitimate: a `namespace` chosen by a
    cluster-scoped XR or set on an object embedded inside `forProvider` (a provider-kubernetes
@@ -184,21 +163,14 @@ why each green thing is not evidence).
 3. **Read the render, not the assertions:** `up test run "tests/test-*" --function-logs`, then
    read it as `charter/evidence.md` says (the directory the run prints). Add each emitted
    resource to `assertResources`; until you do it is untested, though the suite is green.
-4. **The suite satisfies the charter's `charter/evidence.md` "Coverage"**: one test per input shape,
-   including a minimal XR via inline `xr`; one test per observed-state branch, saying what it
-   proves (your branch logic, given the status you wrote) and what it does not (that a provider
-   reports that status); every `status` field the function writes asserted on the composite.
+4. **The suite satisfies the charter's `charter/evidence.md` "Coverage"**: each input shape
+   including a minimal XR, each observed-state branch, every `status` field on the composite.
 
 ## Phase 7: Report
 
-**Claim only what ran** (binding rule 5). Composition tests render and assert; they talk
-to no provider and install nothing.
-
-| You may say | You may not say |
-|---|---|
-| "composition tests pass, N/N" | "production-ready" |
-| "renders the resources I intended, with these fields" | "can be deployed to a control plane" |
-| "provider constraints checked for Kinds X, Y" | "verified" / "working" — you ran no provider |
+**Claim only what ran** (binding rule 5, charter §4). Composition tests render and assert;
+they talk to no provider and install nothing, so never "production-ready", "deployable" or
+"verified".
 
 **Out of reach locally:** external-name semantics — whether a resource's external name is
 provider-assigned or the identifier you set — are undiscoverable from CRDs or models, and
