@@ -21,7 +21,9 @@ when interactive (charter §1).
 - Analysis only. You write the plan file and nothing else: no code changes, builds, tests or
   commits.
 - Every change you plan comes from [breaking-changes.md](references/breaking-changes.md). Point
-  at its sections; do not restate them in the plan.
+  at its sections; do not restate them in the plan. Upstream: the
+  [Crossplane v2 upgrade guide](https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/)
+  and [What's new in v2](https://docs.crossplane.io/latest/whats-new/).
 - The plan changes the project, not a control plane. Moving a control plane that runs the v1
   package is a rollout risk you record, never a step you plan
   ([Installed v1 APIs](references/breaking-changes.md#installed-v1-apis)).
@@ -145,12 +147,3 @@ report the effect, not the intent).
 - Every dependency has a verified target version, or is marked unverified with the reason.
 - Every assumed decision is labelled as an assumption.
 - No file outside `.agents/plans/` changed (`git status`).
-
-## References
-
-- [breaking-changes.md](references/breaking-changes.md) — read in Phase 4, before you judge a
-  file: every v1 → v2 change, language-neutral, with before/after YAML.
-- [checklist-template.md](references/checklist-template.md) — read in Phase 6: the plan's
-  shape and its eight stages.
-- [Crossplane v2 upgrade guide](https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/)
-  and [What's new in v2](https://docs.crossplane.io/latest/whats-new/).

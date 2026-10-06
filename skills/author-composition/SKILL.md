@@ -219,12 +219,3 @@ Checks for you before you report, not a report format (`control-plane-project-ch
 7. Provider-level constraints were checked, and the result — including "found nothing" —
    is in the summary
 8. The summary claims the layer that was actually reached, and no further
-
-## References
-
-- [patterns.md](references/patterns.md) — read in Phase 3 for each design question, when
-  debugging a green test whose resource misbehaves, and when migrating a function to v2.
-- [`scripts/`](scripts/) — Python only; read the charter's `languages/python.md` before running
-  them.
-- The language files — the charter's, indexed by its `languages/README.md`; read the one
-  Phase 1 names before writing code.

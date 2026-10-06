@@ -17,9 +17,9 @@ and write the assertion that has to fail first.
 
 A test's *meaning* is language-agnostic; only its *syntax* differs. Every test, in any
 language, compiles to a `CompositionTest` or an `E2ETest` (`meta.dev.upbound.io/v1alpha1`):
-the rules are in this file, the object model and common mistakes in
-[test-model.md](references/test-model.md), the syntax in the charter's file for the test
-language (Phase 1).
+the rules are in this file, the object model, structuring patterns and common mistakes in
+[test-model.md](references/test-model.md) (read it before your first test in a project), the
+syntax in the charter's file for the test language (Phase 1).
 
 - Writing or changing an `E2ETest`: Phase 4.
 - Planning or executing a test refactor: [refactoring.md](references/refactoring.md) (plan into
@@ -213,16 +213,3 @@ authoring is complete when:
 - The new assertion was observed to fail before the implementation existed, and to pass after
 - The gate passed once the suite was green — the project's own gate if it has one, else
   `verify-configuration`, without a deploy where none is allowed (Phase 6)
-
-## References
-
-- [test-model.md](references/test-model.md) — read for the `CompositionTest` fields, the
-  structuring patterns (bundle, matrix, `observedResources` sequences) and the common
-  mistakes, before writing your first test in a project.
-- [e2e.md](references/e2e.md) — read before writing or changing any `E2ETest`: fields,
-  `defaultConditions`, status, credentials per target, the ProviderConfig, Go template, e2e RED.
-- [refactoring.md](references/refactoring.md) — read before planning or executing a test
-  refactor.
-- The language files — the charter's, indexed by its `languages/README.md`; read the one
-  Phase 1 names before writing a test (`kcl.md`, `python.md`, `yaml.md`, `go/tests.md` with
-  unit tests in `go/functions.md`, `go-templating.md`).

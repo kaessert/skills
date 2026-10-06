@@ -139,10 +139,3 @@ Checks for you, not a report format (report what ran, charter §4):
   and every resource the change produces is in the render and asserted.
 - E2E offered (interactive) or handled as the brief says (unattended), unless the project
   rules it out.
-
-## References
-
-- [dev-control-plane.md](references/dev-control-plane.md) — read before any `up project run`,
-  and when a run hangs on `Waiting for package to be ready`.
-- [report-templates.md](references/report-templates.md) — read when writing the verification
-  report or the cumulated E2E report.

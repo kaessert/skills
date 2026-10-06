@@ -235,11 +235,3 @@ Shape (templates in [report-templates.md](references/report-templates.md)):
   caller chooses it.
 - Space: **create a group, space or control plane** as a side effect (charter §9).
 - Space: pass a `--kubeconfig` path you did not write and check in this run.
-
-## References
-
-- [local.md](references/local.md) — read before running with `--local`.
-- [space.md](references/space.md) — read before running against a Space or Upbound Cloud.
-- [troubleshooting.md](references/troubleshooting.md) — read when a run is stuck or failed (resources under
-  test, the stuck-investigation brief, failure patterns).
-- [report-templates.md](references/report-templates.md) — read when writing the report.

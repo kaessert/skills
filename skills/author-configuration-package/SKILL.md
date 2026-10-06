@@ -100,7 +100,8 @@ first; its Python layout differs from what `up function generate` produces.
   github.com/upbound/project-template-scratch/tests/<dir>` in generated Go tests' `go.mod`.
   **Set `repository`, `source` and `maintainer` before any generator runs** — `spec.repository`
   names the embedded function in every `functionRef` (the charter's `charter/generators.md`) —
-  and fix any test `go.mod` that still names the template.
+  and fix any test `go.mod` that still names the template. An `upbound.yaml` and a
+  `.gitignore` to start from: [templates.md](references/templates.md#upboundyaml).
 - Templates leave `examples/example/example.yaml` (`kind: Example`, `spec: {}`), backed by no
   XRD. Delete it; the real example is the file `up example generate` writes.
 
@@ -262,7 +263,9 @@ scaffold emits `Pipeline`; don't hand-edit it.
 model tree under `.up/<language>/` exists and holds the Kinds and API versions you will
 compose. **Re-run it after every XRD change** — the models come from the XRD, so an edit
 leaves them stale (a `status` field added by hand is absent from the model until a rebuild).
-No `.m.` models: the provider is v1.x, or the cache was not updated.
+No `.m.` models: the provider is v1.x, or the cache was not updated. Any build that fails, or
+an XR that never gets Ready:
+[templates.md](references/templates.md#when-a-build-fails-or-the-xr-never-gets-ready).
 
 ## Phase 7: Generate the function
 
@@ -306,15 +309,3 @@ skill succeeds when:
   (`'>=v2.0.0, <v3.0.0'`), never `'>=v0.0.0'`
 - Example XRs and `examples/providerconfig.yaml` created
 - The hand-off names the next skill
-
-## References
-
-- [templates.md](references/templates.md) — read when writing `upbound.yaml`, an XRD,
-  `.gitignore` or example XRs, when asking a user for project or field information, when
-  choosing a provider package, when a build fails, and for the hand-off report.
-- [providerconfig.md](references/providerconfig.md) — read before writing
-  `examples/providerconfig.yaml` (Phase 8).
-- [mrap.md](references/mrap.md) — read before writing a ManagedResourceActivationPolicy or
-  running `up dep add --api` (Phase 4).
-- [project-templates.md](references/project-templates.md) — read before starting from a
-  language template rather than `--scratch` (Phase 2).

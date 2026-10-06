@@ -21,7 +21,8 @@ interactive; unattended, take the default named at each point and state it in th
 - No plan, no migration: without `.agents/plans/CROSSPLANE_V2_MIGRATION.md`, stop and point
   to `plan-v2-migration`.
 - What each change means is in `plan-v2-migration` `breaking-changes.md`; the plan points at
-  its sections. Read the section before you edit.
+  its sections. Read the section before you edit. Upstream: the
+  [Crossplane v2 upgrade guide](https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/).
 - You edit YAML directly (stages 1–4, 6, 8). Tests and functions go to `author-tests` and
   `author-composition`, verification to `verify-configuration` and `e2e-test-configuration`,
   each as a sub-agent with a brief from [phases.md](references/phases.md#sub-agent-briefs).
@@ -105,12 +106,3 @@ Checks for you before you report, not a report format (`control-plane-project-ch
 - Build and composition-test results are quoted from the runs' own output; E2E results, or
   "not run" with the reason.
 - The summary follows the [final summary template](references/phases.md#final-summary-template).
-
-## References
-
-- [phases.md](references/phases.md) — read at the start of each stage: its commands, the
-  sub-agent briefs (stages 5 and 7), what to do when a step fails, and the final summary
-  template.
-- `plan-v2-migration` `breaking-changes.md` — read the section a plan item points at before
-  you edit the file.
-- [Crossplane v2 upgrade guide](https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/)
