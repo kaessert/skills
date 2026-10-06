@@ -48,18 +48,10 @@ works too. Shapes: author-tests' `e2e.md` reference.
 
 ## Target flags
 
-Write the kubeconfig fresh in this run and check it: `--kubeconfig` is an input, and a stale file sends the run
-to local kind (`charter/targets.md`). Pass `--control-plane-group` explicitly even when the context names the
-group:
-
-```bash
-KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
-up ctx . -f- > "$KCFG"
-kubectl --kubeconfig "$KCFG" config current-context || echo "not a kubeconfig: $KCFG"
-echo "group: $GROUP  kubeconfig: $KCFG"   # shell variables do not survive to your next command; reuse the values
-```
-
-The target flags for SKILL.md Phase 4's run idiom are then:
+Write the kubeconfig fresh in this run and check it parses, as `charter/targets.md` ("`--kubeconfig` is an
+input") shows: a stale file sends the run to local kind. Shell variables do not survive to your next command, so
+reuse the group and the file path as values. Pass `--control-plane-group` explicitly even when the context names
+the group. The target flags for SKILL.md Phase 4's run idiom are then:
 
 ```bash
 up test run "tests/e2etest-<n>" --e2e --control-plane-group="<group>" --kubeconfig "<kubeconfig>"
@@ -88,17 +80,9 @@ message truncated mid-word (the `up ctp list` MESSAGE column), not a failure. Al
 ## Stuck on a Space
 
 Check the package installed before any managed resource. If the run never got past `Waiting for package to be
-ready`, no XR exists and tracing resources is wasted effort:
-
-```bash
-up controlplane list                     # the control plane usually reads Available/Healthy regardless
-up ctx ./<control-plane-name>            # from the group context; no leading "." means absolute
-kubectl get configuration.pkg.crossplane.io
-kubectl describe configuration.pkg.crossplane.io <name>
-```
-
-A `401 Unauthorized` or `UNAUTHORIZED: authentication required` in the unpack error is the private-repository
-case of precondition 2 (`charter/targets.md`): retrying does not help; hand back that precondition's options.
+ready`, no XR exists and tracing resources is wasted effort: read the `Configuration` as `charter/targets.md`
+("A run stuck on `Waiting for package to be ready`") says. A `401 Unauthorized` there is precondition 2's
+private repository: retrying does not help; hand back that precondition's options.
 
 For the brief in [troubleshooting.md](troubleshooting.md), get the test control plane's kubeconfig while it
 exists:
