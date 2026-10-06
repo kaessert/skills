@@ -51,15 +51,3 @@ detail:
 3. Otherwise **YAML** — the fallback for TypeScript functions (the CLI has no TS test
    language) and projects with no embedded function. `up project init` does not accept
    `--test-language yaml`; scaffold YAML tests with `up test generate <n> --language yaml`.
-
-## Adding a language
-
-A language reference that outgrows one file becomes an index plus a same-named directory
-of detail files (`python.md` + `python/`, `kcl.md` + `kcl/`) — keep each file small enough
-to read in one go, since a large one gets redirected into a scratch file instead of
-returned. The index keeps the toolchain commands; the detection marker goes in the table above.
-
-A new file belongs here, not inside a skill, and it carries only what is specific to the
-language: layout, import or type paths, the function bootstrap, how each agnostic pattern is
-expressed, test templates, toolchain, and language-specific mistakes. A rule that would be true
-in any language belongs in the charter: put it there and link to it.

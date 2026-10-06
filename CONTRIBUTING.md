@@ -166,6 +166,20 @@ hand — multi-call pagination, credential handling, deterministic output shapin
 - Support `--help`, exiting 0 without touching the network.
 - Bash or standard-library Python only. No `npm install` or `pip install` at runtime.
 
+### Adding a language to the control-plane-project suite
+
+Language references live in `skills/control-plane-project-charter/references/languages/`, not
+inside a task skill. A new file carries only what is specific to the language: layout, import or
+type paths, the function bootstrap, how each language-agnostic pattern is expressed, test
+templates, toolchain, and language-specific mistakes. A rule that would be true in any language
+belongs in the charter: put it there and link to it. Add the detection marker to the table in
+that directory's `README.md`.
+
+A reference that outgrows one file becomes an index plus a same-named directory of detail files
+(`python.md` + `python/`, `kcl.md` + `kcl/`). Keep each file small enough to read in one go: a
+large one gets redirected into a scratch file instead of returned. The index keeps the toolchain
+commands.
+
 ## Writing style
 
 Documentation here should read like a person wrote it for another person.
