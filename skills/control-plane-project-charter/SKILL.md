@@ -384,10 +384,11 @@ comes back *blocked* — not merely *failed* — means the run you are about to 
 produce a valid result. Starting it anyway spends real time and produces a failure whose
 cause you already knew.
 
-**Detail:** [`charter/targets.md`](references/charter/targets.md) has which control plane a
-run lands on, how to read `up ctx`, how the group defaults to `default`, why a bad
-`--kubeconfig` silently goes local, what `--public` does and does not change, diagnosing
-`context deadline exceeded`, and teardown.
+**Detail:** [`charter/targets.md`](references/charter/targets.md) — read it before a run on a
+Space, or one without a target flag (a `--local` E2E run reads e2e-test-configuration's
+`local.md` instead) — has which control plane a run lands on, how to read `up ctx`, how the
+group defaults to `default`, why a bad `--kubeconfig` silently goes local, what `--public`
+does and does not change, diagnosing `context deadline exceeded`, and teardown.
 
 ---
 
@@ -409,18 +410,3 @@ sets nothing. The reasons and the `init`/`generate` flags:
 `--language` slugs and what each generator actually emits: `up project init` produces a **v1**
 project, `up test generate` prepends `test-`, `up composition generate` wires only auto-ready,
 and `up xrd generate` drops every constraint.
-
-## Detail files
-
-| Detail file | What is in it |
-|---|---|
-| [`charter/agent-context.md`](references/charter/agent-context.md) | what inline and forked (separate-agent) skills may and may not do, delegation and long runs (§1) |
-| [`charter/tdd.md`](references/charter/tdd.md) | the two-tier inner loop, and backfilling tests for existing code (§3) |
-| [`charter/v2-resources.md`](references/charter/v2-resources.md) | what `.m.` means, the verified behaviour behind §5's field table, the v2 XRD skeleton, what CRD defaults do to a render, choosing a ProviderConfig, the symptom of a missing or wrong one (§5) |
-| [`charter/xrd-design.md`](references/charter/xrd-design.md) | naming, validation, immutability, status and printer columns for the XR API (§5) |
-| [`charter/provider-schema.md`](references/charter/provider-schema.md) | examples, measured constraint density, and the rules that live only in cloud API docs (§6) |
-| [`charter/container.md`](references/charter/container.md) | which languages are containerized, and what crosses the boundary (§7) |
-| [`charter/evidence.md`](references/charter/evidence.md) | what `up project build` checks per language, reading a render, how `assertResources` matches, making a suite exhaustive, what a suite must contain (§8) |
-| [`charter/targets.md`](references/charter/targets.md) | where `up project run` and `up test run --e2e` land (local KIND or a Space), reading `up ctx`, the group, `--kubeconfig`, `--public` and repository visibility, a run stuck on `Waiting for package to be ready`, teardown (§9) — read before a run on a Space, or one without a target flag; a `--local` E2E run needs e2e-test-configuration's `local.md` instead |
-| [`charter/generators.md`](references/charter/generators.md) | the `--language` slugs, and what each CLI generator actually emits (§10) |
-| [`charter/review.md`](references/charter/review.md) | the Crossplane checks for a review: the gate, the mutation check, the render, the v2 fields, dependencies, claims |
