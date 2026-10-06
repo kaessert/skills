@@ -48,19 +48,23 @@ The cluster-scoped `…/io/upbound/aws/s3/…` models exist next to the `.m.` on
 is the same mistake as in any other language (charter §5).
 
 **Use typed models for composed-resource expectations** — a misspelt or mis-shaped `forProvider` field does not
-compile, which is the main thing Go buys you over YAML. A real case from writing the template below: the function
-and a map-based expectation both wrote `versioningConfiguration` as a list, the shape of the old cluster-scoped
-API. Function and test agreed, so the test passed — but in the namespaced `v1beta1` API it is an object, and only
-schema validation caught it. With the typed `BucketVersioning` model the list does not compile. Every model field is a pointer with `omitempty`, so only what you
-set is serialised and the assertion stays partial. Use plain maps for the XR fixture, `observedResources`
-and expectations on the composite: those are `map[string]interface{}` in the test model anyway, and a map lets
-you write exactly the partial shape you mean (e.g. only `status`, or only `spec.crossplane.resourceRefs`).
+compile, which is the main thing Go buys you over YAML. Every model field is a pointer with `omitempty`, so only
+what you set is serialised and the assertion stays partial. **Use plain maps for the XR fixture,
+`observedResources` and expectations on the composite:** those are `map[string]interface{}` in the test model
+anyway, and a map lets you write exactly the partial shape you mean (e.g. only `status`, or only
+`spec.crossplane.resourceRefs`).
+
+A real case from writing the template below: the function and a map-based expectation both wrote
+`versioningConfiguration` as a list, the shape of the old cluster-scoped API. Function and test agreed, so the
+test passed — but in the namespaced `v1beta1` API it is an object, and only schema validation caught it. With the
+typed `BucketVersioning` model the list does not compile.
 
 ## Composition test template (`tests/test-<n>/main.go`)
 
 Three tests for the function template in [`functions.md`](functions.md): one per input branch (with an
-absence guard on the composite) and one observed-state test that drives a status field. The status test asserts the bucket too: a test that asserts only the composite stays green
-if that branch stops composing anything. Adapt the helpers; keep the shape.
+absence guard on the composite) and one observed-state test that drives a status field. Adapt the helpers; keep
+the shape. The status test asserts the bucket too: a test that asserts only the composite stays green if that
+branch stops composing anything.
 
 ```go
 // Package main generates the composition tests for Bucket.
