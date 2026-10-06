@@ -63,8 +63,6 @@ charter, so pasting reaches agents that never open it. Section numbers (§N) are
   seen failing. Check one yourself; mutating the expected value does not count (§3, §4).
 - The spec's requirements are met where they depart from skill defaults, and the departure is
   stated (§2).
-- A departure from the spec's literal text is at least Major, even when it looks cosmetic (§2).
-- Check every "every/all" clause of the spec on every kind in the render, not on a sample (§2).
 - Re-read the spec section before you write a finding from it, never quote from memory, and
   check every quoted spec sentence verbatim against the spec, wherever it is quoted (§1).
 - Flag `providerConfigRef`, `managementPolicies` or MR `metadata.namespace` as removable unless

@@ -141,9 +141,10 @@ defaults, credentials per target, the ProviderConfig the test creates, a Go temp
 counts as an e2e RED.
 
 - `defaultConditions` lists condition types (`Ready`), never expressions or status paths.
-- An `E2ETest` cannot assert a status value. Prove it with an `observedResources`
-  CompositionTest plus a unit test, and report the e2e layer as "Ready only". Do not search the
-  `up` binary or the web for another mechanism: e2e.md says what exists.
+- An `E2ETest` cannot assert a live status value. A requirement for one is not covered by e2e:
+  say so and name the substitute evidence (an `observedResources` CompositionTest, a unit test,
+  a read-back during the run; [e2e.md](references/e2e.md#status-values-cannot-be-asserted)).
+  Do not search the `up` binary or the web for another mechanism: e2e.md says what exists.
 - Set `timeoutSeconds` explicitly, sized to what you provision. Credentials depend on the
   target: `source: Upbound` works only on a Spaces control plane.
 - `extraResources` creates the ProviderConfig: by default a `ClusterProviderConfig` named
@@ -183,9 +184,9 @@ requirement on a file — dependencies in `upbound.yaml`, a frozen XRD surface, 
   non-zero on a mismatch and prints `items: []` adds zero tests. Passing, it drops out of the
   count (alone: `No test files found`, exit 0); failing, it stops at `✗ Parsing tests`, which
   is a broken test, not RED.
-- **The report lists what nothing covers.** A required line, not optional prose: by spec
-  clause, each requirement no automated check covers (e.g. XRD `required` lists, enums,
-  scope; the dependency set), and whether it was checked by hand or not at all.
+- **What no check here reaches** — XRD `required` lists, enums and scope; the dependency set —
+  stays uncovered unless the project's gate checks it (charter §4: say what you did not
+  verify).
 
 ## Phase 6: The gate, after the loop
 
@@ -218,7 +219,6 @@ authoring is complete when:
 - The test follows this file, test-model.md and the matching language file
 - The fields that matter are asserted, not just existence
 - The new assertion was observed to fail before the implementation existed, and to pass after
-- The report lists, by spec clause, each requirement no automated check covers
 - The gate passed once the suite was green — the project's own gate if it has one, else
   `verify-configuration`, without a deploy where none is allowed (Phase 6)
 

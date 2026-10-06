@@ -45,11 +45,14 @@ The last two are broken tests, not RED.
 ## Status values cannot be asserted
 
 An `E2ETest` has no field that checks a value such as `status.vpcId`; `assertResources` exists only on
-`CompositionTest`, which is render-only. The supported route:
+`CompositionTest`, which is render-only. So a requirement for an e2e check of a live status value is **not
+covered by e2e**: say so, and name the evidence that stands in for it:
 
-1. Prove status derivation with a `CompositionTest` whose `observedResources` mock the provider's status,
-   asserting the composite's `status`, plus a function unit test.
-2. Report the e2e layer as **"Ready only"**: the live value is not asserted.
+1. a `CompositionTest` whose `observedResources` mock the provider's status, asserting the composite's `status`,
+   which proves status derivation;
+2. a function unit test;
+3. a read-back during the run, if you took one, quoted as "read-back, not asserted" (e2e-test-configuration's
+   `local.md` reference).
 
 uptest's `uptest.upbound.io/pre-assert-hook` / `post-assert-hook` manifest annotations run a local script, but
 the path resolves against the temp dir `up` writes the manifests to (uptest `internal/tester.go:343`; up
