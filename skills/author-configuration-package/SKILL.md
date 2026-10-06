@@ -17,11 +17,6 @@ needs. Composition logic and tests are other skills' work.
 
 ## Before you start
 
-**Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
-the spec and state the assumption, or stop and report. Load `control-plane-project-charter`
-before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
-load it.
-
 Run the phases in order. The two builds bracket function generation: models come from the
 XRD and the dependencies (Phase 6), and the function is generated against them (Phase 7).
 
@@ -35,36 +30,27 @@ user's choice — `--public` publishes their package — is `control-plane-proje
 
 ## Binding rules — they hold even if you open nothing else
 
-These are the core of `control-plane-project-charter`, which this skill does not load for you;
-the charter has the reasons. Where the project's spec, work item or gate script decides
-otherwise, the project wins: say so in your report.
+Load `control-plane-project-charter` first, or read its `SKILL.md` beside this skill's
+directory: this skill does not load it, and the charter has the reasons. The project's spec,
+work item or gate wins over these: say where you departed.
 
-1. **Never block on a question nobody can answer.** Decide from the project's spec and state
-   the assumption, or stop and report the open question (charter §1).
-2. **Never create a group, Space, control plane or cloud resource as a side effect** (§9).
-3. **Test first: watch each new composition or unit test fail for the reason you intended**,
-   then make it pass; for a new E2ETest this is optional. A broken test is not RED, even when it
-   exits 1: a syntax error, a missing path, a run that stops at `✗ Parsing tests`, a bug in the
-   test's own logic (§3).
-4. **Backfilling a test for code that already works: mutate the implementation, never the
-   test's expected value.** See that test go red, then revert (the charter's `charter/tdd.md`).
-5. **In a v2 project, managed resources carry `forProvider` only**, on the `.m.` API groups,
+1. **Never block on a question nobody can answer.** Interactive, ask only what the project
+   can't tell you; unattended, never ask: decide from the spec and state the assumption, or
+   stop and report (charter §1).
+2. **Never create a group, Space, control plane or cloud resource as a side effect, and never
+   pass `--public` yourself** (§9).
+3. **Test first: watch each new composition or unit test fail for the reason you intended**;
+   for a new E2ETest this is optional. A syntax error, a missing path, `✗ Parsing tests`, a
+   compile error or a bug in the test's own logic is a broken test, not RED. Backfill by
+   mutating the implementation, never the expected value (§3).
+4. **In a v2 project, managed resources carry `forProvider` only**, on the `.m.` API groups,
    unless the project's spec or API sets more: no `deletionPolicy`, `managementPolicies` or
-   `metadata.namespace`; omit `providerConfigRef` if and only if
-   `ClusterProviderConfig/default` exists and is the right one. A v1 project keeps its v1
-   APIs: migrating it is separate work (§5).
-6. **Name what ran and the command's own exit code.** After `| tail`, `$?` is `tail`'s: read
-   `${PIPESTATUS[0]}`, or redirect to a file and then read `$?`. No command, no claim (§4).
-7. **`No test files found` means nothing ran**, though `up test run` exits 0. A test program
-   that prints `items: []` contributes zero tests (§8).
-8. **For every test you added or changed, name the code change that turns it red**, and say
-   whether you saw it fail. If you did not, call the test unproven (§4).
-9. **Name the layer you reached** — render, composition test, local control plane, cloud — and
-   never claim one you did not reach. Comments and docs claim no more than the test checks (§4).
-10. **Re-read a document before you write from it.** Long runs lose old output: before you
-    write a work item, a test expectation, a quote or a field value taken from a document,
-    re-read the section you rely on in that step. Never quote from memory; if the re-read
-    contradicts what you wrote, fix it first (charter §1).
+   `metadata.namespace`; omit `providerConfigRef` if and only if `ClusterProviderConfig/default`
+   is the right one. A v1 project stays v1 (§5).
+5. **Claim only what ran:** the command's own exit code (`${PIPESTATUS[0]}`, not `tail`'s);
+   `No test files found` means nothing ran; the layer you reached; for each new test, the
+   change that turns it red, or call it unproven. Comments and docs claim no more (§4, §8).
+6. **Re-read the section before you write from it**; never quote from memory (§1).
 
 ## Phase 1: Gather the project and resource information
 

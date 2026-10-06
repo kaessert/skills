@@ -40,7 +40,7 @@ render to exactly this shape.
 Fields, defaults, credentials, the ProviderConfig it creates, and what it cannot assert:
 [e2e.md](e2e.md).
 
-Managed resources in either kind follow binding rule 5; how the `.m.` group is spelled
+Managed resources in either kind follow binding rule 4; how the `.m.` group is spelled
 (import path or `apiVersion` string) is in the language file.
 
 ---

@@ -13,11 +13,6 @@ supports, test first.
 
 ## Before you start
 
-**Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
-the spec and state the assumption, or stop and report. Load `control-plane-project-charter`
-before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
-load it.
-
 A composition's *meaning* is language-agnostic; only its *syntax* differs. Read three layers:
 the charter (the rules), [patterns.md](references/patterns.md) (what each pattern means), and
 the charter's `languages/` file for your language (the syntax).
@@ -32,36 +27,27 @@ the charter's `languages/` file for your language (the syntax).
 
 ## Binding rules — they hold even if you open nothing else
 
-These are the core of `control-plane-project-charter`, which this skill does not load for you;
-the charter has the reasons. Where the project's spec, work item or gate script decides
-otherwise, the project wins: say so in your report.
+Load `control-plane-project-charter` first, or read its `SKILL.md` beside this skill's
+directory: this skill does not load it, and the charter has the reasons. The project's spec,
+work item or gate wins over these: say where you departed.
 
-1. **Never block on a question nobody can answer.** Decide from the project's spec and state
-   the assumption, or stop and report the open question (charter §1).
-2. **Never create a group, Space, control plane or cloud resource as a side effect** (§9).
-3. **Test first: watch each new composition or unit test fail for the reason you intended**,
-   then make it pass; for a new E2ETest this is optional. A broken test is not RED, even when it
-   exits 1: a syntax error, a missing path, a run that stops at `✗ Parsing tests`, a bug in the
-   test's own logic (§3).
-4. **Backfilling a test for code that already works: mutate the implementation, never the
-   test's expected value.** See that test go red, then revert (the charter's `charter/tdd.md`).
-5. **In a v2 project, managed resources carry `forProvider` only**, on the `.m.` API groups,
+1. **Never block on a question nobody can answer.** Interactive, ask only what the project
+   can't tell you; unattended, never ask: decide from the spec and state the assumption, or
+   stop and report (charter §1).
+2. **Never create a group, Space, control plane or cloud resource as a side effect, and never
+   pass `--public` yourself** (§9).
+3. **Test first: watch each new composition or unit test fail for the reason you intended**;
+   for a new E2ETest this is optional. A syntax error, a missing path, `✗ Parsing tests`, a
+   compile error or a bug in the test's own logic is a broken test, not RED. Backfill by
+   mutating the implementation, never the expected value (§3).
+4. **In a v2 project, managed resources carry `forProvider` only**, on the `.m.` API groups,
    unless the project's spec or API sets more: no `deletionPolicy`, `managementPolicies` or
-   `metadata.namespace`; omit `providerConfigRef` if and only if
-   `ClusterProviderConfig/default` exists and is the right one. A v1 project keeps its v1
-   APIs: migrating it is separate work (§5).
-6. **Name what ran and the command's own exit code.** After `| tail`, `$?` is `tail`'s: read
-   `${PIPESTATUS[0]}`, or redirect to a file and then read `$?`. No command, no claim (§4).
-7. **`No test files found` means nothing ran**, though `up test run` exits 0. A test program
-   that prints `items: []` contributes zero tests (§8).
-8. **For every test you added or changed, name the code change that turns it red**, and say
-   whether you saw it fail. If you did not, call the test unproven (§4).
-9. **Name the layer you reached** — render, composition test, local control plane, cloud — and
-   never claim one you did not reach. Comments and docs claim no more than the test checks (§4).
-10. **Re-read a document before you write from it.** Long runs lose old output: before you
-    write a work item, a test expectation, a quote or a field value taken from a document,
-    re-read the section you rely on in that step. Never quote from memory; if the re-read
-    contradicts what you wrote, fix it first (charter §1).
+   `metadata.namespace`; omit `providerConfigRef` if and only if `ClusterProviderConfig/default`
+   is the right one. A v1 project stays v1 (§5).
+5. **Claim only what ran:** the command's own exit code (`${PIPESTATUS[0]}`, not `tail`'s);
+   `No test files found` means nothing ran; the layer you reached; for each new test, the
+   change that turns it red, or call it unproven. Comments and docs claim no more (§4, §8).
+6. **Re-read the section before you write from it**; never quote from memory (§1).
 
 ## Phase 1: Detect the language and the Crossplane generation — do not ask
 
@@ -76,13 +62,13 @@ ask — this is a decision, not a discoverable fact.
 **Generation**, which governs more of the guidance than the language does:
 
 ```
-apis/*/definition.yaml: apiextensions.crossplane.io/v2  → v2: binding rule 5 and charter §5 apply
+apis/*/definition.yaml: apiextensions.crossplane.io/v2  → v2: binding rule 4 and charter §5 apply
                                                    /v1  → v1: they do not
 ```
 
 A v1 project uses the non-`.m.` provider models and a cluster-scoped `ProviderConfig`. Every
 `up project init` template is v1 today, so a freshly initialised project is v1 and its shipped
-function breaks every v2 rule. Match what the project is (binding rule 5); migrating it is
+function breaks every v2 rule. Match what the project is (binding rule 4); migrating it is
 `plan-v2-migration`'s work, not cleanup in passing. Python: `probe_project.py` reports the
 generation on its first line and recommends imports accordingly.
 
@@ -164,7 +150,7 @@ The language file has the bootstrap and the syntax. Language-independent, in ord
 1. Parse the observed XR with the language's required bootstrap (Python needs
    `struct_to_dict`; skipping it fails *silently* on current Up CLI versions. Go: the generated
    models are not `runtime.Object`s, so convert through JSON, in and out).
-2. Create managed resources per binding rule 5.
+2. Create managed resources per binding rule 4.
 3. Convert flexible maps to the language's plain map type before assigning them.
 4. Extract connection details by **composition key**, not by resource name.
 5. Mark a composed ProviderConfig — anything auto-ready cannot judge — ready explicitly.
@@ -205,7 +191,7 @@ why each green thing is not evidence).
 
 ## Phase 7: Report
 
-**Claim only what ran** (binding rule 9). Composition tests render and assert; they talk
+**Claim only what ran** (binding rule 5). Composition tests render and assert; they talk
 to no provider and install nothing.
 
 | You may say | You may not say |
@@ -226,7 +212,7 @@ Checks for you before you report, not a report format (`control-plane-project-ch
 1. The function language and generation were detected, not assumed, and the matching
    `languages/` file was read
 2. Import paths resolved from the project, never derived by hand
-3. Managed resources follow binding rule 5, with no dangling `providerConfigRef`
+3. Managed resources follow binding rule 4, with no dangling `providerConfigRef`
 4. A test was written first, run, and observed to fail for the right reason
 5. The RED→GREEN transition is reported, with the failure text
 6. The render was read and every emitted resource is asserted
