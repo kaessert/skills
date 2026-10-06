@@ -1,7 +1,7 @@
 # Running the project on a dev control plane
 
 `up project run`, step by step: the Space pre-flight, the choice you hand back when a Space
-cannot pull, confirming the run reconciled, and diagnosing a run that hangs on
+cannot pull, confirming the run reconciled, and what to do when a run hangs on
 `Waiting for package to be ready`. The skill's Phase 5 holds the never-rules. Where a run lands,
 the non-interactive `up ctx` forms, what `--public` does, and why a private repository wedges
 the run are in `control-plane-project-charter` `charter/targets.md`: read it with this.
@@ -88,32 +88,10 @@ verified at the provider".
 
 ## When a run hangs on "Waiting for package to be ready"
 
-`up project run` (and a Space E2E run) can sit on `Waiting for package to be ready` and then
-fail with nothing but:
-
-```text
-✗ Waiting for package to be ready
-up: error: context deadline exceeded
-```
-
-That names no control plane and no package. Do not retry; diagnose:
-
-```bash
-up ctx .                             # first: is kubeconfig on the control plane the run created?
-up controlplane list                 # dev CP is named up-<project>; usually Available/Healthy regardless
-up ctx ../up-<project>               # relative form, from a sibling control-plane context
-kubectl get configuration.pkg.crossplane.io
-kubectl describe configuration.pkg.crossplane.io <project>   # the real error is here
-```
-
-Check the context first: a failed run can leave kubeconfig on a different control plane, and
-`kubectl describe` then shows a healthy, unrelated package. The control plane being
-`Available`/`Healthy` says nothing about the package; its conditions and events do:
-
-| `describe` shows | Cause | Next |
-|---|---|---|
-| `cannot unpack package: ... 401 Unauthorized ... UNAUTHORIZED: authentication required` | the control plane cannot pull what the run pushed to a private repository (`charter/targets.md`) | hand back step 4's choice; never `--public` as a workaround |
-| `cannot resolve ... not found` | pushed to a different repo than the CP is installing | reconcile `spec.repository` with the installed package reference |
-| provider revision unhealthy | provider still installing, or a bad version constraint | `kubectl get provider.pkg.crossplane.io` and its revisions |
-
-Report the underlying condition message, not "the run timed out".
+It ends with only `up: error: context deadline exceeded`, which names no control plane and no
+package. Do not retry. Check the context first (`up ctx .`): a failed run can leave kubeconfig on
+a different control plane, whose healthy package then misleads you. Then diagnose as
+`control-plane-project-charter` `charter/targets.md` ("A run stuck on `Waiting for package to be
+ready`") says: the real error is on the `Configuration`, and a pull failure hands back step 4's
+choice, never `--public` as a workaround. Report the underlying condition message, not "the run
+timed out".
