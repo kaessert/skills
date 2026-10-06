@@ -8,8 +8,8 @@ runs, and could change between versions.
 
 - **Docker must be reachable** (`docker info` exits 0). `up` creates the cluster itself through the kind
   library; the `kind` CLI is only needed to look inside or clean up.
-- **No `up ctx`, repository, `--public` or group check.** `--local` ignores the context and sideloads the
-  package instead of pushing it (`control-plane-project-charter` `charter/targets.md`), so a failing
+- **Don't run `up ctx`, or check a repository, `--public` or the group.** `--local` ignores the context and
+  sideloads the package instead of pushing it (`control-plane-project-charter` `charter/targets.md`), so a failing
   `up ctx . --short` is not a failed precondition here.
 - **Credentials are a static Secret** in `extraResources`: `credentials.source: Secret` plus
   `secretRef: {namespace, name, key}`, built from a `UP_*` variable. `source: Upbound` web identity does not work
