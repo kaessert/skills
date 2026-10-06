@@ -6,7 +6,6 @@ references:
   - references/templates.md
   - references/providerconfig.md
   - references/mrap.md
-  - references/project-templates.md
 ---
 
 # Crossplane Configuration Package Authoring
@@ -85,9 +84,10 @@ The generators disagree on pluralization — `examples/storagebucket/` vs
 `apis/storagebuckets/` — so read the path each command prints.
 
 **`up project init`.** Non-interactively: `up project init <name> --scratch` (or
-`--template <t> --language <lang> [--test-language <lang>]`). Starting from a language
-template instead of `--scratch`: read [project-templates.md](references/project-templates.md)
-first; its Python layout differs from what `up function generate` produces.
+`--template <t> --language <lang> [--test-language <lang>]`). A language template gives a
+complete, passing **v1** project whose Python functions use the embedded layout (`main.py` +
+`requirements.txt`), not what `up function generate` produces: code you add matches what the
+project has (the charter's `languages/python.md`).
 
 - `--scratch` ignores `--language` (it logs `... for kcl` regardless). Harmless — the scratch
   template has no functions — but don't read it as the project's language.
