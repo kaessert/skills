@@ -73,7 +73,7 @@ or the worked example behind a rule.
 | [`charter/provider-schema.md`](references/charter/provider-schema.md) | examples, measured constraint density, and the rules that live only in cloud API docs (§6) |
 | [`charter/container.md`](references/charter/container.md) | which languages are containerized, and what crosses the boundary (§7) |
 | [`charter/evidence.md`](references/charter/evidence.md) | what `up project build` checks per language, reading a render, how `assertResources` matches, making a suite exhaustive, what a suite must contain (§8) |
-| [`charter/targets.md`](references/charter/targets.md) | where `up project run` and `up test run --e2e` land (local KIND or a Space), reading `up ctx`, the group, `--kubeconfig`, `--public` and repository visibility, a run stuck on `Waiting for package to be ready`, teardown (§9) — read before any run that creates a control plane |
+| [`charter/targets.md`](references/charter/targets.md) | where `up project run` and `up test run --e2e` land (local KIND or a Space), reading `up ctx`, the group, `--kubeconfig`, `--public` and repository visibility, a run stuck on `Waiting for package to be ready`, teardown (§9) — read before a run on a Space, or one without a target flag; a `--local` E2E run needs e2e-test-configuration's `local.md` instead |
 | [`charter/generators.md`](references/charter/generators.md) | the `--language` slugs, and what each CLI generator actually emits (§10) |
 | [`rules-card.md`](references/rules-card.md) | the charter on one screen, plus a reviewer variant: read them when you build or review |
 
