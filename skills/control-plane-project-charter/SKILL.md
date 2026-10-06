@@ -33,7 +33,6 @@ references:
   - references/languages/python/tests.md
   - references/languages/typescript.md
   - references/languages/yaml.md
-  - references/rules-card.md
 ---
 # Development Charter
 
@@ -41,8 +40,8 @@ references:
 which language a project is written in or which skill you happen to be: how to behave as an
 agent, how to develop, what Crossplane v2 actually requires, and how to report what you did.
 
-**It does not replace the task skill.** Before you write, review or specify work, read the
-[rules card](references/rules-card.md) and load the skill that owns the work:
+**It does not replace the task skill.** Before you write, review or specify work, load the
+skill that owns the work:
 
 | Work | Load | And read |
 |---|---|---|
@@ -424,5 +423,4 @@ and `up xrd generate` drops every constraint.
 | [`charter/evidence.md`](references/charter/evidence.md) | what `up project build` checks per language, reading a render, how `assertResources` matches, making a suite exhaustive, what a suite must contain (§8) |
 | [`charter/targets.md`](references/charter/targets.md) | where `up project run` and `up test run --e2e` land (local KIND or a Space), reading `up ctx`, the group, `--kubeconfig`, `--public` and repository visibility, a run stuck on `Waiting for package to be ready`, teardown (§9) — read before a run on a Space, or one without a target flag; a `--local` E2E run needs e2e-test-configuration's `local.md` instead |
 | [`charter/generators.md`](references/charter/generators.md) | the `--language` slugs, and what each CLI generator actually emits (§10) |
-| [`rules-card.md`](references/rules-card.md) | the charter on one screen: read it when you build |
 | [`charter/review.md`](references/charter/review.md) | the Crossplane checks for a review: the gate, the mutation check, the render, the v2 fields, dependencies, claims |
