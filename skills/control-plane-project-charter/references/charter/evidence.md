@@ -15,9 +15,9 @@ The package was assembled; a clean build never proves the function *runs*. Per l
 - **Go:** the build runs `go mod tidy` and a real compile, so a Go function that does not
   compile fails here.
 
----
+### Reading the render
 
-**To find what a function actually emitted**, read the render rather than the assertions:
+To find what a function actually emitted, read the render rather than the assertions:
 
 ```bash
 up test run "tests/<t>" --function-logs
@@ -99,6 +99,9 @@ takes `xrPath` needs an `xr` parameter, never both at once. This is where "the u
 obvious minimal manifest" bugs live: the shipped example usually sets every optional field, so
 the omitted branch never renders.
 
+Besides `xr`, the test takes these inline fields, all optional: `composition` and `xrd` (inline
+instead of `*Path`), `extraResources`, `context`, and `functionCredentialsPath`.
+
 **2. One test per observed-state branch.** Code gated on observed resources or on readiness
 **never executes** when `observedResources` is empty — it is unexercised, not merely
 unasserted. Supply the observed state explicitly:
@@ -129,9 +132,6 @@ matches the composite ([§8](../../SKILL.md#8-a-green-run-is-not-evidence)). Wit
 status write that clobbers nested keys — writing the status more than once can drop all but the
 last (Go: `languages/go/functions.md`, several status fields) — passes silently, and you blame
 the provider.
-
-Other inline fields worth knowing, all optional: `composition` and `xrd` (inline instead of
-`*Path`), `extraResources`, `context`, and `functionCredentialsPath`.
 
 **A conditional resource needs all three:**
 
