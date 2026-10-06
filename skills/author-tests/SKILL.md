@@ -54,18 +54,9 @@ work item or gate wins over these: say where you departed.
 
 ## Phase 1: Detect the test language — do this first
 
-**Existing tests decide; otherwise the composition language; otherwise YAML** — the rule is
-charter §10, its reasons the charter's `languages/README.md`. Only a test dir that produces a
-`CompositionTest` or `E2ETest` counts as an existing test: a Go program printing `items: []` or
-a linter over repo files does not set the language. A project may already mix languages
-(Python functions with YAML tests), and new tests match what is in `tests/`. Functions in more
-than one language and no tests yet: ask the user.
-
-Detect with the table in the charter's `languages/README.md`
-(`control-plane-project-charter/references/languages/`, beside this skill's directory), then
-read the file it names before writing a test: each carries its templates and its silent
-failure modes (Go: an empty `items` list passes; go-templating: a misspelt key renders
-`<no value>`).
+Pick the language as charter §10 says (existing tests, else the composition language, else
+YAML; functions in more than one language and no tests yet: ask), then read its file before
+writing a test: it carries the templates and the silent failure modes.
 
 ## Phase 2: Decide what to test, and scaffold
 
@@ -178,15 +169,9 @@ counts as an e2e RED.
 
 ## Phase 5: Run it — RED, then GREEN
 
-`control-plane-project-charter` §3 owns the loop (RED → GREEN → REFACTOR), including which
-failures count as RED and deliberate mutation for backfill. This skill writes the assertion
-that has to fail. In a run that also changes the function, `author-composition` Phase 4 says
-which skill runs RED, GREEN and the gate; only when you add or change tests alone are this
-phase and Phase 6 the whole loop.
-
-Run the test directly — `up test run "tests/<t>"` — not through `verify-configuration`, which
-builds the package and runs the whole suite and is not an inner loop. `No test files found`
-means nothing ran (binding rule 5).
+Charter §3's loop, run directly with `up test run "tests/<t>"`. In a run that also changes the
+function, `author-composition` Phase 4 says which skill runs RED, GREEN and the gate; only when
+you add or change tests alone are this phase and Phase 6 the whole loop.
 
 ## Phase 6: The gate, after the loop
 
