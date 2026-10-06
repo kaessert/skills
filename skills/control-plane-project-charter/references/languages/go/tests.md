@@ -1,15 +1,15 @@
 # Go: tests
 
-Composition tests for a project whose functions are written in Go. Everything here was run against
-`up` v0.55.0: the template below passes, a flipped expectation and a function mutant both turn it red, and
-the failure modes in the last section are reproduced, not guessed.
+Composition tests for a project whose functions are written in Go. The object model — `CompositionTest`,
+`assertResources` (partial and positive for objects, **exact for lists**), `observedResources`,
+`extraResources` — is the same in every language; [`../yaml.md`](../yaml.md) shows it with no language in the
+way. What the suite must contain (one test per input shape, one per observed-state branch, every status field
+asserted on the composite, absence guarded through `resourceRefs`) is in
+[`charter/evidence.md` § Coverage](../../charter/evidence.md#coverage-what-the-suite-must-contain), and it
+applies here unchanged.
 
-The object model — `CompositionTest`, `assertResources` (partial and positive for objects, **exact for
-lists**), `observedResources`, `extraResources` — is the same in every language; [`../yaml.md`](../yaml.md)
-shows it with no language in the way. What the suite must contain (one test per input shape, one per
-observed-state branch, every status field asserted on the composite, absence guarded through
-`resourceRefs`) is in [`charter/evidence.md` § Coverage](../../charter/evidence.md#coverage-what-the-suite-must-contain),
-and it applies here unchanged.
+Everything here was run against `up` v0.55.0: the template below passes, a flipped expectation and a function
+mutant both turn it red, and the failure modes in the last section are reproduced, not guessed.
 
 ## How `up` runs a Go test
 
