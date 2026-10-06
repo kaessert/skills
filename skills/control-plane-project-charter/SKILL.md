@@ -236,10 +236,8 @@ provided` (v1.3.3), and composition tests that assert the same omission stay gre
 **These are defaults; the project may override them (§2).** When the project's spec or API
 sets `managementPolicies`, `providerConfigRef` or an MR's `metadata.namespace` — an XRD that
 exposes `managementPolicies` as a parameter, a spec that requires a per-XR `providerConfigRef`
-— set it as specified and say so in your report. A review flags these fields as removable
-**unless the project's spec or API sets them**, and flags
-`providerConfigRef.kind: ProviderConfig` as a bug only when no namespaced `ProviderConfig` of
-that name exists in, or is created in, the XR's namespace.
+— set it as specified and say so in your report. How a review judges these fields:
+[`charter/review.md`](references/charter/review.md).
 
 **Detail:** [`charter/v2-resources.md`](references/charter/v2-resources.md) has what these CRD
 defaults do to a render (it differs by language), when a `providerConfigRef` is genuinely
