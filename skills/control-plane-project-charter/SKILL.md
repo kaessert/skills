@@ -118,13 +118,6 @@ the XR before the pipeline sees it — so a field with a `default:` reaches your
 the example sets it or not, and a test that asserts only what the example mentions is asserting
 the XRD's defaults back to itself.
 
-Two limits:
-
-- **Only if the test sets `xrdPath` (or inline `xrd`).** Without it the XR is rendered exactly
-  as written and no defaulting happens at all.
-- **The XR only.** Composed resources are never touched by this. Provider *CRD* defaults are a
-  different mechanism — see §5.
-
 ## 3. Develop test-first (RED → GREEN → REFACTOR)
 
 This is the plugin's default flow for composition code, tests, and migrations alike.
@@ -216,11 +209,6 @@ Before writing any summary:
    success criteria are checks for you, not a report format: do not tick them off in a report.
 7. **Comments, docs and READMEs claim no more than a named test or run.** They are read as
    reports.
-
-**Abort on a failed precondition; do not proceed and report the symptom.** A check that
-comes back *blocked* — not merely *failed* — means the run you are about to start cannot
-produce a valid result. Starting it anyway spends real time and produces a failure whose
-cause you already knew.
 
 ## 5. Crossplane v2: what a composed resource actually needs
 
@@ -363,6 +351,13 @@ each mock the XR's namespace and the render's name: without the namespace it is 
 it proves: your branch logic, given the status you wrote. It does not prove a provider ever
 reports that status. For that, `--e2e` or a live apply — or say it is unverified.
 
+The XRD defaulting in §2 has two limits:
+
+- **Only if the test sets `xrdPath` (or inline `xrd`).** Without it the XR is rendered exactly
+  as written and no defaulting happens at all.
+- **The XR only.** Composed resources are never touched by this. Provider *CRD* defaults are a
+  different mechanism — see §5.
+
 **Detail:** [`charter/evidence.md`](references/charter/evidence.md) has how to find the render
 artifacts, how `assertResources` matches a resource, asserting `spec.crossplane.resourceRefs` so
 a surplus resource fails the suite, and what a suite must contain (minimal XR, observed-state
@@ -383,6 +378,11 @@ to make it work is.
 - **Delete what this run created, and nothing else.** Your own leftovers — a control plane, a
   kind cluster and its registry container, a scratch directory — must be removed before
   you report; for anything else, report what you would delete and let the user choose.
+
+**Abort on a failed precondition; do not proceed and report the symptom.** A check that
+comes back *blocked* — not merely *failed* — means the run you are about to start cannot
+produce a valid result. Starting it anyway spends real time and produces a failure whose
+cause you already knew.
 
 **Detail:** [`charter/targets.md`](references/charter/targets.md) has which control plane a
 run lands on, how to read `up ctx`, how the group defaults to `default`, why a bad
