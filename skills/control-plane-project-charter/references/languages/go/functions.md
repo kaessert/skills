@@ -34,7 +34,8 @@ and history keeps it. Compile with `go vet ./...` or `go build -o /dev/null ./..
 | `request.GetDesiredComposedResources(req)` | `map[resource.Name]*resource.DesiredComposed`, what earlier steps composed. Add yours to it |
 | `response.SetDesiredComposedResources(rsp, desired)` | writes the map into `rsp`. Each key becomes `crossplane.io/composition-resource-name`. It sets keys and never removes one |
 | `request.GetObservedComposedResources(req)` | `map[resource.Name]resource.ObservedComposed`, keyed by composition resource name: `observed["bucket"].Resource.GetString("status.atProvider.arn")` |
-| `.Resource.GetAnnotations()["crossplane.io/external-name"]` | an annotation. Its key has dots, so the path `metadata.annotations.crossplane.io/…` fails with `no such field`; `GetStringObject("metadata.annotations")[key]` works too |
+| `.Resource.GetAnnotations()["crossplane.io/external-name"]` | an annotation. Its key has dots, so the path `metadata.annotations.crossplane.io/…` fails with `no such field`; `GetStringObject("metadata.annotations")[key]` and the bracket path `GetString("metadata.annotations[<key>]")` work too |
+| `.Resource.SetValue("metadata.labels[<key>]", v)` | writes one label whose key has dots or slashes; the same bracket segment works for `metadata.annotations[<key>]` and `spec.forProvider.tags[<key>]` (used in a passing v0.5.0 function). `SetLabels`/`SetAnnotations`, from the embedded Kubernetes `Unstructured`, replace the whole map: read it with `GetLabels()`, add the key, write it back |
 | `request.GetDesiredCompositeResource(req)` + `response.SetDesiredCompositeResource(rsp, dxr)` | XR status: `dxr.Resource.SetString("status.bucketArn", arn)` between the two; lists and objects with `SetValue("status.subnetIds", []any{…})`. `composed.Unstructured` has the same `SetValue`; there is no `SetNestedField` |
 | `response.Fatal(rsp, err)`, then `return rsp, nil` | how a function reports an error: as a fatal result in the response, not as Go's `error` |
 | `response.ConditionTrue(rsp, typ, reason).TargetComposite()` | a condition on the XR |
@@ -44,6 +45,12 @@ and `resource.AsStruct(model)` do not compile with one (`does not implement runt
 DeepCopyObject)`). Round-trip through JSON instead: `composed.New()`, then `json.Marshal` the model and
 `json.Unmarshal` into it. That is `convertViaJSON` in the template. Every model field is a pointer with
 `omitempty`, so only the fields you set are emitted.
+
+**Where things are in v0.5.0** (`github.com/crossplane/function-sdk-go/…`): `request` and `response` (the calls
+above); `resource` (`Composite`, `DesiredComposed`, `ObservedComposed`, `Name`, `AsObject`, `AsStruct`);
+`resource/composed` and `resource/composite` (each package's `Unstructured` with its `Get*`/`Set*` methods);
+`errors`; `logging`; `proto/v1` (`fnv1`). Field paths are crossplane-runtime's `v2/pkg/fieldpath`. There is no
+`resource/unstructured.go` or `resource/convert.go`, and no `crossplane-runtime/v2/pkg/resource/errors`.
 
 Leave `DesiredComposed.Ready` unset unless the project says otherwise; a function-auto-ready step later in the
 pipeline marks readiness.

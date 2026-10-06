@@ -15,7 +15,7 @@ and it applies here unchanged.
 
 | | |
 |---|---|
-| Scaffold | `up test generate <n> --language go` → `tests/test-<n>/{go.mod,main.go}` |
+| Scaffold | `up test generate <n> --language go` → `tests/test-<n>/{go.mod,main.go}`. Pass the bare name: `up` adds the prefix (`test-x` gives `tests/test-test-x`; with `--e2e`, `e2etest-`) |
 | Detected by | a `go.mod` in the test directory |
 | Generation | `go mod tidy`, then `go run .`, both **with the test directory as CWD**, in your working tree, on your machine (no container). A file the program opens itself resolves from `tests/test-<n>/`; the paths it *emits* (`compositionPath`, `xrdPath`) are resolved by `up` from the project root |
 | Contract | the program prints `{items: [CompositionTest, …]}` as YAML on stdout. A non-zero exit fails the whole run at `✗ Parsing tests`, before any render. `items: []` is zero tests, not a passing test |
@@ -223,7 +223,8 @@ such as `example-963082b09556` are safe to copy):
 
 ```bash
 gofmt -l tests/ && (cd tests/test-<n> && go vet .)
-up test run tests/test-<n> --function-logs     # prints the directory holding each test's render.log
+up test run tests/test-<n> --function-logs     # prints the directory holding each test's render.log;
+                                               # --output-dir without --function-logs writes nothing
 ```
 
 ## E2E tests
