@@ -101,10 +101,9 @@ skill's default and why.
 | Current Space / group / control plane | `up ctx . --short` — how to read it: [`charter/targets.md`](references/charter/targets.md) |
 
 Read the XRD's **defaults** before you design anything against it. `up test run` applies them
-itself — it derives a CRD from the XRD and runs Kubernetes' structural-defaulting library over
-the XR before the pipeline sees it — so a field with a `default:` reaches your function whether
-the example sets it or not, and a test that asserts only what the example mentions is asserting
-the XRD's defaults back to itself.
+to the XR before the pipeline sees it (§8 has the limits), so a field with a `default:` reaches
+your function whether the example sets it or not, and a test that asserts only what the example
+mentions is asserting the XRD's defaults back to itself.
 
 ## 3. Develop test-first (RED → GREEN → REFACTOR)
 
@@ -223,9 +222,6 @@ resource.
 | `metadata.name` | Only for a stable external name | Otherwise generated: deterministic in a render (safe to assert), not across re-creations |
 | `crossplane.io/composition-resource-name` | Never by hand | It comes from the key you store the resource under |
 
-The verified behaviour behind each row (the source lines, the name formula):
-[`charter/v2-resources.md`](references/charter/v2-resources.md).
-
 **The table is about the composed resource's own metadata, not about objects inside
 `forProvider`.** A Kubernetes object embedded in a managed resource — the `manifest` of a
 provider-kubernetes `Object`, for instance — is input to the provider, and nothing fills in its
@@ -239,8 +235,8 @@ exposes `managementPolicies` as a parameter, a spec that requires a per-XR `prov
 — set it as specified and say so in your report. How a review judges these fields:
 [`charter/review.md`](references/charter/review.md).
 
-**Detail:** [`charter/v2-resources.md`](references/charter/v2-resources.md) has what these CRD
-defaults do to a render (it differs by language), when a `providerConfigRef` is genuinely
+**Detail:** [`charter/v2-resources.md`](references/charter/v2-resources.md) has the verified
+behaviour behind each row of the table, what these CRD defaults do to a render (it differs by language), when a `providerConfigRef` is genuinely
 warranted, what a missing or wrong ProviderConfig looks like on a control plane, and the two
 greps that catch a hardcoded one.
 
