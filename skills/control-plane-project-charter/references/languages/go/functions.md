@@ -1,14 +1,15 @@
 # Go: composition functions
 
-Composition functions written in Go. The scaffold facts below were observed on `up` v0.55.0, which pins
-`function-sdk-go` v0.5.0; every SDK name was checked against that version's source. The function template
-passes the three tests in [`tests.md`](tests.md) under `up test run`, and the mutant `if versioning` → `if
-true` turns `versioning-disabled` red. The unit-test template goes red under the same mutant.
-
-Imports and the `go.mod` wiring are in [`../go.md`](../go.md#imports-and-models). The models are on disk under
+Composition functions written in Go. Imports and the `go.mod` wiring are in
+[`../go.md`](../go.md#imports-and-models). The models are on disk under
 `.up/go/models/io/upbound/m/<provider>/<service>/<version>/<kind>.go` (no `dev.upbound.io` level). What a v2
 managed resource needs is in
 [`control-plane-project-charter` §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
+
+The scaffold facts below were observed on `up` v0.55.0, which pins `function-sdk-go` v0.5.0; every SDK name
+was checked against that version's source. The function template passes the three tests in
+[`tests.md`](tests.md) under `up test run`, and the mutant `if versioning` → `if true` turns
+`versioning-disabled` red. The unit-test template goes red under the same mutant.
 
 ## The scaffold, and what to change in it
 
@@ -52,13 +53,13 @@ above); `resource` (`Composite`, `DesiredComposed`, `ObservedComposed`, `Name`, 
 `errors`; `logging`; `proto/v1` (`fnv1`). Field paths are crossplane-runtime's `v2/pkg/fieldpath`. There is no
 `resource/unstructured.go` or `resource/convert.go`, and no `crossplane-runtime/v2/pkg/resource/errors`.
 
-Leave `DesiredComposed.Ready` unset unless the project says otherwise; a function-auto-ready step later in the
-pipeline marks readiness.
-
 ## Function template (`functions/<n>/fn.go`)
 
 The function the [`tests.md`](tests.md) template tests: a Bucket, a BucketVersioning when `spec.versioning`
 is true, and `status.bucketArn` from the observed bucket. Keep the shape; replace the resources.
+
+Leave `DesiredComposed.Ready` unset unless the project says otherwise; a function-auto-ready step later in the
+pipeline marks readiness.
 
 ```go
 package main
@@ -216,6 +217,9 @@ unit-test request built with `Observed` only (checked against v0.5.0).
 also where absence goes. `assertResources` cannot say a field is absent, and a Go unit test on the desired
 state can. Asserting the exact set of resource names catches a surplus resource too.
 
+The unit test supplements `up test run`; it never replaces it. It does not run the composition pipeline,
+the XRD defaults, or the other functions.
+
 ```go
 package main
 
@@ -310,9 +314,6 @@ if rsp.GetDesired().GetResources()["bucket"].GetReady() != fnv1.Ready_READY_UNSP
 	t.Error("bucket: Ready set, want unset")
 }
 ```
-
-The unit test supplements `up test run`; it never replaces it. It does not run the composition pipeline,
-the XRD defaults, or the other functions.
 
 ## Failure modes
 
