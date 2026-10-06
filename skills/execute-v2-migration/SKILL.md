@@ -13,13 +13,10 @@ stage by stage, ticking each item as it is done.
 
 ## Before you start
 
-**Interactive:** ask only at the points this skill names — the go-ahead, a dirty worktree, an
-existing branch, a retry, E2E tests, README prose. **Unattended:** never ask; take the default
-named at each point and state it in the summary, or stop and report. Started as a separate
-agent, you are unattended, and prose is your only output channel:
-`control-plane-project-charter` §4 (report the effect, not the intent) binds every summary.
-Load the charter before you start, or read its `SKILL.md` beside this skill's directory: this
-skill does not load it.
+Load `control-plane-project-charter` first, or read its `SKILL.md` beside this skill's
+directory; this skill does not load it. Ask only at the points this skill names, and only when
+interactive; unattended, take the default named at each point and state it in the summary
+(charter §1). Its §4 binds every summary.
 
 - No plan, no migration: without `.agents/plans/CROSSPLANE_V2_MIGRATION.md`, stop and point
   to `plan-v2-migration`.

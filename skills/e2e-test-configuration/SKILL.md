@@ -16,13 +16,9 @@ test gets a fresh control plane, creates real cloud resources, and is torn down 
 
 ## Before you start
 
-**Interactive:** ask only what the project can't tell you. **Unattended** (started as a separate agent, or no
-user in the loop): never ask; act on the brief and the project and state the assumption, or stop and report.
-Every "ask" below follows this.
-
-Load `control-plane-project-charter` before you start, or read its `SKILL.md` beside this skill's directory;
-this skill does not load it. §4 (report the effect, not the intent) binds every summary you write. §1 says
-what to do when your harness has no background tasks or sub-agents.
+Load `control-plane-project-charter` first, or read its `SKILL.md` beside this skill's directory; this skill
+does not load it. Every "ask" below follows its §1 (unattended: never ask; act on the brief and state the
+assumption, or stop and report), and its §4 binds every summary.
 
 - Writing or changing an `E2ETest` (fields, `defaultConditions`, credentials per target) is `author-tests`'
   job: read its `e2e.md` reference. This skill runs them.

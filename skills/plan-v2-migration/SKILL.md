@@ -14,10 +14,9 @@ carries out: `.agents/plans/CROSSPLANE_V2_MIGRATION.md`.
 
 ## Before you start
 
-**Interactive:** ask only what the project can't tell you — here, the decisions in Phase 5.
-**Unattended:** never ask; decide from the spec and state the assumption in the plan, or stop
-and report. Load `control-plane-project-charter` before you start, or read its `SKILL.md`
-beside this skill's directory: this skill does not load it.
+Load `control-plane-project-charter` first, or read its `SKILL.md` beside this skill's
+directory; this skill does not load it. The only questions are Phase 5's decisions, asked only
+when interactive (charter §1).
 
 - Analysis only. You write the plan file and nothing else: no code changes, builds, tests or
   commits.

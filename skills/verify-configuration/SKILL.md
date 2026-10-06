@@ -15,12 +15,10 @@ plane.
 
 ## Before you start
 
-**Interactive:** ask only what the project can't tell you. **Unattended** (started as a
-separate agent, or no user in the loop): never ask; act on the brief and state the assumption,
-or stop and report. Every "ask" below follows this. Prose is a forked run's only output
-channel, and `control-plane-project-charter` §4 (report the effect, not the intent) binds every
-summary. Load the charter before you start, or read its `SKILL.md` beside this skill's
-directory: this skill does not load it.
+Load `control-plane-project-charter` first, or read its `SKILL.md` beside this skill's
+directory; this skill does not load it. Every "ask" below follows its §1 (unattended: never
+ask; act on the brief and state the assumption, or stop and report), and its §4 binds every
+summary.
 
 - This skill changes no code and fixes nothing: fixes go to the authoring skills, new tests to
   `author-tests`. It runs E2E only through `e2e-test-configuration`.
