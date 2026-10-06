@@ -2,9 +2,7 @@
 
 What a clean `up project build` checks per language, how to find what a function actually emitted, how `assertResources` matches, the one assertion that catches a surplus resource, and what a suite must contain. [`control-plane-project-charter` §8](../../SKILL.md#8-a-green-run-is-not-evidence) states the rule.
 
----
-
-### What a clean `up project build` checks
+## What a clean `up project build` checks
 
 The package was assembled; a clean build never proves the function *runs*. Per language:
 
@@ -15,7 +13,7 @@ The package was assembled; a clean build never proves the function *runs*. Per l
 - **Go:** the build runs `go mod tidy` and a real compile, so a Go function that does not
   compile fails here.
 
-### Reading the render
+## Reading the render
 
 To find what a function actually emitted, read the render rather than the assertions:
 
@@ -42,7 +40,7 @@ That lists every resource the function produced, including the ones nothing asse
 adds nothing, since every name is unique. A new resource is untested until it is named in an
 assertion.
 
-### How `assertResources` matches, and how to make a suite exhaustive
+## How `assertResources` matches, and how to make a suite exhaustive
 
 An expected resource is matched on **`apiVersion` + `kind` + `metadata.name`**. For the name:
 
@@ -83,7 +81,7 @@ operator, so "this field is not set" cannot be asserted in a composition test, a
 the CLI for one is wasted time. Assert it in a unit test on the function's desired state, in
 the function's own language, or confirm it once in `render.log` and report it as not asserted.
 
-### Coverage: what the suite must contain
+## Coverage: what the suite must contain
 
 The scaffold generates **one** test, against **one** example XR, asserting **only** composed
 resources. That suite is green over a function that crashes on a minimal XR, silently drops
