@@ -66,7 +66,7 @@ spec:
     - apiVersion: pkg.crossplane.io/v1
       kind: Function
       package: xpkg.upbound.io/crossplane-contrib/function-auto-ready
-      version: '>=vX.Y.Z'   # always a constraint; a bare `up dep add <ref>` writes '>=v0.0.0'
+      version: '>=v0.2.1, <v1.0.0'   # always cap the major; a bare `up dep add <ref>` writes '>=v0.0.0'
     # providers added in Phase 4
   description: {description}
   license: Apache-2.0
@@ -83,7 +83,7 @@ spec:
 - apiVersion: pkg.crossplane.io/v1
   kind: Provider
   package: xpkg.upbound.io/upbound/provider-aws-ec2
-  version: '>=v2.0.0'
+  version: '>=v2.0.0, <v3.0.0'
 ```
 
 ### Composition skeleton (for reading)

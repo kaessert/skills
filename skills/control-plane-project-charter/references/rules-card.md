@@ -69,7 +69,7 @@ charter, so pasting reaches agents that never open it. Section numbers (§N) are
   the project's spec or API sets them; flag `providerConfigRef.kind: ProviderConfig` as a bug
   only when no namespaced `ProviderConfig` of that name exists in, or is created in, the XR's
   namespace (§5).
-- Flag an unbounded dependency: a `dependsOn` entry at `version: '>=v0.0.0'`, which a bare
-  `up dep add <ref>` writes (author-configuration-package).
+- Flag an unbounded dependency: a `dependsOn` `version` with no cap on the major, such as the
+  `'>=v0.0.0'` a bare `up dep add <ref>` writes (author-configuration-package).
 - The report names the layer reached — render, composition test, control plane, cloud — and
   claims nothing beyond it (§4, §8).

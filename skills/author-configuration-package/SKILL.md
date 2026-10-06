@@ -135,7 +135,7 @@ up example generate --scope=namespace --name example --namespace default \
 #   -> examples/storagebucket/example.yaml (spec: {}); fill in the spec users should write
 # Write apis/storagebuckets/definition.yaml yourself (plural directory).
 up composition generate apis/storagebuckets/definition.yaml                 # Phase 5
-up dep add 'xpkg.upbound.io/upbound/provider-aws-s3:>=v2.0.0'               # Phase 4
+up dep add 'xpkg.upbound.io/upbound/provider-aws-s3:>=v2.0.0, <v3.0.0'      # Phase 4
 up project build                                                            # Phase 6
 up function generate compose-bucket apis/storagebuckets/composition.yaml --language python
 up project build                                                            # Phase 9
@@ -224,10 +224,9 @@ package name.
   `https://marketplace.upbound.io/providers/upbound/provider-azure-network`, for the ref and
   latest version. Pages list scope and description, not always exact Kinds — confirm Kinds
   from the generated models after the first build.
-- **Always pass a constraint:** `up dep add '<ref>:>=vX.Y.Z'` (the form `up dep add --help`
-  shows). A bare `<ref>` records `version: '>=v0.0.0'`, which accepts any major (up v0.55.0).
-  To cap the major, set `version: ^vX.Y.Z` in `upbound.yaml`. Then `up dep update-cache`;
-  do not skip it.
+- **Always pass a constraint that caps the major:** `up dep add '<ref>:>=v2.0.0, <v3.0.0'`
+  (accepted by up v0.55.0). A bare `<ref>` records `version: '>=v0.0.0'`, and `'>=v2.0.0'`
+  alone still accepts any later major. Then `up dep update-cache`; do not skip it.
 - **Prefer v2+ Upbound Official family providers** (`provider-<cloud>-<service>`) over the
   monolithic `provider-<cloud>`. A new project needs v2.x: the `.m.` groups ship from v2.0.0.
 - **Base resources live in the family package.** `ResourceGroup`, `ProviderConfig` and other
@@ -318,8 +317,8 @@ skill succeeds when:
 - First build generated the models (`.up/<language>/` model tree exists)
 - `up function generate` created the function, its step before auto-ready
 - Final build succeeded (`.uppkg` under `_output/`)
-- No unbounded dependency: every `dependsOn` `version` names the major you built against,
-  never `'>=v0.0.0'`
+- No unbounded dependency: every `dependsOn` `version` caps the major you built against
+  (`'>=v2.0.0, <v3.0.0'`), never `'>=v0.0.0'`
 - Example XRs and `examples/providerconfig.yaml` created
 - The hand-off names the next skill
 

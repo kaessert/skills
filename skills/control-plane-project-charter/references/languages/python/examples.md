@@ -177,15 +177,15 @@ spec:
   - apiVersion: pkg.crossplane.io/v1
     kind: Provider
     package: xpkg.upbound.io/upbound/provider-azure-network
-    version: ">=v2.0.0"                  # v2 providers serve the namespaced .m. APIs
+    version: ">=v2.0.0, <v3.0.0"         # v2 providers serve the namespaced .m. APIs
   - apiVersion: pkg.crossplane.io/v1
     kind: Provider
     package: xpkg.upbound.io/upbound/provider-family-azure   # ResourceGroup
-    version: ">=v2.0.0"
+    version: ">=v2.0.0, <v3.0.0"
   - apiVersion: pkg.crossplane.io/v1
     kind: Function
     package: xpkg.upbound.io/crossplane-contrib/function-auto-ready
-    version: ">=v0.2.1"
+    version: ">=v0.2.1, <v1.0.0"
 ```
 
 ## pyproject.toml
