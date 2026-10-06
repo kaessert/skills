@@ -1,9 +1,9 @@
 # Rules card
 
-The charter on one screen, for an orchestrator to paste into an agent's instructions. Loading
-a skill does not load the charter, and agents often skip it, so pasting is the reliable route.
-Paste the card — between the two `---` lines below — into prompts for agents that build, and the
-reviewer variant into prompts for agents that review. Section numbers (§N) are the charter's
+The charter on one screen. **Read the card — between the two `---` lines below — when you
+build, and the reviewer variant when you review**, whether or not a prompt included them. An
+orchestrator can also paste them into agent prompts: loading a task skill does not load the
+charter, so pasting reaches agents that never open it. Section numbers (§N) are the charter's
 (`../SKILL.md`), which holds the reasons; the skills hold the checklists.
 
 ---

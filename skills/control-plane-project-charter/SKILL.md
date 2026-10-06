@@ -40,6 +40,18 @@ references:
 which language a project is written in or which skill you happen to be: how to behave as an
 agent, how to develop, what Crossplane v2 actually requires, and how to report what you did.
 
+**It does not replace the task skill.** Before you write, review or specify work, read the
+[rules card](references/rules-card.md) and load the skill that owns the work:
+
+| Work | Load | And read |
+|---|---|---|
+| XRD, `upbound.yaml`, dependencies, examples, ProviderConfig, MRAP | author-configuration-package | its `mrap.md` for an MRAP |
+| function code | author-composition | the language file (§10), e.g. `languages/go/functions.md` |
+| anything under `tests/` | author-tests | the test language's file, e.g. `languages/go/tests.md`; an `E2ETest`: its `e2e.md` |
+| running E2E tests | e2e-test-configuration | its `local.md` or `space.md` |
+| reviewing | the task skills for what changed | the card's reviewer variant |
+| specifying work for someone else | the skills that work needs | — |
+
 Language-specific syntax lives in [`languages/`](references/languages/) — one file per language,
 indexed by [`languages/README.md`](references/languages/README.md), which holds the detection table (§10). Skill
 workflows live in each skill's `SKILL.md`. Nothing in this file is language-specific, and
@@ -63,7 +75,7 @@ or the worked example behind a rule.
 | [`charter/evidence.md`](references/charter/evidence.md) | reading a render, how `assertResources` matches, making a suite exhaustive, what a suite must contain (§8) |
 | [`charter/targets.md`](references/charter/targets.md) | where `up project run` and `up test run --e2e` land (local KIND or a Space), reading `up ctx`, the group, `--kubeconfig`, `--public` and repository visibility, a run stuck on `Waiting for package to be ready`, teardown (§9) — read before any run that creates a control plane |
 | [`charter/generators.md`](references/charter/generators.md) | the `--language` slugs, and what each CLI generator actually emits (§10) |
-| [`rules-card.md`](references/rules-card.md) | the charter on one screen, plus a reviewer variant, for an orchestrator to paste into agent prompts — loading a skill does not load this charter |
+| [`rules-card.md`](references/rules-card.md) | the charter on one screen, plus a reviewer variant: read them when you build or review |
 
 ---
 
