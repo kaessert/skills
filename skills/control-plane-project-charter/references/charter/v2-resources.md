@@ -1,7 +1,29 @@
 # Crossplane v2 resources: the detail
 
-Authoring the XRD, what the CRD defaults do to a render, choosing a ProviderConfig, and what a
-missing one looks like. [`control-plane-project-charter` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) states the rules.
+What `.m.` means, the verified behaviour behind §5's field table, authoring the XRD, what the
+CRD defaults do to a render, choosing a ProviderConfig, and what a missing one looks like.
+[`control-plane-project-charter` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) states the rules.
+
+---
+
+## The `.m.` API groups
+
+**`.m.` is for *modern*, not "naMespaced"** (Crossplane's upgrade guide: "The `.m.` indicates
+modern namespaced managed resources"). The groups hold the namespaced managed resources *and*
+the cluster-scoped `ClusterProviderConfig` they default to, in the bare `aws.m.upbound.io` — so
+the "namespaced" reading cannot be right.
+
+---
+
+## The verified behaviour behind §5's field table
+
+| Field | Verified behaviour |
+|---|---|
+| `metadata.namespace` | **If the XR is namespaced**, Crossplane overwrites it with the XR's namespace (`if xr.GetNamespace() != "" { cd.SetNamespace(...) }`), so a function setting a *different* namespace is silently overridden, not merged with. A **cluster-scoped** XR is the exception — its composed resources keep the namespace the function sets, which is how a cluster XR targets one. (A namespaced XR composing a cluster-scoped kind is a hard error, not a namespace question.) |
+| `managementPolicies` | The namespaced MR spec carries `+kubebuilder:default={"*"}`, so the API server fills it in, and that default deletes the external resource with the MR. Never write `["*"]` yourself. Set it only for a different policy — `["Create","Observe","Update","LateInitialize"]` to orphan on delete — or when the project's API exposes it as a parameter. |
+| `deletionPolicy` | The namespaced MR spec has no such field. To orphan, use `managementPolicies` (above); to delete, set nothing. A v1 API's `deletionPolicy` parameter maps the same way (`plan-v2-migration`). |
+| `providerConfigRef` | The same struct, the same way: `+kubebuilder:default={"kind":"ClusterProviderConfig","name":"default"}`. |
+| `metadata.name` | Unless set, Crossplane generates `<prefix>-<sha256(xr-uid + composition-resource-name)[:12]>`, where the prefix comes from the `crossplane.io/composite` label, truncated to 63 chars. Deterministic for one XR instance, **not** across re-creations — and it falls back to a random 5-char suffix when the composition-resource-name annotation or the controller ownerRef is missing. Inside a *render* it is fully deterministic and safe to assert — see [`evidence.md`](evidence.md). |
 
 ---
 
@@ -72,7 +94,7 @@ schema from it.
 Three claims that are false:
 
 - "Family providers use different APIs than single providers"
-- "The `.m.` stands for monolithic" (§5: it is *modern*)
+- "The `.m.` stands for monolithic" (it is *modern*, above)
 - "`provider-aws-iam` can't use namespaced ProviderConfig"
 
 The import or type path that reaches these APIs is language-specific: see

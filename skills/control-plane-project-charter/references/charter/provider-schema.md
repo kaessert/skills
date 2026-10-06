@@ -1,10 +1,19 @@
 # What the provider schema does and does not tell you
 
-How sparse the recorded constraints really are, and the classes of rule that live only in the cloud API. [`control-plane-project-charter` §6](../../SKILL.md#6-the-provider-schema-is-a-lower-bound-not-the-constraint-set) states the rule.
+Examples, how sparse the recorded constraints really are, and the classes of rule that live only in the cloud API. [`control-plane-project-charter` §6](../../SKILL.md#6-the-provider-schema-is-a-lower-bound-not-the-constraint-set) states the rule.
 
 ---
 
-Measured over the namespaced AWS models in a real project: `Conflicts with` in 12 of 127 Kinds,
+**A v2-conformant composition can still emit a resource the cloud API rejects.** S3 lifecycle
+rules with neither `filter` nor `prefix` pass composition tests and fail with `MalformedXML`.
+
+**What the models do record.** Some generated models carry conditional rules the type system
+cannot express, in docstrings and field descriptions: *"Required if
+`source_db_instance_identifier` is not specified"*, *"Conflicts with `domain_fqdn`,
+`domain_ou`"*, *"If set, must contain at least one key-value pair"*. A field being optional in
+the generated type means only that the **CRD** does not require it — the provider still can.
+
+**Expect this to be sparse, not systematic.** Measured over the namespaced AWS models in a real project: `Conflicts with` in 12 of 127 Kinds,
 `Required if` in 3, clustered in the big Kinds like RDS `Instance`. So the grep is cheap and worth
 running, and **finding nothing is not evidence the API has no such rule.**
 

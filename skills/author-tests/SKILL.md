@@ -60,12 +60,12 @@ language (Phase 1).
 
 ## Phase 1: Detect the test language — do this first
 
-**Existing tests decide; otherwise the composition language; otherwise YAML** — the rule and
-its reasons are charter §10. Only a test dir that produces a `CompositionTest` or `E2ETest`
-counts as an existing test: a Go program printing `items: []` or a linter over repo files does
-not set the language. A project may already mix languages (Python functions with YAML tests),
-and new tests match what is in `tests/`. Functions in more than one language and no tests yet:
-ask the user.
+**Existing tests decide; otherwise the composition language; otherwise YAML** — the rule is
+charter §10, its reasons the charter's `languages/README.md`. Only a test dir that produces a
+`CompositionTest` or `E2ETest` counts as an existing test: a Go program printing `items: []` or
+a linter over repo files does not set the language. A project may already mix languages
+(Python functions with YAML tests), and new tests match what is in `tests/`. Functions in more
+than one language and no tests yet: ask the user.
 
 Detect with the table in the charter's `languages/README.md`
 (`control-plane-project-charter/references/languages/`, beside this skill's directory), then

@@ -29,8 +29,25 @@ A test directory that matches no row is skipped without a message. One that matc
 no `CompositionTest` or `E2ETest` — a Go program printing `items: []` — contributes zero tests
 (charter §8).
 
-**Which language to write *new* tests in** is a choice, not a detection:
-[`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch).
+## Choosing the test language for new tests
+
+Which language to write *new* tests in is a choice, not a detection.
+[`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch) states the rule; the
+detail:
+
+1. Tests already exist in the project → write new ones in the same language. Only a test dir
+   that produces a `CompositionTest` or `E2ETest` counts. A program that emits none — a Go
+   program printing `items: []`, a linter over repo files — is not a test (charter §8) and does
+   not set the language.
+2. Otherwise use the **composition language**, whenever `up` supports it as a test language:
+   `kcl`, `python`, `go`, `go-templating` — every language `up function generate` produces.
+   One toolchain and one set of idioms per project, the people who maintain the function can
+   maintain its tests, and typed languages check expectations against the same models the
+   function is built on. When initializing, pass both:
+   `up project init <n> --language go --test-language go`.
+3. Otherwise **YAML** — the fallback for TypeScript functions (the CLI has no TS test
+   language) and projects with no embedded function. `up project init` does not accept
+   `--test-language yaml`; scaffold YAML tests with `up test generate <n> --language yaml`.
 
 ## Adding a language
 

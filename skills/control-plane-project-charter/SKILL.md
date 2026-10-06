@@ -66,13 +66,13 @@ or the worked example behind a rule.
 
 | Detail file | What is in it |
 |---|---|
-| [`charter/agent-context.md`](references/charter/agent-context.md) | what inline and forked (separate-agent) skills may and may not do (§1) |
+| [`charter/agent-context.md`](references/charter/agent-context.md) | what inline and forked (separate-agent) skills may and may not do, delegation and long runs (§1) |
 | [`charter/tdd.md`](references/charter/tdd.md) | the two-tier inner loop, and backfilling tests for existing code (§3) |
-| [`charter/v2-resources.md`](references/charter/v2-resources.md) | the v2 XRD skeleton, what CRD defaults do to a render, choosing a ProviderConfig, the symptom of a missing or wrong one (§5) |
+| [`charter/v2-resources.md`](references/charter/v2-resources.md) | what `.m.` means, the verified behaviour behind §5's field table, the v2 XRD skeleton, what CRD defaults do to a render, choosing a ProviderConfig, the symptom of a missing or wrong one (§5) |
 | [`charter/xrd-design.md`](references/charter/xrd-design.md) | naming, validation, immutability, status and printer columns for the XR API (§5) |
-| [`charter/provider-schema.md`](references/charter/provider-schema.md) | measured constraint density, and the rules that live only in cloud API docs (§6) |
+| [`charter/provider-schema.md`](references/charter/provider-schema.md) | examples, measured constraint density, and the rules that live only in cloud API docs (§6) |
 | [`charter/container.md`](references/charter/container.md) | which languages are containerized, and what crosses the boundary (§7) |
-| [`charter/evidence.md`](references/charter/evidence.md) | reading a render, how `assertResources` matches, making a suite exhaustive, what a suite must contain (§8) |
+| [`charter/evidence.md`](references/charter/evidence.md) | what `up project build` checks per language, reading a render, how `assertResources` matches, making a suite exhaustive, what a suite must contain (§8) |
 | [`charter/targets.md`](references/charter/targets.md) | where `up project run` and `up test run --e2e` land (local KIND or a Space), reading `up ctx`, the group, `--kubeconfig`, `--public` and repository visibility, a run stuck on `Waiting for package to be ready`, teardown (§9) — read before any run that creates a control plane |
 | [`charter/generators.md`](references/charter/generators.md) | the `--language` slugs, and what each CLI generator actually emits (§10) |
 | [`rules-card.md`](references/rules-card.md) | the charter on one screen, plus a reviewer variant: read them when you build or review |
@@ -92,16 +92,12 @@ you consider asking anything; every skill's mode line means this:
 **When nobody can answer, never block on a question** — that includes a caller that cannot
 relay one. Wherever a skill says to ask, read it with this rule.
 
-When a skill says to hand work to a sub-agent, or to run a command in the background, use
-your harness's own way of doing that. If it has none, do the work in band: follow the brief
-yourself, or run the command in the foreground — never detach it yourself.
-
 **Re-read a document before you write from it.** Long runs lose old file and command output.
 Before you write anything derived from a document — a work item, a test expectation, a quote,
 a field value — re-read the section you rely on in that same step. Never quote from memory. If
 the re-read contradicts what you wrote, fix that first.
 
-**Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) — what each context may and may not do, why a fork's only output channel is prose, and how to delegate or run long commands when your harness cannot.
+**Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) — what each context may and may not do, why a fork's only output channel is prose, and how to hand work to a sub-agent or run a long command when your harness cannot (in band, in the foreground: never detach one yourself).
 
 
 ## 2. Discover, do not interview
@@ -232,11 +228,8 @@ cause you already knew.
 
 ### The `.m.` API groups
 
-Compositions target the `.m.` provider API groups. **`.m.` is for *modern*, not
-"naMespaced"** (Crossplane's upgrade guide: "The `.m.` indicates modern namespaced managed
-resources"). The groups hold the namespaced managed resources *and* the cluster-scoped
-`ClusterProviderConfig` they default to, in the bare `aws.m.upbound.io` — so the "namespaced"
-reading cannot be right.
+Compositions target the `.m.` provider API groups (`.m.` means *modern*, not "naMespaced":
+[`charter/v2-resources.md`](references/charter/v2-resources.md)).
 
 | Aspect | Use this | Not this |
 |---|---|---|
@@ -268,14 +261,17 @@ round-trip, most of this is permanent from the first version that ships, so it i
 Crossplane v2 fills in the rest. Adding "required v2 fields" the project does not ask for is at
 best noise and at worst breaks the resource.
 
-| Field | Do you set it? (the default; the project may override) | Verified behaviour |
+| Field | Do you set it? (the default; the project may override) | Why |
 |---|---|---|
-| `metadata.namespace` | **No** | **If the XR is namespaced**, Crossplane overwrites it with the XR's namespace (`if xr.GetNamespace() != "" { cd.SetNamespace(...) }`), so a function setting a *different* namespace is silently overridden, not merged with. A **cluster-scoped** XR is the exception — its composed resources keep the namespace the function sets, which is how a cluster XR targets one. (A namespaced XR composing a cluster-scoped kind is a hard error, not a namespace question.) |
-| `managementPolicies` | **No** | The namespaced MR spec carries `+kubebuilder:default={"*"}`, so the API server fills it in, and that default deletes the external resource with the MR. Never write `["*"]` yourself. Set it only for a different policy — `["Create","Observe","Update","LateInitialize"]` to orphan on delete — or when the project's API exposes it as a parameter. |
-| `deletionPolicy` | **No** | The namespaced MR spec has no such field. To orphan, use `managementPolicies` (above); to delete, set nothing. A v1 API's `deletionPolicy` parameter maps the same way (`plan-v2-migration`). |
-| `providerConfigRef` | Omit it if and only if `ClusterProviderConfig/default` exists and is the right one | The same struct, the same way: `+kubebuilder:default={"kind":"ClusterProviderConfig","name":"default"}`. |
-| `metadata.name` | Only for a stable external name | Otherwise Crossplane generates `<prefix>-<sha256(xr-uid + composition-resource-name)[:12]>`, where the prefix comes from the `crossplane.io/composite` label, truncated to 63 chars. Deterministic for one XR instance, **not** across re-creations — and it falls back to a random 5-char suffix when the composition-resource-name annotation or the controller ownerRef is missing. Inside a *render* it is fully deterministic and safe to assert — see [`charter/evidence.md`](references/charter/evidence.md). |
-| `crossplane.io/composition-resource-name` | Never by hand | It comes from the key you store the resource under. |
+| `metadata.namespace` | **No** | A namespaced XR's namespace overwrites it; only a cluster-scoped XR's resources keep the one the function sets |
+| `managementPolicies` | **No** | The CRD defaults it to `["*"]`; never write that yourself. Set it only for another policy (orphan on delete) or when the project's API exposes it |
+| `deletionPolicy` | **No** | A namespaced MR has no such field; orphan with `managementPolicies` |
+| `providerConfigRef` | Omit it if and only if `ClusterProviderConfig/default` exists and is the right one | The CRD defaults it to `ClusterProviderConfig/default` |
+| `metadata.name` | Only for a stable external name | Otherwise generated: deterministic in a render (safe to assert), not across re-creations |
+| `crossplane.io/composition-resource-name` | Never by hand | It comes from the key you store the resource under |
+
+The verified behaviour behind each row (the source lines, the name formula):
+[`charter/v2-resources.md`](references/charter/v2-resources.md).
 
 **These are defaults; the project may override them (§2).** When the project's spec or API
 sets `managementPolicies`, `providerConfigRef` or an MR's `metadata.namespace` — an XRD that
@@ -296,22 +292,20 @@ provided` (v1.3.3), and composition tests that assert the same omission stay gre
 
 ## 6. The provider schema is a lower bound, not the constraint set
 
-Namespaced APIs and `forProvider`-only are *Crossplane* correctness. They say nothing about
-whether the provider will accept the resource. A composition can be perfectly v2-conformant
-and still emit a resource AWS rejects: S3 lifecycle rules with neither `filter` nor `prefix`
-pass composition tests and fail with `MalformedXML`.
+Namespaced APIs and `forProvider`-only are *Crossplane* correctness; they say nothing about
+whether the provider accepts the resource, and a composition test passes either way.
 
-**First, read what the models do record.** Some generated models carry conditional rules the
-type system cannot express, in docstrings and field descriptions: *"Required if
-`source_db_instance_identifier` is not specified"*, *"Conflicts with `domain_fqdn`,
-`domain_ou`"*, *"If set, must contain at least one key-value pair"*. A field being optional in
-the generated type means only that the **CRD** does not require it — the provider still can.
-
-**Expect this to be sparse, not systematic**, and treat *one list element → one object* as a decision you justify rather than the default. [`charter/provider-schema.md`](references/charter/provider-schema.md) has the measured hit rates, the one docstring that is always a false positive, and the rule classes that appear only in the cloud API docs.
+**Check every Kind you compose against its provider.** Read the conditional rules the
+generated models record in docstrings and field descriptions (`Required if …`, `Conflicts
+with …`): optional in the type means only that the CRD does not require it. Then check the
+cloud API's own rules (name formats, reserved prefixes, create-only fields), and treat *one
+list element → one object* as a decision you justify, not the default.
 
 State the result in your summary: which Kinds you checked, what the schema required, and
 which API-level rule you could not confirm. "I checked and found nothing" is a valid result.
 Silently skipping is not.
+
+**Detail:** [`charter/provider-schema.md`](references/charter/provider-schema.md) — examples (an S3 lifecycle rule that renders and fails with `MalformedXML`), the measured hit rates, the one docstring that is always a false positive, and the rule classes only the cloud API docs hold.
 
 ---
 
@@ -332,7 +326,7 @@ program that exits non-zero — on a missing input, say — fails a plain `tests
 
 | Green thing | What it actually proves |
 |---|---|
-| `up project build` | the package was assembled. For KCL and single-file Python it does not import, type-check, or execute anything — a function with an `AttributeError` on its normal path builds cleanly. **Go is different**: the build runs `go mod tidy` and a real compile, so a Go function that does not compile fails here. The Python SDK builder runs `hatch build` + `pip install`, so packaging and dependency errors fail too, but `fn.py` is still never imported. Either way, a clean build never proves the function *runs*. |
+| `up project build` | the package was assembled, never that the function *runs*. Only Go compiles here; what each language's build checks: [`charter/evidence.md`](references/charter/evidence.md#what-a-clean-up-project-build-checks) |
 | `up test run` printing `No test files found` | **nothing ran.** No test was collected, and it exits 0 anyway — that is not a pass. A test directory that emits no `CompositionTest`, such as a Go test program printing `items: []`, contributes zero tests; next to real tests it just drops out of the count. Report "no tests ran". |
 | A composition test suite | the assertions you wrote held against the render. `assertResources` is **partial and positive for objects**: it ignores composed resources it does not list, and within a resource it checks only the fields you name, at every depth. **Lists are the exception** — an asserted list must match the rendered one exactly in length *and* order, or you get `lengths of slices don't match`. A short list assertion is not a weak assertion; it is a failing one. |
 | A render | the function produced objects. Not that the API server accepts them, and not that the provider does. |
@@ -395,20 +389,10 @@ read the matching file. They are separate axes — `up project init` takes `--la
 markers `up` itself checks, and which reference to read for functions and for tests — is
 [`languages/README.md`](references/languages/README.md).
 
-**Choosing the test language for new tests:**
-
-1. Tests already exist in the project → write new ones in the same language. Only a test dir
-   that produces a `CompositionTest` or `E2ETest` counts. A program that emits none — a Go
-   program printing `items: []`, a linter over repo files — is not a test (§8) and does not
-   set the language.
-2. Otherwise use the **composition language**, whenever `up` supports it as a test language:
-   `kcl`, `python`, `go`, `go-templating` — every language `up function generate` produces.
-   One toolchain and one set of idioms per project, the people who maintain the function can
-   maintain its tests, and typed languages check expectations against the same models the
-   function is built on. When initializing, pass both:
-   `up project init <n> --language go --test-language go`.
-3. Otherwise **YAML** — the fallback for TypeScript functions (the CLI has no TS test
-   language) and projects with no embedded function. `up project init` does not accept
-   `--test-language yaml`; scaffold YAML tests with `up test generate <n> --language yaml`.
+**New tests use the language of the existing tests, else the composition language if `up`
+tests in it, else YAML.** Only a test dir that produces a `CompositionTest` or `E2ETest`
+counts; a program that emits none (a Go program printing `items: []`) is not a test (§8) and
+sets nothing. The reasons and the `init`/`generate` flags:
+[`languages/README.md`](references/languages/README.md#choosing-the-test-language-for-new-tests).
 
 **Detail:** [`charter/generators.md`](references/charter/generators.md) — the accepted `--language` slugs, what each generator actually emits (`up project init` produces a **v1** project; `up test generate` prepends `test-`; `up composition generate` wires only auto-ready; `up xrd generate` drops every constraint).

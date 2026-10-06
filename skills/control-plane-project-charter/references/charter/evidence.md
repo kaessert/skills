@@ -1,6 +1,19 @@
 # Reading a render, and making a suite exhaustive
 
-How to find what a function actually emitted, how `assertResources` matches, the one assertion that catches a surplus resource, and what a suite must contain. [`control-plane-project-charter` §8](../../SKILL.md#8-a-green-run-is-not-evidence) states the rule.
+What a clean `up project build` checks per language, how to find what a function actually emitted, how `assertResources` matches, the one assertion that catches a surplus resource, and what a suite must contain. [`control-plane-project-charter` §8](../../SKILL.md#8-a-green-run-is-not-evidence) states the rule.
+
+---
+
+### What a clean `up project build` checks
+
+The package was assembled; a clean build never proves the function *runs*. Per language:
+
+- **KCL and single-file Python:** nothing is imported, type-checked or executed — a function
+  with an `AttributeError` on its normal path builds cleanly.
+- **Python SDK layout:** the builder runs `hatch build` + `pip install`, so packaging and
+  dependency errors fail, but `fn.py` is still never imported.
+- **Go:** the build runs `go mod tidy` and a real compile, so a Go function that does not
+  compile fails here.
 
 ---
 
