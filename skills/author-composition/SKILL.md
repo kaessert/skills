@@ -141,7 +141,7 @@ The design you just settled fixes what the function must emit — keys, Kinds, f
 that as an assertion now, while it states intent.
 
 **Who does what in a run that changes the function.** `author-tests` writes the test (its
-Phases 1–3, and Phase 5 for what no render reaches). This skill runs RED (step 2 below), GREEN
+Phases 1–4, Phase 2 for what no render reaches). This skill runs RED (step 2 below), GREEN
 (Phase 5) and REFACTOR (Phase 6). The gate comes once, after this skill's Phase 6, as
 `author-tests` Phase 6 describes. A run that only adds or changes tests stays in `author-tests`
 throughout.
