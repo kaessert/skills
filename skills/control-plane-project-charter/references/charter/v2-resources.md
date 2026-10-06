@@ -92,12 +92,6 @@ Keep writing the example XR first — it is the render input for tests and the f
 drafting the API a user will actually write keeps the schema honest. Just do not derive the
 schema from it.
 
-Three claims that are false:
-
-- "Family providers use different APIs than single providers"
-- "The `.m.` stands for monolithic" (it is *modern*, above)
-- "`provider-aws-iam` can't use namespaced ProviderConfig"
-
 The import or type path that reaches these APIs is language-specific: see
 [`languages/`](../languages/). Run `up project build` after a provider version change to
 regenerate models.
