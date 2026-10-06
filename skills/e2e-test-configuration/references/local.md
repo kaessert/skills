@@ -13,7 +13,14 @@ runs, and could change between versions.
   `up ctx . --short` is not a failed precondition here.
 - **Credentials are a static Secret** in `extraResources`: `credentials.source: Secret` plus
   `secretRef: {namespace, name, key}`, built from a `UP_*` variable. `source: Upbound` web identity does not work
-  on kind. The shapes, and the AWS credentials-file format, are in author-tests' `e2e.md` reference.
+  on kind. The shapes, the AWS credentials-file format and how to build it in memory are in author-tests'
+  `e2e.md` reference.
+- **Run under the default umask (`022`), never `umask 077`.** `up` writes the local registry's TLS certificate
+  and key (`/tmp/up-local-registry/<cluster>/.certs/`) with your umask, and the registry container runs as a
+  non-root user. Under `umask 077` it can't read them and exits, and the run waits at `Waiting for package to
+  be ready` until `context deadline exceeded`, about 10 min later (observed with up v0.55.0). `docker logs
+  <cluster>-registry` shows `open /registry-data/.certs/tls.crt: permission denied`. To protect a credentials
+  file, `chmod 600` that file; better, write no file at all.
 
 ## Target flags
 
@@ -66,8 +73,9 @@ kubectl --kubeconfig "$KCFG" get managed -A
 ```
 
 `up` also writes a transient `/tmp/up-*.kubeconfig` during the run (observed); it goes with the cluster. If
-the run never got past the package install, check that first (`kubectl get pkgrev -o wide`, `kubectl describe
-configuration`) before tracing any managed resource, then use the brief in [troubleshooting.md](troubleshooting.md).
+the run never got past the package install, check that first, before tracing any managed resource:
+`docker logs <cluster>-registry` (the umask precondition), then `kubectl get pkgrev -o wide` and `kubectl
+describe configuration`. Then use the brief in [troubleshooting.md](troubleshooting.md).
 
 ## Evidence and cleanup
 

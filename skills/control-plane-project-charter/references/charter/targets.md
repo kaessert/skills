@@ -141,15 +141,19 @@ kubectl get configuration.pkg.crossplane.io
 kubectl describe configuration.pkg.crossplane.io <name>
 ```
 
-| `describe` shows | Cause |
+On `--local` the same failure has a cause of its own (the last row): read `docker logs <cluster>-registry` first.
+
+| `describe` (`--local`: `docker logs`) shows | Cause |
 |---|---|
 | `cannot unpack package: … 401 Unauthorized … UNAUTHORIZED: authentication required` | private repository, and no pull credential for it on that control plane (common under a disconnected profile: `up profile list`). Retrying changes nothing |
 | `cannot resolve … not found` | pushed to a different repository than the one being installed: reconcile `spec.repository` |
 | provider revision unhealthy | a provider still installing, or a bad version constraint: `kubectl get providers.pkg.crossplane.io` and its revisions |
+| (`--local`) `open /registry-data/.certs/tls.crt: permission denied`, and the registry container has exited | the run was started under `umask 077`: `up` wrote the registry's certificate with that umask and the non-root registry can't read it (*observed* with `up test run --e2e --local`; `up project run --local` uses the same registry, not observed). Re-run under the default umask; protect a credentials file with `chmod 600` instead |
 
 The ways out of the first row are the user's choice: pull access on the Space (an existing pull
 secret or `ImageConfig`), a public repository (`--public`, above), or `--local`, which pushes nothing
-and so cannot hit it — but is not the Space they chose. `--local` is never a silent fallback.
+and so cannot hit that row — but is not the Space they chose, and has its own cause (the last row).
+`--local` is never a silent fallback.
 
 ## Teardown and leftovers
 

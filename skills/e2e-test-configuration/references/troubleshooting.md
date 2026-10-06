@@ -96,7 +96,7 @@ and report it as terminated.
 
 | Symptom | Likely cause |
 |---|---|
-| Stuck at `Waiting for package to be ready` | package install failed or a dependency did not resolve; on a Space, often a private repository ([space.md](space.md)) |
+| Stuck at `Waiting for package to be ready` | package install failed or a dependency did not resolve; on a Space, often a private repository ([space.md](space.md)); on `--local`, a run under `umask 077` (`docker logs <cluster>-registry`; [local.md](local.md) Preconditions) |
 | Stuck at `Applying Extra Resources` | invalid ProviderConfig, missing Namespace or Secret |
 | `.spec.credentials.secret: field not declared in schema` | ProviderConfig shape: it is `secretRef`, not `secret` (author-tests' `e2e.md` reference) |
 | `InvalidClientTokenId` | credential value malformed, e.g. `session_token` instead of `aws_session_token`: check the Secret's format |

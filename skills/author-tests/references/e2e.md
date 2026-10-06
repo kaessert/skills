@@ -79,6 +79,17 @@ Web-identity fields on Spaces: AWS `upbound.webIdentity.roleARN`, Azure `upbound
 `upbound.federation.{providerID, serviceAccount}` plus `projectID`. **Never commit a real value**, and never
 inline long-lived keys in a test: use web identity, or a Secret filled from a `UP_*` variable.
 
+Build `UP_AWS_CREDENTIALS` in memory from the session's `AWS_*` variables, in the shell that runs `up test run`:
+one `printf`, no file, no umask change (drop the token line for long-lived keys):
+
+```bash
+export UP_AWS_CREDENTIALS="$(printf '[default]\naws_access_key_id = %s\naws_secret_access_key = %s\naws_session_token = %s\n' \
+  "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" "$AWS_SESSION_TOKEN")"
+```
+
+A `--local` run started under `umask 077`, a common way to protect a credentials file, never gets its package
+ready (e2e-test-configuration's `local.md` reference). If you must write a file, `chmod 600` that file instead.
+
 ## The ProviderConfig the test creates
 
 `up test generate --e2e` emits `extraResources: []` in every language: the test creates no ProviderConfig
