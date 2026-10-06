@@ -40,13 +40,9 @@ Run `setup_venv.py` once, before you write any function or test code, right afte
 `up project build` (which generates the models it installs). It takes about 11 s. Re-run it when
 you add a function or test directory; not after `up project build` (see "Models last" below).
 
-**Why, when the function never runs on your host:** the person you work for is reading this
-code in an editor while you write it. Without the venv on the interpreter path every
-`from models.io…` and `from crossplane.function import …` is underlined, go-to-definition and
-`forProvider` completion are dead, on code that is correct, and the natural response is to
-"fix" imports that were right. The fast tier needs it too: without it every iteration pays a
-full build. A project with no venv still builds and still goes green, which is why skipping it
-is the common mistake.
+**Why, when the function never runs on your host:** the fast tier needs it, and without it an
+editor underlines every correct import, inviting a "fix" of imports that were right. A project
+with no venv still builds and goes green, which is why skipping it is the common mistake.
 
 | What | Runs where | Needs the venv |
 |---|---|---|
@@ -96,19 +92,10 @@ PYBIN=$(for v in 3.13 3.12 3.11; do command -v python$v && break; done)
   pip writes a `.pth` pointing at `.up/python`, so after `up dep add` and `up project build` a
   new module (`models.io.upbound.m.aws.kms.key.v1beta1`) resolves with no pip step.
 
-**In the editor.** The interpreter is all VS Code needs: no `python.analysis.extraPaths`, no
-`__init__.py` for the embedded layout's `.model.*` imports (measured with pyright: 0 unresolved
-imports in both layouts). If an import still shows unresolved, check it with `probe_project.py`
+**In the editor**, the interpreter is all it needs; `setup_venv.py` writes the settings and
+silences the one scaffold diagnostic that is noise (`RunFunction` overrides
+`FunctionRunnerService`). If an import still shows unresolved, check it with `probe_project.py`
 rather than changing it.
-
-- One diagnostic survives on the SDK scaffold: `Method "RunFunction" overrides class
-  "FunctionRunnerService" in an incompatible manner`. The scaffold subclasses the gRPC client
-  stub, registration is duck-typed, and the SDK's own `runtime.py` does the same, so it is
-  noise. `setup_venv.py` switches that one rule off; do not restructure the scaffold.
-- A stored interpreter choice beats `settings.json`: `python.defaultInterpreterPath` applies
-  only when none is selected, including one picked in a parent folder. Run **Python: Clear
-  Workspace Interpreter Setting**, then **Developer: Reload Window**, and open the project
-  directory itself as the workspace root.
 
 ## Layout: SDK or embedded
 
