@@ -60,8 +60,7 @@ charter wins**, and the skill has a bug.
 
 ## 1. Know which kind of agent you are
 
-How you were started decides whether you can hold a conversation. Know which you are before
-you consider asking anything; every skill's mode line means this:
+How you were started decides whether you can ask anything; every skill's mode line means this:
 
 - **Interactive** — loaded into the user's conversation (inline): ask only what the project
   can't tell you.
@@ -82,9 +81,6 @@ sub-agent or run a long command when your harness cannot: in band and in the for
 detached by you.
 
 ## 2. Discover, do not interview
-
-Inline or forked, the project answers most questions faster and more reliably than the user
-does.
 
 **The project's own decisions win over these skills' defaults.** When a design document,
 work item or agent instruction for this project decides something differently — a
@@ -112,9 +108,8 @@ the XRD's defaults back to itself.
 
 ## 3. Develop test-first (RED → GREEN → REFACTOR)
 
-This is the plugin's default flow for composition code, tests, and migrations alike.
-`author-tests` owns the authoring detail; the loop itself is
-here because every skill is bound by it.
+The default flow for composition code, tests and migrations; `author-tests` owns the authoring
+detail.
 
 **Test-first is for behaviour:** the function, the composition, how status is derived.
 Scaffolding, `upbound.yaml` metadata, dependencies, the XRD, an MRAP and the examples are
@@ -122,9 +117,7 @@ declarative: `up project build`, author-configuration-package's `check_xrd_schem
 composition tests that use them check those. Write no test program for them, and don't copy a
 skill's script into the project.
 
-**Why test-first.** The most common false report is coverage for a test that could not have
-failed — *"covers the conditional branch"*, *"Coverage: complete"*. Watching the test fail first
-makes a coverage claim checkable: you saw it catch the absence of the implementation.
+**Why:** watching a test fail first makes a coverage claim checkable.
 
 ### The loop
 
@@ -134,9 +127,8 @@ makes a coverage claim checkable: you saw it catch the absence of the implementa
    up test run "tests/<t>"      # expect: FAIL
    ```
 
-   Run it directly. Do not route this through `verify-configuration`: that skill builds the
-   package and runs the whole suite, and can go on to E2E or a control plane, which is not an
-   inner loop.
+   Run it directly, not through `verify-configuration`, which builds the package and runs the
+   whole suite.
 
    **A failure is only RED if it fails for the reason you intended.** Check the message:
 
@@ -172,10 +164,8 @@ test's expected value.
 
 ## 4. Report the effect, not the intent
 
-Overstated reports follow one pattern — a green composition suite called "production-ready",
-a local KIND run reported as a Space pass, "all resources Ready" above a tree showing
-`Ready=False`, provider values "verified" from the input manifest: asserting what the change was
-*meant* to do instead of reading back what it *did*.
+An overstated report asserts what the change was *meant* to do instead of reading back what it
+*did*.
 
 Before writing any summary:
 
@@ -221,8 +211,8 @@ Compositions target the `.m.` provider API groups (`.m.` means *modern*, not "na
 
 ### Set `forProvider`, and stop
 
-Crossplane v2 fills in the rest. Adding "required v2 fields" the project does not ask for is at
-best noise and at worst breaks the resource.
+Crossplane v2 fills in the rest; "required v2 fields" the project did not ask for can break the
+resource.
 
 | Field | Do you set it? (the default; the project may override) | Why |
 |---|---|---|
