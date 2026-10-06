@@ -162,20 +162,9 @@ is no evidence about the other.
 Between bounded waits, read the log's tail to keep the user informed and to spot a stuck run. Mention errors
 briefly with a timestamp; analyse only when stuck.
 
-**Transient or terminal?** Most alarming strings during provisioning are transient, and calling one fatal
-stops a run that was about to pass:
-
-1. **A threshold is when to start asking, not a verdict.**
-2. **Transient needs recurrence, not just duration.** The same error three times is a resource that failed,
-   recovered and failed again; one error spanning the window is a resource still converging.
-3. **Match by shape, not phrase.** `<entity> <identifier> does not exist` ("database username … does not
-   exist") is dependency ordering: a sibling not ready yet. A bare "does not exist" can name the object's own
-   invalid field, a real rejection.
-4. **Validation-rejection wording is terminal**, whatever status code it arrived in; providers wrap
-   request-validation errors in 500s.
-
-Known transient: `failed to get restmapping: no matches for kind` early in a run (provider CRDs not installed
-yet). Target-specific ones are in the target's reference.
+**Most alarming strings during provisioning are transient**, and calling one fatal stops a run that was about
+to pass: before you call an error terminal, read
+[troubleshooting.md](references/troubleshooting.md#transient-or-terminal).
 
 **Stuck** = no new log output for the threshold from Phase 3. First check the resource is not still `Creating`
 (`crossplane beta trace`); slow cloud resources (NAT gateways, RDS) are normal. Otherwise investigate with the

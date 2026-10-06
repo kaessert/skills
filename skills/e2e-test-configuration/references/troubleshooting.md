@@ -1,8 +1,22 @@
 # E2E troubleshooting
 
-Read when a run is stuck or has failed. [SKILL.md](../SKILL.md) has the workflow; how to reach the control
+Read when a run is stuck or has failed, or before you call an error terminal. [SKILL.md](../SKILL.md) has the workflow; how to reach the control
 plane while it exists is in [local.md](local.md) or [space.md](space.md); the report shapes are in
 [report-templates.md](report-templates.md).
+
+## Transient or terminal?
+
+1. **A threshold is when to start asking, not a verdict.**
+2. **Transient needs recurrence, not just duration.** The same error three times is a resource that failed,
+   recovered and failed again; one error spanning the window is a resource still converging.
+3. **Match by shape, not phrase.** `<entity> <identifier> does not exist` ("database username … does not
+   exist") is dependency ordering: a sibling not ready yet. A bare "does not exist" can name the object's own
+   invalid field, a real rejection.
+4. **Validation-rejection wording is terminal**, whatever status code it arrived in; providers wrap
+   request-validation errors in 500s.
+
+Known transient: `failed to get restmapping: no matches for kind` early in a run (provider CRDs not installed
+yet). Target-specific ones are in the target's reference.
 
 ## Resources under test
 
