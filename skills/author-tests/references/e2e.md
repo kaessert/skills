@@ -134,7 +134,8 @@ const (
 )
 
 func main() {
-	// Fail before a control plane exists. Safe because the composition gate is "tests/test-*".
+	// Fail before a control plane exists. Safe while the composition gate is "tests/test-*"; a
+	// gate that globs "tests/*" runs this program too and needs this variable set.
 	creds := os.Getenv(credsVar)
 	if creds == "" {
 		fail("%s is not set: export it before running this e2e test", credsVar)
@@ -190,7 +191,8 @@ func fail(format string, args ...any) {
 
 `resourcesToItems` is the helper from the composition-test template in the charter's `languages/go/tests.md`.
 The E2E run is `up test run "tests/e2etest-<n>" --e2e …`; the composition gate stays `"tests/test-*"`, and both
-go in the project README.
+go in the project README. If the project's own gate or spec runs `up test run tests/*`, that run needs the e2e
+inputs set too; say so in the README and the report (the charter's `charter/container.md`).
 
 ## What happens on the control plane
 

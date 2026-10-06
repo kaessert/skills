@@ -73,8 +73,10 @@ up project build             # 1. the project builds
 up test run "tests/test-*"   # 2. composition tests pass
 ```
 
-Check 2 is `test-*`, not `tests/*`: `up test run` runs every matched dir's program, e2e ones too, even without
-`--e2e`, and fails at `✗ Parsing tests` when an e2e input is unset.
+Check 2 is `test-*` by default, not `tests/*`: `up test run` runs every matched dir's program, e2e ones too, even
+without `--e2e`, and fails at `✗ Parsing tests` when an e2e input is unset. If the project's own gate or spec
+runs `up test run tests/*`, use it, with the e2e inputs (check 3) set for that run too, and say so in the report
+(the charter's `charter/container.md`).
 
 3. **Credentials.** List what the test programs read, in any language, and check each:
 

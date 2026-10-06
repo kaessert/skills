@@ -236,10 +236,10 @@ E2ETest template, the field defaults (the Go scaffold writes `timeoutSeconds: 30
 program runs locally and sees every variable); name them `UP_*` anyway.
 
 **A missing input exits non-zero, naming the variable**, so an E2E run stops at parse time instead of after a
-control plane and real resources exist. That is safe only because the composition gate is
+control plane and real resources exist. That is safe because the default composition gate is
 `up test run "tests/test-*"`, which never runs this program (charter §7; write both commands in the project
-README). Do not swap the exit for a placeholder value: the run would then pass parsing without the credential
-and fail only at the provider, after a control plane exists.
+README; a project gate of `tests/*` sets the variable too). Do not swap the exit for a placeholder value: the
+run would then pass parsing without the credential and fail only at the provider, after a control plane exists.
 
 ## Go-specific failure modes (reproduced)
 
@@ -248,7 +248,7 @@ and fail only at the provider, after a control plane exists.
 | Wrong expected value | that test FAILs (good) |
 | Function mutant (`if versioning` → `if true`) | only a test with a `resourceRefs` guard FAILs; without it the suite stays green |
 | Compile error, panic or non-zero exit in `main.go` | the **whole run** fails at `✗ Parsing tests` (`failed to generate test files: … failed to execute 'go run .'`), no test executes. It reads as a broken test, never as RED |
-| E2E program exits on a missing variable under `up test run "tests/*"` | the composition gate fails at `✗ Parsing tests` (`failed to execute 'go run .': <your message>`), though no composition test is wrong. Run the gate as `"tests/test-*"` |
+| E2E program exits on a missing variable under `up test run "tests/*"` | the composition gate fails at `✗ Parsing tests` (`failed to execute 'go run .': <your message>`), though no composition test is wrong. Run the gate as `"tests/test-*"`, or, if the project's own gate is `tests/*`, set the variable for it too ([`charter/container.md`](../../charter/container.md)) |
 | `tests/e2etest-<n>` run on its own without `--e2e` | `unable to validate composition tests: no valid CompositionTests found`: the dir produced no `CompositionTest`. Add `--e2e` |
 | `items` empty | **nothing fails, and nothing ran from that dir.** Next to other tests it drops out of the count (`Total Tests Executed`); on its own, or with other empty dirs, the run prints `No test files found` and exits 0. Exit non-zero on an empty list, as the template does |
 | `go.mod`/`go.sum` not tidy or not committed | the run passes and leaves the working tree dirty |

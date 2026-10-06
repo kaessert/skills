@@ -56,9 +56,15 @@ up test run "tests/test-*"                        # composition gate: no e2e pro
 up test run "tests/e2etest-<n>" --e2e ...         # E2E: fails fast on a missing input
 ```
 
-Write both commands in the project README, so nobody uses `tests/*` as the gate. An
-`e2etest-*` directory run on its own without `--e2e` stops with `unable to validate composition
-tests: no valid CompositionTests found`: the matched directories produced no
+Write both commands in the project README, so nobody uses `tests/*` as the gate. **Unless the
+project's own gate or spec names `up test run tests/*`** (a Done-when, a Makefile, CI): then keep
+it, and that run needs the e2e inputs set too. Without `--e2e` no E2E test executes, so a program
+that only checks its input is set passes with any non-empty value (observed with up v0.55.0). Say
+so in the README beside that command, and in your report as a departure from the `tests/test-*`
+default.
+
+An `e2etest-*` directory run on its own without `--e2e` stops with `unable to validate
+composition tests: no valid CompositionTests found`: the matched directories produced no
 `CompositionTest`. That is the wrong glob or a missing flag, not a failing test.
 
 Prefer web identity (`source: Upbound`) wherever the platform supports it — no credential
