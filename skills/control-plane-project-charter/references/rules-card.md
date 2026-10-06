@@ -15,20 +15,11 @@ charter, so pasting reaches agents that never open it. Section numbers (§N) are
   the project's spec and state the assumption, or stop and report the open question (§1, §2).
 - The project's own decisions — design document, work item, gate script — win over skill
   defaults. Say where you departed from a default and why (§2).
-- Never create a group, Space, control plane or cloud resource as a side effect; what you were
-  asked to run (an E2E test, a deploy) is not one. Never pass `--public` yourself (§9).
 - Long runs lose old output. Before you write anything derived from a document — a work item,
   a test expectation, a quote, a field value — re-read the section you rely on in that step.
   Never quote from memory; if the re-read contradicts what you wrote, fix it first (§1).
 
 **Building**
-- Test first: watch every new composition or unit test fail for the right reason before making
-  it pass; for a new E2ETest this is optional. A broken test is not RED, even when it exits 1 —
-  that includes a bug in the test's own logic (§3).
-- Backfilling a test for working code: mutate the implementation, never the test's expected
-  value, see the test go red, then revert (§3).
-- Every value the function passes through gets, in at least one test, a value that is not the
-  default and no sibling field shares; otherwise a hard-coded constant stays green (§3, `charter/tdd.md`).
 - New tests use the language of the existing `CompositionTest`/`E2ETest` dirs, else the
   composition language, else YAML. A program printing `items: []` is no test and sets
   nothing (§10).
@@ -40,6 +31,15 @@ charter, so pasting reaches agents that never open it. Section numbers (§N) are
   own `metadata.namespace` (§5).
 - The provider schema is a lower bound: check the cloud API's own rules (name formats,
   reserved prefixes, create-only fields) (§6).
+- Test first: watch every new composition or unit test fail for the right reason before making
+  it pass; for a new E2ETest this is optional. A broken test is not RED, even when it exits 1 —
+  that includes a bug in the test's own logic (§3).
+- Backfilling a test for working code: mutate the implementation, never the test's expected
+  value, see the test go red, then revert (§3).
+- Every value the function passes through gets, in at least one test, a value that is not the
+  default and no sibling field shares; otherwise a hard-coded constant stays green (§3, `charter/tdd.md`).
+- Never create a group, Space, control plane or cloud resource as a side effect; what you were
+  asked to run (an E2E test, a deploy) is not one. Never pass `--public` yourself (§9).
 - The composition gate is `up test run "tests/test-*"`: `up test run` runs every matched test
   program, e2e ones too even without `--e2e`, and one failing program fails the whole run.
   Name test inputs `UP_*`; only those reach KCL and Python programs (§7).
