@@ -8,6 +8,7 @@ references:
   - references/charter/evidence.md
   - references/charter/generators.md
   - references/charter/provider-schema.md
+  - references/charter/review.md
   - references/charter/targets.md
   - references/charter/tdd.md
   - references/charter/v2-resources.md
@@ -49,7 +50,7 @@ agent, how to develop, what Crossplane v2 actually requires, and how to report w
 | function code | author-composition | the language file (§10), e.g. `languages/go/functions.md` |
 | anything under `tests/` | author-tests | the test language's file, e.g. `languages/go/tests.md`; an `E2ETest`: its `e2e.md` |
 | running E2E tests | e2e-test-configuration | its `local.md` or `space.md` |
-| reviewing | the task skills for what changed | the card's reviewer variant |
+| reviewing | no task skill | [`charter/review.md`](references/charter/review.md), and the language file's failure modes for what changed |
 | specifying work for someone else | the skills that work needs | — |
 
 Language-specific syntax lives in [`languages/`](references/languages/) — one file per language,
@@ -423,4 +424,5 @@ and `up xrd generate` drops every constraint.
 | [`charter/evidence.md`](references/charter/evidence.md) | what `up project build` checks per language, reading a render, how `assertResources` matches, making a suite exhaustive, what a suite must contain (§8) |
 | [`charter/targets.md`](references/charter/targets.md) | where `up project run` and `up test run --e2e` land (local KIND or a Space), reading `up ctx`, the group, `--kubeconfig`, `--public` and repository visibility, a run stuck on `Waiting for package to be ready`, teardown (§9) — read before a run on a Space, or one without a target flag; a `--local` E2E run needs e2e-test-configuration's `local.md` instead |
 | [`charter/generators.md`](references/charter/generators.md) | the `--language` slugs, and what each CLI generator actually emits (§10) |
-| [`rules-card.md`](references/rules-card.md) | the charter on one screen, plus a reviewer variant: read them when you build or review |
+| [`rules-card.md`](references/rules-card.md) | the charter on one screen: read it when you build |
+| [`charter/review.md`](references/charter/review.md) | the Crossplane checks for a review: the gate, the mutation check, the render, the v2 fields, dependencies, claims |

@@ -210,18 +210,10 @@ rename is a migration (top of this file).
 
 ---
 
-## Reviewing function code, and a green test with a misbehaving resource
+## A green test with a misbehaving resource
 
-**When shown function code** — reviewing it, or checking your own before you report:
-1. Check the language's required bootstrap is present.
-2. Check imports resolve against the probe or the generated schemas, and match the project's
-   generation: `.m.` paths in a v2 project (binding rule 5).
-3. Judge `providerConfigRef`, `managementPolicies` and MR `metadata.namespace` by the review
-   rule in `control-plane-project-charter` §5: removable unless the project's spec or API sets
-   them.
-4. Check flexible maps are converted to a plain map type.
-5. Check the guard-clause order — does a return above the new resource gate it unintentionally?
-6. Check a composed ProviderConfig is marked ready explicitly.
+Reviewing function code, or checking your own before you report: the checks are in
+`control-plane-project-charter`'s `charter/review.md`.
 
 **When a test passes but the resource misbehaves on a control plane:**
 1. Read the render (`control-plane-project-charter` `charter/evidence.md`) — the test may never

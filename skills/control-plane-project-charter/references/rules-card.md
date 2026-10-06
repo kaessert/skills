@@ -57,21 +57,4 @@ charter, so pasting reaches agents that never open it. Section numbers (§N) are
 
 ---
 
-**Reviewer variant.** If this conflicts with the project's spec, the spec wins; say so.
-- Re-run the gate yourself and read its output. `No test files found`, or a test program
-  printing `items: []`, is zero tests: no vacuous green counts as a pass (§8).
-- For each new test, the report names the implementation change that turns it red, and it was
-  seen failing; an E2ETest may instead be reported unproven. Check one yourself; mutating the
-  expected value does not count (§3, §4).
-- The spec's requirements are met where they depart from skill defaults, and the departure is
-  stated (§2).
-- Re-read the spec section before you write a finding from it, never quote from memory, and
-  check every quoted spec sentence verbatim against the spec, wherever it is quoted (§1).
-- Flag `providerConfigRef`, `managementPolicies` or MR `metadata.namespace` as removable unless
-  the project's spec or API sets them; flag `providerConfigRef.kind: ProviderConfig` as a bug
-  only when no namespaced `ProviderConfig` of that name exists in, or is created in, the XR's
-  namespace (§5).
-- Flag an unbounded dependency: a `dependsOn` `version` with no cap on the major, such as the
-  `'>=v0.0.0'` a bare `up dep add <ref>` writes (author-configuration-package).
-- The report names the layer reached — render, composition test, control plane, cloud — and
-  claims nothing beyond it (§4, §8).
+**Reviewing:** the checks are in [`charter/review.md`](charter/review.md).

@@ -22,9 +22,9 @@ A composition's *meaning* is language-agnostic; only its *syntax* differs. Read 
 the charter (the rules), [patterns.md](references/patterns.md) (what each pattern means), and
 the charter's `languages/` file for your language (the syntax).
 
-- **Reviewing function code, or a test passes but the resource misbehaves on a control
-  plane:** the checklists in
-  [patterns.md](references/patterns.md#reviewing-function-code-and-a-green-test-with-a-misbehaving-resource).
+- **Reviewing function code:** the checks are in the charter's `charter/review.md`. **A test
+  passes but the resource misbehaves on a control plane:**
+  [patterns.md](references/patterns.md#a-green-test-with-a-misbehaving-resource).
 - Tests → `author-tests`; XRD design and scaffolding → `author-configuration-package`; the
   gate and deploying → `verify-configuration`; live cloud runs → `e2e-test-configuration`;
   migrating a function to v2 → `plan-v2-migration` (the function-side points:
@@ -237,8 +237,7 @@ Checks for you before you report, not a report format (`control-plane-project-ch
 ## References
 
 - [patterns.md](references/patterns.md) — read in Phase 3 for each design question, when
-  reviewing function code or debugging a green test whose resource misbehaves, and when
-  migrating a function to v2.
+  debugging a green test whose resource misbehaves, and when migrating a function to v2.
 - [`scripts/`](scripts/) — Python only; read the charter's `languages/python.md` before running
   them.
 - The language files — the charter's, indexed by its `languages/README.md`; read the one
