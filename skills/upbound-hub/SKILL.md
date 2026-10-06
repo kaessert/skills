@@ -76,15 +76,9 @@ Prefer these over hand-rolled curl. They handle auth, pagination, and the quirks
 ## API groups differ by Hub version
 
 **The API surface differs by Hub major, so do not pin a group.** Hub 1.0.x served
-almost everything from `hub.upbound.io`. Hub 1.1.0 split it:
-
-| Resources | 1.0.x | 1.1.0 |
-|---|---|---|
-| `resources`, `resourcestats`, `lenses`, `typedefinitions`, `crossplanepackages`, `resourcerelationships`, `resourcerelationshiptrees` | `hub.upbound.io` | `inventory.hub.upbound.io` |
-| `controlplanes`, `spaces`, `controlplaneregistrations`, `spaceregistrations` | `hub.upbound.io` | `fleet.hub.upbound.io` |
-| `realms` | `hub.upbound.io` | `hub.upbound.io` (unchanged) |
-| `identityproviders`, `users`, `groups` | `authentication.hub.upbound.io` | `iam.hub.upbound.io` |
-| `organizationrolebindings`, `realmrolebindings`, `selfsubjectaccessreviews` | `authorization.hub.upbound.io` | `iam.hub.upbound.io` |
+almost everything from `hub.upbound.io`; Hub 1.1.0 split it into `inventory.`, `fleet.` and
+`iam.hub.upbound.io` (which group serves which resource on each major:
+[api-surface.md](references/api-surface.md)).
 
 `realms` is why this is not a rename: `hub.upbound.io` still exists on 1.1.0 and
 still serves it, so a blanket find-and-replace breaks a working call.
