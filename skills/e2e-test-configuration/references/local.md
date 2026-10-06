@@ -28,7 +28,7 @@ runs, and could change between versions.
 up test run "tests/e2etest-<n>" --e2e --local
 ```
 
-inside the run idiom in SKILL.md Step 4. Optional:
+inside the run idiom in SKILL.md Phase 4. Optional:
 
 - `--control-plane-version <version>` pins UXP (otherwise `spec.crossplane.version`, otherwise the latest
   stable UXP).
@@ -84,7 +84,7 @@ If the run never got past the package install, check that first, before tracing 
 describe configuration`. Then use the brief in [troubleshooting.md](troubleshooting.md).
 
 **A live status value.** An `E2ETest` can't assert one (author-tests' `e2e.md` reference). To read one, take it
-inside the one run you need anyway: poll with a bounded loop, as for the `EXIT=` wait in SKILL.md Step 4, and
+inside the one run you need anyway: poll with a bounded loop, as for the `EXIT=` wait in SKILL.md Phase 4, and
 repeat it until the field appears or the run ends:
 
 ```bash

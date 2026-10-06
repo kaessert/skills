@@ -14,7 +14,7 @@ references:
 Run a project's `E2ETest`s with `up test run --e2e` and report what the run did, from its own output. Each
 test gets a fresh control plane, creates real cloud resources, and is torn down afterwards, pass or fail.
 
-## Mode, and the charter
+## Before you start
 
 **Interactive:** ask only what the project can't tell you. **Unattended** (started as a separate agent, or no
 user in the loop): never ask; act on the brief and the project and state the assumption, or stop and report.
@@ -24,13 +24,14 @@ Load `control-plane-project-charter` before you start, or read its `SKILL.md` be
 this skill does not load it. §4 (report the effect, not the intent) binds every summary you write. §1 says
 what to do when your harness has no background tasks or sub-agents.
 
-## Boundaries
-
 - Writing or changing an `E2ETest` (fields, `defaultConditions`, credentials per target) is `author-tests`'
   job: read its `e2e.md` reference. This skill runs them.
 - Your scope is running and reporting. Fixes are the caller's.
 
-## Step 1: Choose the target and the tests
+If the project's own gate (README, Makefile, CI) runs E2E, use it and report its command, exit code and
+output (charter §2, §4). Everything below still applies to reading its output.
+
+## Phase 1: Choose the target and the tests
 
 A local kind control plane and an Upbound Space are equally valid targets, and this skill has no default.
 Use the one your caller, the brief or the project's own gate names, then **read that target's reference
@@ -48,10 +49,7 @@ before you run anything**:
 - **Always pass the target flags.** Without them the current context decides where the run lands, without
   saying so (`control-plane-project-charter` `charter/targets.md`).
 - **State the target in one line before the run** ("running e2e on local kind" or "running e2e on Space
-  `<space>/<group>`"), and check it against the run's first progress line (Step 5).
-
-If the project's own gate (README, Makefile, CI) runs E2E, use it and report its command, exit code and
-output (charter §2, §4). Everything below still applies to reading its output.
+  `<space>/<group>`"), and check it against the run's first progress line (Phase 4).
 
 **Which tests:** the names you were given (`e2etest-network-lifecycle`, space-separated) or `all`. With none,
 list `ls -1d tests/e2etest-*`; interactive, ask which to run; unattended, run the ones the brief names, or all
@@ -62,7 +60,7 @@ next: each has its own control plane. Stop the rest only when the failure is sha
 target, or the package install (`Waiting for package to be ready`) would fail every test the same way — and
 list what did not run.
 
-## Step 2: Preconditions
+## Phase 2: Preconditions
 
 An `--e2e` run creates a control plane and real cloud resources, so everything cheap comes first. **A
 precondition that fails ends the run**; it is not a warning you carry forward. In this order, stopping at the
@@ -95,7 +93,7 @@ credential you cannot read. A run with a precondition known to be unmet carries 
 free. Report which precondition you could not establish and what the user needs to do. Skip a check only if
 the user explicitly asks you to.
 
-## Step 3: Size the run
+## Phase 3: Size the run
 
 Read the test's own settings first:
 
@@ -108,10 +106,10 @@ grep -rniE 'timeoutseconds|skipdelete' tests/e2etest-<n>/
   Typical durations differ by target: see its reference.
 - **`skipDelete: true`** leaves the control plane and the cloud resources running. Say so before you run.
 - **Stuck threshold: `min(15 min, timeoutSeconds / 3)` with no new log output.** A fixed 15 minutes never
-  fires on a 300 s test, which fails at 5 minutes. Crossing it starts an investigation (Step 6); it is not a
+  fires on a 300 s test, which fails at 5 minutes. Crossing it starts an investigation (Phase 5); it is not a
   verdict.
 
-## Step 4: Run it
+## Phase 4: Run it
 
 One idiom on both targets; only the target flags differ:
 
@@ -130,7 +128,7 @@ One idiom on both targets; only the target flags differ:
   returns the complete log in one result.
 - **Otherwise in the background**, with your harness's own facility (charter §1; never detach it yourself with
   `nohup` or `&`). **Whatever runs it in the background must not have a shorter timeout than the run:** give
-  it the worst case from Step 3; a run cut off mid-install can leak its control plane (charter §1). Wait for
+  it the worst case from Phase 3; a run cut off mid-install can leak its control plane (charter §1). Wait for
   the process to exit with bounded waits only:
 
   ```bash
@@ -148,9 +146,7 @@ One idiom on both targets; only the target flags differ:
 - If you stop a run early (wrong target, stuck), say it was **terminated** and why. A killed run has no
   outcome.
 
-## Step 5: Check the target the run used
-
-The first progress line names it:
+**Then check the target the run used.** The first progress line names it:
 
 ```bash
 grep -m1 -E 'Creating (local )?development control plane' /tmp/e2e-<n>.log
@@ -165,7 +161,7 @@ If it contradicts the target you stated, **the result is void**, even with `EXIT
 a pass. In the background, check as soon as the line appears and terminate on a mismatch. A pass on one target
 is no evidence about the other.
 
-## Step 6: While it runs
+## Phase 5: While it runs
 
 Between bounded waits, read the log's tail to keep the user informed and to spot a stuck run. Mention errors
 briefly with a timestamp; analyse only when stuck.
@@ -185,14 +181,14 @@ stops a run that was about to pass:
 Known transient: `failed to get restmapping: no matches for kind` early in a run (provider CRDs not installed
 yet). Target-specific ones are in the target's reference.
 
-**Stuck** = no new log output for the threshold from Step 3. First check the resource is not still `Creating`
+**Stuck** = no new log output for the threshold from Phase 3. First check the resource is not still `Creating`
 (`crossplane beta trace`); slow cloud resources (NAT gateways, RDS) are normal. Otherwise investigate with the
 brief in [troubleshooting.md](references/troubleshooting.md): hand it to a sub-agent to keep your context
 small, or follow it yourself. The target's reference says how to reach the control plane while it exists.
 `up: error: context deadline exceeded` is not a diagnosis; report the underlying Configuration or Provider
 condition instead.
 
-## Step 7: Report
+## Phase 6: Report
 
 **Every claim must trace to captured output.** Before writing a line, produce these three. If you cannot,
 the report is **"UNVERIFIED — could not confirm"**, not a pass:

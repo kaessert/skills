@@ -6,7 +6,7 @@ runs of this skill, and could change between versions.
 
 ## Preconditions
 
-Run these after SKILL.md Step 2's build, composition and credential checks, stopping at the first failure.
+Run these after SKILL.md Phase 2's build, composition and credential checks, stopping at the first failure.
 
 **1. The context names a group.** Derive it; never hardcode one:
 
@@ -59,7 +59,7 @@ kubectl --kubeconfig "$KCFG" config current-context || echo "not a kubeconfig: $
 echo "group: $GROUP  kubeconfig: $KCFG"   # shell variables do not survive to your next command; reuse the values
 ```
 
-The target flags for SKILL.md Step 4's run idiom are then:
+The target flags for SKILL.md Phase 4's run idiom are then:
 
 ```bash
 up test run "tests/e2etest-<n>" --e2e --control-plane-group="<group>" --kubeconfig "<kubeconfig>"

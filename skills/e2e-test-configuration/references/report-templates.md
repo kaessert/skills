@@ -1,6 +1,6 @@
 # E2E report templates
 
-Read when writing the report (SKILL.md Step 7). Every line traces to the run's log or a read taken during the
+Read when writing the report (SKILL.md Phase 6). Every line traces to the run's log or a read taken during the
 run.
 
 ## Pass
