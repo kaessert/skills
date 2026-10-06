@@ -2,9 +2,7 @@
 
 How to iterate without paying a full build every time, and how to add tests to code that already works. [`control-plane-project-charter` §3](../../SKILL.md#3-develop-test-first-red--green--refactor) states the discipline.
 
----
-
-### The two-tier inner loop
+## The two-tier inner loop
 
 **Every `up test run` pays a full project build** — schema generation, dependency check,
 function build, package build, push to the local daemon. There is no flag to skip it;
@@ -16,7 +14,9 @@ function build, package build, push to the local daemon. There is no flag to ski
 | Python, embedded | 11–50 s, scaling with the number of test cases (11 s for two, 36 s for six) | minutes |
 
 These are composition-test runs. E2E durations are in e2e-test-configuration's `local.md` and
-`space.md` references. Use both tiers:
+`space.md` references.
+
+Use both tiers:
 
 | Tier | ~time | Catches |
 |---|---|---|
@@ -26,7 +26,7 @@ These are composition-test runs. E2E durations are in e2e-test-configuration's `
 The fast tier never replaces the RED/GREEN cycle: Python's asserts nothing, and Go's unit tests
 run no pipeline. It just stops you paying a whole build to discover a typo.
 
-### Backfilling tests for code that already exists
+## Backfilling tests for code that already exists
 
 Migrations, coverage work and "add a test for this" all start from working code, so there is
 no natural RED. That is fine — but a test written against passing code has never been
@@ -55,6 +55,8 @@ claim with evidence behind it. *"Coverage: complete"* is not.
 
 If a mutation you expected to break the test leaves the suite green, the test does not cover
 what you thought — say so rather than reporting the coverage.
+
+## Distinguishing inputs
 
 **Check that each pass-through input is distinguishing.** For every field the function copies
 from the XR (region, a config name, a CIDR, the XR's own name), hard-code the field to the
