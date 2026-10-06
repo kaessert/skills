@@ -169,9 +169,13 @@ makes a coverage claim checkable: you saw it catch the absence of the implementa
    | a syntax error, an unresolved import, a missing `compositionPath`, a run that stops at `✗ Parsing tests`, a bug in the test's own logic | **not** RED, even though it exits 1 — the test is broken, not the code. Fix it before writing any implementation |
    | a compiled language (Go): `undefined: <symbol you are adding>` | **not** RED — a compile error. Add a stub returning the zero value, then watch the assertion fail |
    | passes immediately | **not** RED — the assertion is vacuous, or the behaviour already exists |
-   | E2E: an implementation mutation (drop a composed resource others depend on, break a selector) that never readies within a short `timeoutSeconds` | valid RED. Editing `defaultConditions` or an expected value is not; an unparsable condition is a broken test (author-tests' `e2e.md` reference) |
+   | E2E: an implementation mutation (drop a composed resource others depend on, break a selector) that never readies within a short `timeoutSeconds` | valid RED, and optional (below). Editing `defaultConditions` or an expected value is not; an unparsable condition is a broken test (author-tests' `e2e.md` reference) |
 
    Record the failure text. It goes in your report as the evidence that the test bites.
+
+   **RED is required for composition tests and function unit tests, and optional for a new
+   `E2ETest`.** An e2e RED costs a real control-plane run: take it when it is cheap, as in the
+   table's last row; otherwise report the E2ETest as unproven (§4).
 
 2. **GREEN — implement** until the test passes, and no further.
 

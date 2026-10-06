@@ -213,6 +213,9 @@ the only record. Choosing the target and running it: `e2e-test-configuration`.
 
 ## E2E RED
 
+An e2e RED is optional (charter §3): it costs a real control-plane run, so take it when it is cheap, and
+otherwise report the E2ETest as unproven. RED is still required for the composition and unit tests.
+
 A valid e2e RED is an **implementation mutation** the control plane rejects or never readies: drop a composed
 resource the others depend on, or break a selector. Run it with a short `timeoutSeconds` (300) so the RED costs
 minutes. Check the failure is the Ready assertion (observed: the expected `Ready` condition against

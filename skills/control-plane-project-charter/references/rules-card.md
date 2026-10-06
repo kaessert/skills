@@ -22,8 +22,9 @@ charter, so pasting reaches agents that never open it. Section numbers (§N) are
   Never quote from memory; if the re-read contradicts what you wrote, fix it first (§1).
 
 **Building**
-- Test first: watch every new test fail for the right reason before making it pass. A broken
-  test is not RED, even when it exits 1 — that includes a bug in the test's own logic (§3).
+- Test first: watch every new composition or unit test fail for the right reason before making
+  it pass; for a new E2ETest this is optional. A broken test is not RED, even when it exits 1 —
+  that includes a bug in the test's own logic (§3).
 - Backfilling a test for working code: mutate the implementation, never the test's expected
   value, see the test go red, then revert (§3).
 - Every value the function passes through gets, in at least one test, a value that is not the
@@ -60,7 +61,8 @@ charter, so pasting reaches agents that never open it. Section numbers (§N) are
 - Re-run the gate yourself and read its output. `No test files found`, or a test program
   printing `items: []`, is zero tests: no vacuous green counts as a pass (§8).
 - For each new test, the report names the implementation change that turns it red, and it was
-  seen failing. Check one yourself; mutating the expected value does not count (§3, §4).
+  seen failing; an E2ETest may instead be reported unproven. Check one yourself; mutating the
+  expected value does not count (§3, §4).
 - The spec's requirements are met where they depart from skill defaults, and the departure is
   stated (§2).
 - Re-read the spec section before you write a finding from it, never quote from memory, and

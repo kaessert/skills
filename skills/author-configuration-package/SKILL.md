@@ -24,9 +24,10 @@ otherwise, the project wins: say so in your report.
 1. **Never block on a question nobody can answer.** Decide from the project's spec and state
    the assumption, or stop and report the open question (charter §1).
 2. **Never create a group, Space, control plane or cloud resource as a side effect** (§9).
-3. **Test first: watch each new test fail for the reason you intended**, then make it pass. A
-   broken test is not RED, even when it exits 1: a syntax error, a missing path, a run that
-   stops at `✗ Parsing tests`, a bug in the test's own logic (§3).
+3. **Test first: watch each new composition or unit test fail for the reason you intended**,
+   then make it pass; for a new E2ETest this is optional. A broken test is not RED, even when it
+   exits 1: a syntax error, a missing path, a run that stops at `✗ Parsing tests`, a bug in the
+   test's own logic (§3).
 4. **Backfilling a test for code that already works: mutate the implementation, never the
    test's expected value.** See that test go red, then revert (the charter's `charter/tdd.md`).
 5. **In a v2 project, managed resources carry `forProvider` only**, on the `.m.` API groups,
