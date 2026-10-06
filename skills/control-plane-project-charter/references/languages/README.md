@@ -43,8 +43,11 @@ detail:
    `kcl`, `python`, `go`, `go-templating` — every language `up function generate` produces.
    One toolchain and one set of idioms per project, the people who maintain the function can
    maintain its tests, and typed languages check expectations against the same models the
-   function is built on. When initializing, pass both:
-   `up project init <n> --language go --test-language go`.
+   function is built on. Pass the language to the generators:
+   `up function generate <n> <composition-path> --language go`, then
+   `up test generate <n> --language go`. `up project init --scratch` creates neither and ignores
+   `--language`; only a `--template` project takes `--language` and `--test-language` at init,
+   and every template is v1 (author-configuration-package Phase 1).
 3. Otherwise **YAML** — the fallback for TypeScript functions (the CLI has no TS test
    language) and projects with no embedded function. `up project init` does not accept
    `--test-language yaml`; scaffold YAML tests with `up test generate <n> --language yaml`.

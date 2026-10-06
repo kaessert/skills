@@ -384,8 +384,8 @@ to make it work is.
 ## 10. Language dispatch
 
 Detect the composition language from `functions/` and the test language from `tests/`, then
-read the matching file. They are separate axes — `up project init` takes `--language` and
-`--test-language` separately, and an existing project may mix them. The detection table — the
+read the matching file. They are separate axes — `up function generate` and `up test generate`
+each take their own `--language`, and an existing project may mix them. The detection table — the
 markers `up` itself checks, and which reference to read for functions and for tests — is
 [`languages/README.md`](references/languages/README.md).
 
