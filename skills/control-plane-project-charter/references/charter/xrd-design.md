@@ -2,6 +2,8 @@
 
 Naming, validation, immutability and status for the API your users type against. [`control-plane-project-charter` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) covers what a *composed resource* needs and why you write the XRD by hand; this covers what to put in it.
 
+A schema that parses can still be one nobody can consume: no `description` means `kubectl explain` documents nothing, no `enum` or `pattern` means bad input fails in the provider rather than at `kubectl apply`, and an empty `status` means the caller cannot learn what the composition computed.
+
 ---
 
 ## Everything here is driven by one constraint

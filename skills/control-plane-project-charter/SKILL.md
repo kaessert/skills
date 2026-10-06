@@ -264,14 +264,9 @@ example carries values, never constraints, so an inferred schema loses every `re
 [`charter/v2-resources.md`](references/charter/v2-resources.md) has the v2 skeleton and what
 inference does to the generated model.
 
-**Then design the schema, do not just transcribe fields.** A schema that parses can still be
-one nobody can consume: no `description` means `kubectl explain` documents nothing, no `enum`
-or `pattern` means bad input fails in the provider rather than at `kubectl apply`, and an empty
-`status` means the caller cannot learn what the composition computed. Because XRD versions must
-round-trip, most of this is permanent from the first version that ships, so it is cheap at
-`v1alpha1` and impossible later.
-[`charter/xrd-design.md`](references/charter/xrd-design.md) has the rules, the CEL patterns, and the
-`--dry-run=server` loop that proves them on a control plane.
+**Then design the schema, do not just transcribe fields;** most of it is permanent from the
+first version that ships. [`charter/xrd-design.md`](references/charter/xrd-design.md) has why,
+the rules, the CEL patterns, and the `--dry-run=server` loop that proves them.
 
 ## 6. The provider schema is a lower bound, not the constraint set
 
