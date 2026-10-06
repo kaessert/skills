@@ -36,12 +36,11 @@ references:
 ---
 # Development Charter
 
-**Every skill in this plugin follows this charter.** It holds the rules that do not depend on
-which language a project is written in or which skill you happen to be: how to behave as an
-agent, how to develop, what Crossplane v2 actually requires, and how to report what you did.
+**Every skill in this plugin follows this charter:** how to behave as an agent, how to
+develop, what Crossplane v2 actually requires, and how to report what you did.
 
-**It does not replace the task skill.** Before you write, review or specify work, load the
-skill that owns the work:
+**It does not replace the task skill.** Before you write, review or specify work, load what
+your row names:
 
 | Work | Load | And read |
 |---|---|---|
@@ -52,17 +51,10 @@ skill that owns the work:
 | reviewing | no task skill | [`charter/review.md`](references/charter/review.md), and the language file's failure modes for what changed |
 | specifying work for someone else | the skills that work needs | — |
 
-Language-specific syntax lives in [`languages/`](references/languages/) — one file per language,
-indexed by [`languages/README.md`](references/languages/README.md), which holds the detection table (§10). Skill
-workflows live in each skill's `SKILL.md`. Nothing in this file is language-specific, and
-nothing in it is optional.
-
-When a skill's own guidance contradicts this charter, **the charter wins** — and that
-contradiction is a bug worth fixing in the skill.
-
-**This file holds the rules; the detail sits beside it in [`charter/`](references/charter/).** Read this
-one end to end — it is short on purpose. Follow a link when you need the evidence, the tables
-or the worked example behind a rule.
+This file holds the rules, none of them language-specific and none optional. The evidence and
+worked examples sit in [`charter/`](references/charter/), the syntax in
+[`languages/`](references/languages/) (§10). Where a skill contradicts this charter, **the
+charter wins**, and the skill has a bug.
 
 ---
 
@@ -394,19 +386,14 @@ does and does not change, diagnosing `context deadline exceeded`, and teardown.
 
 ## 10. Language dispatch
 
-Detect the composition language from `functions/` and the test language from `tests/`, then
-read the matching file. They are separate axes — `up function generate` and `up test generate`
-each take their own `--language`, and an existing project may mix them. The detection table — the
-markers `up` itself checks, and which reference to read for functions and for tests — is
-[`languages/README.md`](references/languages/README.md).
+Detect the composition language from `functions/` and the test language from `tests/` — separate
+axes, which a project may mix — with the table in
+[`languages/README.md`](references/languages/README.md), then read the file it names. **New tests
+use the language of the existing tests, else the composition language if `up` tests in it, else
+YAML**; a program that emits no `CompositionTest` or `E2ETest` (a Go program printing
+`items: []`) is not a test and sets nothing
+([why, and the flags](references/languages/README.md#choosing-the-test-language-for-new-tests)).
 
-**New tests use the language of the existing tests, else the composition language if `up`
-tests in it, else YAML.** Only a test dir that produces a `CompositionTest` or `E2ETest`
-counts; a program that emits none (a Go program printing `items: []`) is not a test (§8) and
-sets nothing. The reasons and the `init`/`generate` flags:
-[`languages/README.md`](references/languages/README.md#choosing-the-test-language-for-new-tests).
-
-**Detail:** [`charter/generators.md`](references/charter/generators.md) has the accepted
-`--language` slugs and what each generator actually emits: `up project init` produces a **v1**
-project, `up test generate` prepends `test-`, `up composition generate` wires only auto-ready,
-and `up xrd generate` drops every constraint.
+**Detail:** [`charter/generators.md`](references/charter/generators.md) has the `--language`
+slugs and what each generator emits: `up project init` produces a **v1** project, and
+`up xrd generate` drops every constraint.
