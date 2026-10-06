@@ -47,7 +47,7 @@ detail:
    `up function generate <n> <composition-path> --language go`, then
    `up test generate <n> --language go`. `up project init --scratch` creates neither and ignores
    `--language`; only a `--template` project takes `--language` and `--test-language` at init,
-   and every template is v1 (author-configuration-package Phase 1).
+   and every template is v1 (author-configuration-package Phase 2).
 3. Otherwise **YAML** — the fallback for TypeScript functions (the CLI has no TS test
    language) and projects with no embedded function. `up project init` does not accept
    `--test-language yaml`; scaffold YAML tests with `up test generate <n> --language yaml`.
