@@ -131,7 +131,9 @@ One idiom on both targets; only the target flags differ:
 - **Foreground** when the worst case fits the longest timeout your harness allows for one command. The call
   returns the complete log in one result.
 - **Otherwise in the background**, with your harness's own facility (charter §1; never detach it yourself with
-  `nohup` or `&`), and wait for the process to exit with bounded waits only:
+  `nohup` or `&`). **Whatever runs it in the background must not have a shorter timeout than the run:** give
+  it the worst case from Step 3; a run cut off mid-install can leak its control plane (charter §1). Wait for
+  the process to exit with bounded waits only:
 
   ```bash
   for _ in $(seq 1 30); do grep -q '^EXIT=' /tmp/e2e-<n>.log && break; sleep 20; done
@@ -214,7 +216,8 @@ Then:
   derive a duration from file timestamps (a log's or any file's birth or modification time), and never
   estimate: an unrelated file's timestamp once turned a 6-minute run into "~95 min".
 - **Readiness is what you read.** The assert step passing in the log is the evidence. A resource read must be
-  taken while the control plane exists: both targets tear it down after every test.
+  taken while the control plane exists: both targets tear it down after every test. A status value read during
+  the run is quoted as "read-back, not asserted" (how, on kind: [local.md](references/local.md)).
 - **A claim about the provider comes from the provider:** its own read (CLI or SDK, whichever is installed),
   taken before teardown, and quoted. Reading back the XR or your manifest proves only that your input
   round-tripped. Without that read, say "not verified at the provider".
@@ -236,6 +239,7 @@ Shape (templates in [report-templates.md](references/report-templates.md)):
 - Write a verdict from a poll, or report an outcome for a run that was terminated or cut off.
 - Derive a duration from file timestamps, or estimate one.
 - Report readiness or provider state you did not read.
+- Re-run a green e2e only to read a status value: read it during the run, or report "not read back".
 - Local: delete a kind cluster or container this run did not create.
 - Space: **add `--public` on your own initiative. It permanently publishes the user's package**; only the
   caller chooses it.

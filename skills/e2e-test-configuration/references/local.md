@@ -37,7 +37,7 @@ inside the run idiom in SKILL.md Step 4. Optional:
 
 ## What the run does
 
-1. Creates a kind cluster named `<project>-uptest-<test name>` (truncated to 63 characters) on the node image
+1. Creates a kind cluster whose name starts `<project>-uptest-` (shortened: below) on the node image
    `xpkg.upbound.io/upbound/kind-node`: Kubernetes v1.37.0 with up v0.55.0. It also starts a local OCI registry
    container (`upbound/olareg`).
 2. Installs UXP: `spec.crossplane.version` or `--control-plane-version` if set, otherwise **the latest stable
@@ -63,19 +63,44 @@ Size `timeoutSeconds` to what you provision (author-tests' `e2e.md` reference); 
 
 ## Reaching the cluster while it runs
 
-The cluster exists only during the run. For a stuck investigation or a provider-state read:
+The cluster exists only during the run. Its name is `<project>-uptest-<test>` shortened: observed with up
+v0.55.0, a 56-character name became its first 49 characters, ending in `-`. Don't derive it, and don't wait on
+a word such as `cluster`: find it with `kind get clusters`, the entry starting `<project>-uptest-`. The
+registry container is `<cluster>-registry`.
 
 ```bash
-kind get clusters                                   # look for <project>-uptest-<test>
+kind get clusters                                   # the entry starting <project>-uptest-
 KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
 kind get kubeconfig --name <cluster> > "$KCFG"
 kubectl --kubeconfig "$KCFG" get managed -A
 ```
 
-`up` also writes a transient `/tmp/up-*.kubeconfig` during the run (observed); it goes with the cluster. If
-the run never got past the package install, check that first, before tracing any managed resource:
+Use `kind get kubeconfig`, not a kubeconfig `up` leaves in `/tmp`: observed with up v0.55.0,
+`/tmp/up-*.kubeconfig` was empty (0 bytes), and the test's own `/tmp/<test><random>/kubeconfig.yaml` was gone by
+the next read.
+
+If the run never got past the package install, check that first, before tracing any managed resource:
 `docker logs <cluster>-registry` (the umask precondition), then `kubectl get pkgrev -o wide` and `kubectl
 describe configuration`. Then use the brief in [troubleshooting.md](troubleshooting.md).
+
+**A live status value.** An `E2ETest` can't assert one (author-tests' `e2e.md` reference). To read one, take it
+inside the one run you need anyway: poll with a bounded loop, as for the `EXIT=` wait in SKILL.md Step 4, and
+repeat it until the field appears or the run ends:
+
+```bash
+for _ in $(seq 1 24); do
+  grep -q '^EXIT=' /tmp/e2e-<n>.log && break
+  kind get kubeconfig --name <cluster> > "$KCFG" 2>/dev/null &&
+    kubectl --kubeconfig "$KCFG" get <xr-kind> <xr-name> -n <namespace> -o jsonpath='{.status}' \
+      > /tmp/e2e-<n>-status.json 2>/dev/null &&
+    grep -q '<field>' /tmp/e2e-<n>-status.json && break
+  sleep 5
+done
+```
+
+Quote it as **"read-back, not asserted"**, with its `Ready` condition: a read while `Ready` is `False` can be
+partial. It is not a provider read. Never re-run a green e2e only to read status: if the window was missed,
+report "not read back".
 
 ## Evidence and cleanup
 
@@ -92,9 +117,10 @@ After the run the cluster is gone, so `kubectl get managed` afterwards is imposs
 ## Leaks
 
 - **A half-built cluster can leak.** If control-plane creation fails partway, `up` never hands it to teardown
-  (from the v0.55.0 source, not observed), so a kind cluster or registry container can stay behind. After a
-  failure at `Creating local development control plane`, run `kind get clusters` and `docker ps -a`.
-- **Remove only what this run created:** the cluster named `<project>-uptest-<test>`, with
+  (from the v0.55.0 source, not observed), so a kind cluster or registry container can stay behind. A run
+  killed mid-install by a command timeout left both behind (observed). After either, run `kind get clusters`
+  and `docker ps -a`.
+- **Remove only what this run created:** the cluster `kind get clusters` lists for this run, with
   `kind delete cluster --name <cluster>`. Anything else on the machine is the user's.
 - **`kind delete cluster` leaves the registry container behind** (`charter/targets.md`). If you delete a
   leaked cluster by hand, check `docker ps -a` for this run's registry container (`upbound/olareg`) and remove it

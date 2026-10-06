@@ -58,5 +58,10 @@ the background (an E2E test). Neither is a tool name; use whatever your harness 
   detach it yourself with `nohup` or `&` and poll for it. If that
   timeout ends the run first, report the run as *cut off* and what it had reached — a run
   that did not finish has no outcome to report.
+- **Long commands keep a timeout that fits them.** Whatever runs a command, in the background or
+  not, must not have a shorter timeout than the command's worst case: set it on the call itself.
+  A killed `up` run can leave its kind cluster or containers behind (observed: a background E2E
+  run cut off by a default command timeout leaked its kind cluster and registry; a composition
+  gate over 9 test directories was cut off the same way, likely leaving its render containers).
 - **Checking on and stopping a background run** means reading its output so far and
   stopping it with your harness's own tools. A foreground run has nothing to check on.

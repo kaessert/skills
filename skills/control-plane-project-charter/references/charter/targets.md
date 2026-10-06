@@ -26,7 +26,7 @@ Creating development control plane in Spaces         <- Space
 
 | | Local KIND | Space |
 |---|---|---|
-| Control plane | kind cluster `up-<project>` (`up project run`) or `<project>-uptest-<test>` (E2E), plus a registry container `<cluster>-registry` | `ControlPlane` of the same name in the group |
+| Control plane | kind cluster `up-<project>` (`up project run`) or `<project>-uptest-<test>` (E2E; can be shortened, so read it from `kind get clusters`), plus a registry container `<cluster>-registry` | `ControlPlane` of the same name in the group |
 | Package | sideloaded into the local registry; nothing is pushed | pushed to `spec.repository`, then installed |
 | Repository, `--public`, group | none of them apply | all of them apply (below) |
 | Cloud resources | created, through the test's or project's provider credentials | created |
