@@ -107,6 +107,8 @@ Four things make an assertion bite:
 | **Use distinguishing inputs.** | Every parameter the function passes through (region, config names, CIDRs, the XR's own name, …) gets a non-default value, unique across fields, in at least one test; a required field with no default needs two tests with different values. An input equal to the default or to a sibling field can't tell pass-through from a hard-coded constant. Backfill check: charter `tdd.md`. |
 
 - **Define the XR inline** where the format supports it, with `namespace: default` (v2).
+- **Assert list membership on the parsed list**, not by substring matching on a joined string:
+  a short token matches inside a longer one (`rt` inside `rta-…`).
 - **Composed-resource names:** never guess one; the naming rule is in charter
   `charter/evidence.md` ([test-model.md, mistake 1](references/test-model.md#1-guessed-composed-resource-names)).
 - **Managed resources in a test follow binding rule 5**, written as the import path in KCL,
@@ -180,6 +182,8 @@ requirement on a file — dependencies in `upbound.yaml`, a frozen XRD surface, 
   surface; `<author-configuration-package>` is the directory containing that skill's SKILL.md,
   beside this skill's directory. Where the project has a gate script, such checks belong there,
   beside the build and the test run (charter §2: the project's gate wins; `verify-configuration`).
+- **A check is coverage only if it is committed** — under `tests/`, or in the gate script —
+  and run by the gate. A scratch check in `/tmp` is not.
 - **Never turn a test program into a linter.** A test dir that checks repo files, exits
   non-zero on a mismatch and prints `items: []` adds zero tests. Passing, it drops out of the
   count (alone: `No test files found`, exit 0); failing, it stops at `✗ Parsing tests`, which

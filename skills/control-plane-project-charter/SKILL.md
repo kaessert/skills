@@ -171,6 +171,7 @@ makes a coverage claim checkable: you saw it catch the absence of the implementa
    | `no actual resource found` for the resource you are about to compose | valid RED |
    | a field mismatch naming the exact field you are adding | valid RED |
    | a syntax error, an unresolved import, a missing `compositionPath`, a run that stops at `✗ Parsing tests`, a bug in the test's own logic | **not** RED, even though it exits 1 — the test is broken, not the code. Fix it before writing any implementation |
+   | a compiled language (Go): `undefined: <symbol you are adding>` | **not** RED — a compile error. Add a stub returning the zero value, then watch the assertion fail |
    | passes immediately | **not** RED — the assertion is vacuous, or the behaviour already exists |
    | E2E: an implementation mutation (drop a composed resource others depend on, break a selector) that never readies within a short `timeoutSeconds` | valid RED. Editing `defaultConditions` or an expected value is not; an unparsable condition is a broken test (author-tests' `e2e.md` reference) |
 
@@ -179,6 +180,12 @@ makes a coverage claim checkable: you saw it catch the absence of the implementa
 2. **GREEN — implement** until the test passes, and no further.
 
 3. **REFACTOR** with the suite green, then add the next failing assertion and repeat.
+
+**Use distinguishing inputs.** Every value the function passes through gets, in at least one
+test, an input that is neither its default nor shared with a sibling field, or a hard-coded
+constant stays green (author-tests Phase 3). For a pass-through field, expected == input is
+correct; prove it by hard-coding the field in the function and seeing a test go red, never by
+editing the expectation.
 
 **Detail:** [`charter/tdd.md`](references/charter/tdd.md) — the two-tier inner loop (every `up test run` pays a full build, so use a fast tier for crashes), and how to backfill tests for code that already works by proving each one can fail: mutate the implementation, never the test's expected value.
 
@@ -211,6 +218,8 @@ Before writing any summary:
    honest summary is "tests pass; provider validity unchecked; not deployed", that is the
    summary — it is more useful to the caller than a confident one that is wrong. A skill's
    success criteria are checks for you, not a report format: do not tick them off in a report.
+7. **Comments, docs and READMEs claim no more than a named test or run.** They are read as
+   reports.
 
 **Abort on a failed precondition; do not proceed and report the symptom.** A check that
 comes back *blocked* — not merely *failed* — means the run you are about to start cannot

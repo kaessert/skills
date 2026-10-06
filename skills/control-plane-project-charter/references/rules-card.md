@@ -52,7 +52,7 @@ charter, so pasting reaches agents that never open it. Section numbers (§N) are
   fail. Otherwise call the test unproven (§4, §8).
 - Name the layer you reached — render, composition test, local control plane, cloud — and
   never claim one you did not reach (§4, §8).
-- Comments and docs claim no more than the test checks (§4).
+- Comments, docs and READMEs claim no more than a named test or run (§4).
 
 ---
 
