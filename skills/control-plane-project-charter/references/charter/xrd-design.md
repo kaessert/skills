@@ -46,24 +46,20 @@ The test is whether the word is restating *this* object or naming another one. T
 
 This is deliberately *not* the Kubernetes core convention. Core spells them `containerID`, `imageID`, `storagePolicyID`, and copying that into an XRD is the mistake: across the Crossplane resources your users see beside your XR, the field surface is title-case throughout. `vpcID` on your XR next to `vpcId` on everything around it is one concept with two spellings, and a reader pays for it every time.
 
-**Orthography is not vocabulary**, and the distinction matters because this file argues both sides. Choosing `repositoryClass` over a backend's `rclass`, or `Enabled` over `on`, is your platform's vocabulary and yours to set; that is what "not a thin wrapper" means. `Id` versus `ID` is not a naming decision at all. Diverging on it buys nothing and costs a double-take, so follow the convention and spend the design budget on the names that carry meaning.
+Vocabulary (`repositoryClass` over a backend's `rclass`) is yours to set; orthography (`Id` versus `ID`) is not, so follow the convention.
 
 The failure is silent either way: a wrong guess is a schema mismatch nobody notices, not an error.
 
 **Get the Kind right** (it cannot be renamed, above). `HttpLoadbalancer` should be `HTTPLoadBalancer`: two defects, only one of them mechanical, since no table can see the missing word boundary in `Loadbalancer`.
 
-For the Kind, an **allowlist of tokens that must be upper-cased** is what scales, each written with the expansion it stands for. The allowlist is inverted from the intuitive design, and the inversion is the reason it works. A *registry* of canonical initialisms, used to decide what casing is wrong, fires on every name it does not know, so nearly every hit is a gap in the registry rather than a defect, and the check gets switched off. An allowlist used the other way can only ever produce a **missed defect**, never a false alarm. An entry nobody can expand does not belong in it.
-
-The field surface needs no list at all. Under the title-case rule no word in a correct field name is ever all-caps, so any all-caps run of two letters or more is a defect without consulting a table, which is registry-free and safe against an acronym nobody wrote down.
+For the Kind, keep an **allowlist of tokens that must be upper-cased**, each with the expansion it stands for; an entry nobody can expand does not belong in it. The field surface needs no list: any all-caps run of two letters or more is a defect. (Why an allowlist and not a registry: the docstring of author-configuration-package's `check_xrd_schema.py`.)
 
 Two rules neither approach makes for you:
 
 - **Stacked acronyms, on a Kind.** Canonicalising both halves of `VmiId` gives `VMIID`, readable as neither "VMI ID" nor one word. Expand the leading one into a word: `VMInstanceID`. On the *field* surface this never arises: `vmiId` is already correct.
 - **Invented abbreviations.** `adminsSG` forces `SG` vs `Sg`, and in a Crossplane codebase `SG` reads as an AWS security group whatever you meant. Title-casing it to `adminsSg` answers the casing question and leaves the worse one. No list catches this, because the token is yours. `adminGroups` has no casing question and no second reading.
 
-**Consistency checking alone reports this schema clean.** Comparing every field name against every other, case-insensitively, catches `projectID` beside `ProjectId`: one concept, two spellings. It is blind to an acronym spelled two ways across names that never collide, such as `tlsConfig` beside `tlsParameters`, or one name carrying both spellings inside itself.
-
-So run both. Neither subsumes the other.
+Comparing names case-insensitively catches `projectID` beside `ProjectId`, but not one acronym spelled two ways across names that never collide; the casing rules above catch that. The script runs both.
 
 ---
 
@@ -203,23 +199,12 @@ This is a real design decision rather than a rule: a team may keep the field del
 
 ---
 
-## Check the names mechanically, and assert the corpus
+## Check the names mechanically
 
-```bash
-python3 <author-configuration-package>/scripts/check_xrd_schema.py \
-  apis/*/definition.yaml
-```
-
-`<author-configuration-package>` is the directory containing that skill's SKILL.md, beside the
-charter's own directory.
-
-Collisions, allowlist casing, group stutter, enum casing, missing descriptions, unbounded lists and printer columns Crossplane already appends are all greppable out of the YAML, before any cluster is involved. The script's `ACRONYMS` table applies to the **Kind only**: trim it to the acronyms this API actually uses, and add entries only with the expansion written beside them. Field casing needs no table, because the title-case rule makes any all-caps run a defect on its own.
-
-Booleans, bare strings and group stutter print as `REVIEW`, not `FAIL`. A check that fails every boolean gets disabled, and each of these is a judgement: whether `gatewayName` restates this object or names another one is not something a prefix match can decide.
-
-On a frozen API (already shipped, or fixed by the project's spec), record each `FAIL` you may not fix under its rule class in `xrd-schema-exceptions.yaml`, with a reason, or read its state with `--report-only`. author-configuration-package's SKILL.md has the format.
-
-One trap sits underneath all of it: **a check whose corpus is empty reports every schema clean.** Assert the corpus size before trusting the verdict, and exit non-zero on extraction failure with a different code than on a finding. The script exits `0` clean, `10` on a finding and `2` when it extracted nothing, so a caller can tell a pass from a silence.
+Run author-configuration-package's `check_xrd_schema.py` as its Phase 3 says (exit codes, the
+`ACRONYMS` table, the exceptions file for a frozen API). Booleans, bare strings and group stutter
+print as `REVIEW`, not `FAIL`: each is a judgement, and a check that fails every boolean gets
+disabled.
 
 What the check does not look at, deliberately: **kind stutter** (`repositoryClass` is a good name and `repositoryName` is not, the difference is semantic, and a check firing on both pushes someone to break the good one); which fields are **identity fields** needing `self == oldSelf`; and whether a `pattern` matches what the backend actually enforces. Those stay review judgements.
 
