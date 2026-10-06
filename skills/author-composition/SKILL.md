@@ -11,6 +11,25 @@ references:
 Author and modify Crossplane composition functions, in any language `up function generate`
 supports, test first.
 
+## Before you start
+
+**Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
+the spec and state the assumption, or stop and report. Load `control-plane-project-charter`
+before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
+load it.
+
+A composition's *meaning* is language-agnostic; only its *syntax* differs. Read three layers:
+the charter (the rules), [patterns.md](references/patterns.md) (what each pattern means), and
+the charter's `languages/` file for your language (the syntax).
+
+- **Reviewing function code, or a test passes but the resource misbehaves on a control
+  plane:** the checklists in
+  [patterns.md](references/patterns.md#reviewing-function-code-and-a-green-test-with-a-misbehaving-resource).
+- Tests → `author-tests`; XRD design and scaffolding → `author-configuration-package`; the
+  gate and deploying → `verify-configuration`; live cloud runs → `e2e-test-configuration`;
+  migrating a function to v2 → `plan-v2-migration` (the function-side points:
+  [patterns.md](references/patterns.md#migrating-a-function-to-v2)).
+
 ## Binding rules — they hold even if you open nothing else
 
 These are the core of `control-plane-project-charter`, which this skill does not load for you;
@@ -44,17 +63,6 @@ otherwise, the project wins: say so in your report.
     re-read the section you rely on in that step. Never quote from memory; if the re-read
     contradicts what you wrote, fix it first (charter §1).
 
-## Mode, and the charter
-
-**Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
-the spec and state the assumption, or stop and report. Load `control-plane-project-charter`
-before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
-load it.
-
-A composition's *meaning* is language-agnostic; only its *syntax* differs. Read three layers:
-the charter (the rules), [patterns.md](references/patterns.md) (what each pattern means), and
-the charter's `languages/` file for your language (the syntax).
-
 ## Phase 1: Detect the language and the Crossplane generation — do not ask
 
 **Language.** Detect the *function* language from `functions/` with the table in the charter's
@@ -79,6 +87,12 @@ function breaks every v2 rule. Match what the project is (binding rule 5); migra
 generation on its first line and recommends imports accordingly.
 
 ## Phase 2: Discover — do not ask
+
+Make sure the XRD and a composition exist so the test has something to point at. Write the
+XRD yourself (`author-configuration-package`; the charter's `charter/v2-resources.md` has the
+v2 skeleton), scaffold the composition with `up composition generate`, which emits only an
+auto-ready step, and wire your function in with `up function generate <n> <composition-path>`.
+The function body stays empty or unchanged.
 
 `control-plane-project-charter` §2 has the general table. The composition-specific additions:
 
@@ -127,20 +141,15 @@ The design you just settled fixes what the function must emit — keys, Kinds, f
 that as an assertion now, while it states intent.
 
 **Who does what in a run that changes the function.** `author-tests` writes the test (its
-Phases 1–3, and Phase 5 for what no render reaches). This skill runs RED (step 3 below), GREEN
+Phases 1–3, and Phase 5 for what no render reaches). This skill runs RED (step 2 below), GREEN
 (Phase 5) and REFACTOR (Phase 6). The gate comes once, after this skill's Phase 6, as
 `author-tests` Phase 6 describes. A run that only adds or changes tests stays in `author-tests`
 throughout.
 
-1. Make sure the XRD and a composition exist so the test has something to point at. Write the
-   XRD yourself (`author-configuration-package`; the charter's `charter/v2-resources.md` has the v2 skeleton), scaffold the
-   composition with `up composition generate`, which emits only an auto-ready step, and wire
-   your function in with `up function generate <n> <composition-path>`. The function body
-   stays empty or unchanged.
-2. Author the test via `author-tests`, which reads the same `languages/` file you did.
-3. **Run it and read the failure:** `up test run "tests/<t>"` — expect FAIL, for a reason the
+1. Author the test via `author-tests`, which reads the same `languages/` file you did.
+2. **Run it and read the failure:** `up test run "tests/<t>"` — expect FAIL, for a reason the
    charter's §3 table counts as RED.
-4. **Keep the failure text.** It is what makes the coverage claim in your summary checkable.
+3. **Keep the failure text.** It is what makes the coverage claim in your summary checkable.
 
 Adding to a composition that already works has no natural RED: write the new assertion, run
 it, and confirm *it* fails while the others still pass.
@@ -186,36 +195,29 @@ why each green thing is not evidence).
    `ClusterProviderConfig/default`, with a `kind` naming an object that exists; any field the
    project's spec or API sets. A `namespace` on a composed Secret or ConfigMap of a namespaced
    XR is not legitimate: Crossplane overwrites it.
-3. **The suite satisfies the charter's `charter/evidence.md` "Coverage"**: one test per input shape,
+3. **Read the render, not the assertions:** `up test run "tests/test-*" --function-logs`, then
+   read it as `charter/evidence.md` says (the directory the run prints). Add each emitted
+   resource to `assertResources`; until you do it is untested, though the suite is green.
+4. **The suite satisfies the charter's `charter/evidence.md` "Coverage"**: one test per input shape,
    including a minimal XR via inline `xr`; one test per observed-state branch, saying what it
    proves (your branch logic, given the status you wrote) and what it does not (that a provider
    reports that status); every `status` field the function writes asserted on the composite.
-4. **Read the render, not the assertions:** `up test run "tests/test-*" --function-logs`, then
-   read it as `charter/evidence.md` says (the directory the run prints). Add each emitted
-   resource to `assertResources`; until you do it is untested, though the suite is green.
-5. **Claim only what ran** (binding rule 9). Composition tests render and assert; they talk
-   to no provider and install nothing.
 
-   | You may say | You may not say |
-   |---|---|
-   | "composition tests pass, N/N" | "production-ready" |
-   | "renders the resources I intended, with these fields" | "can be deployed to a control plane" |
-   | "provider constraints checked for Kinds X, Y" | "verified" / "working" — you ran no provider |
+## Phase 7: Report
 
-   **Out of reach locally:** external-name semantics — whether a resource's external name is
-   provider-assigned or the identifier you set — are undiscoverable from CRDs or models, and
-   `assertResources` is partial-positive, so a stray annotation is never flagged. Check it on
-   a live control plane, or say it is unchecked.
+**Claim only what ran** (binding rule 9). Composition tests render and assert; they talk
+to no provider and install nothing.
 
-## Boundaries
+| You may say | You may not say |
+|---|---|
+| "composition tests pass, N/N" | "production-ready" |
+| "renders the resources I intended, with these fields" | "can be deployed to a control plane" |
+| "provider constraints checked for Kinds X, Y" | "verified" / "working" — you ran no provider |
 
-- **Reviewing function code, or a test passes but the resource misbehaves on a control
-  plane:** the checklists in
-  [patterns.md](references/patterns.md#reviewing-function-code-and-a-green-test-with-a-misbehaving-resource).
-- Tests → `author-tests`; XRD design and scaffolding → `author-configuration-package`; the
-  gate and deploying → `verify-configuration`; live cloud runs → `e2e-test-configuration`;
-  migrating a function to v2 → `plan-v2-migration` (the function-side points:
-  [patterns.md](references/patterns.md#migrating-a-function-to-v2)).
+**Out of reach locally:** external-name semantics — whether a resource's external name is
+provider-assigned or the identifier you set — are undiscoverable from CRDs or models, and
+`assertResources` is partial-positive, so a stray annotation is never flagged. Check it on
+a live control plane, or say it is unchecked.
 
 ## Success criteria
 
