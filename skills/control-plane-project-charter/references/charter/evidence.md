@@ -126,8 +126,9 @@ function that never checks readiness passes.
 
 **3. Assert every `status` field the function writes, on the composite.** `assertResources`
 matches the composite ([§8](../../SKILL.md#8-a-green-run-is-not-evidence)). Without this, a
-status write that clobbers nested keys — writing the status more than once drops all but the
-last — passes silently, and you blame the provider.
+status write that clobbers nested keys — writing the status more than once can drop all but the
+last (Go: `languages/go/functions.md`, several status fields) — passes silently, and you blame
+the provider.
 
 Other inline fields worth knowing, all optional: `composition` and `xrd` (inline instead of
 `*Path`), `extraResources`, `context`, and `functionCredentialsPath`.

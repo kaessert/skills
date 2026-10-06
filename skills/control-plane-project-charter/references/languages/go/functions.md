@@ -36,7 +36,7 @@ and history keeps it. Compile with `go vet ./...` or `go build -o /dev/null ./..
 | `request.GetObservedComposedResources(req)` | `map[resource.Name]resource.ObservedComposed`, keyed by composition resource name: `observed["bucket"].Resource.GetString("status.atProvider.arn")` |
 | `.Resource.GetAnnotations()["crossplane.io/external-name"]` | an annotation. Its key has dots, so the path `metadata.annotations.crossplane.io/…` fails with `no such field`; `GetStringObject("metadata.annotations")[key]` and the bracket path `GetString("metadata.annotations[<key>]")` work too |
 | `.Resource.SetValue("metadata.labels[<key>]", v)` | writes one label whose key has dots or slashes; the same bracket segment works for `metadata.annotations[<key>]` and `spec.forProvider.tags[<key>]` (used in a passing v0.5.0 function). `SetLabels`/`SetAnnotations`, from the embedded Kubernetes `Unstructured`, replace the whole map: read it with `GetLabels()`, add the key, write it back |
-| `request.GetDesiredCompositeResource(req)` + `response.SetDesiredCompositeResource(rsp, dxr)` | XR status: `dxr.Resource.SetString("status.bucketArn", arn)` between the two; lists and objects with `SetValue("status.subnetIds", []any{…})`. `composed.Unstructured` has the same `SetValue`; there is no `SetNestedField` |
+| `request.GetDesiredCompositeResource(req)` + `response.SetDesiredCompositeResource(rsp, dxr)` | XR status: `dxr.Resource.SetString("status.bucketArn", arn)` between the two; lists and objects with `SetValue("status.subnetIds", []any{…})`. `composed.Unstructured` has the same `SetValue`; there is no `SetNestedField`. Several fields: one pair per run ([below](#several-status-fields)) |
 | `response.Fatal(rsp, err)`, then `return rsp, nil` | how a function reports an error: as a fatal result in the response, not as Go's `error` |
 | `response.ConditionTrue(rsp, typ, reason).TargetComposite()` | a condition on the XR |
 
@@ -198,6 +198,17 @@ func convertViaJSON(to, from any) error {
 	return json.Unmarshal(bs, to)
 }
 ```
+
+### Several status fields
+
+The template writes one status field. For several, get `dxr` once, set every field on it, each
+inside its own observed-resource branch, and call `response.SetDesiredCompositeResource` once
+before returning. Don't repeat the template's get-set-set block per field:
+`request.GetDesiredCompositeResource(req)` builds a new object from the request on every call,
+and `SetDesiredCompositeResource` replaces the response's composite whole. Whether an earlier
+field survives then depends on the request: `response.To` shares the request's desired state with
+the response, so it survives when the request carries one, and is lost when it does not, as in a
+unit-test request built with `Observed` only (checked against v0.5.0).
 
 ## Unit-test template: the fast tier (`functions/<n>/fn_test.go`)
 
