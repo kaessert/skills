@@ -224,6 +224,10 @@ cause you already knew.
 
 ## 5. Crossplane v2: what a composed resource actually needs
 
+**These rules are for a v2 project.** A v1 project — which is what every `up project init`
+template produces (§10) — keeps its v1 APIs and its Kinds; migrating it is separate work
+(`plan-v2-migration`).
+
 ### API groups and versions
 
 Compositions target the `.m.` provider API groups (`.m.` means *modern*, not "naMespaced":
@@ -234,27 +238,6 @@ Compositions target the `.m.` provider API groups (`.m.` means *modern*, not "na
 | Managed resource `apiVersion` | `<service>.<cloud>.m.upbound.io/v1beta1` (Upbound providers) or `<...>.m.crossplane.io/v1beta1` (community) | the same group without `.m.` |
 | A new XRD | `apiextensions.crossplane.io/v2` + `scope: Namespaced`; Kind without an `X` prefix, no `claimNames` | `v1`, cluster-scoped, `claimNames` |
 | **Composition** | **stays `apiextensions.crossplane.io/v1`** | there is no `v2` Composition — do not bump it |
-
-**These rules are for a v2 project.** A v1 project — which is what every `up project init`
-template produces (§10) — keeps its v1 APIs and its Kinds; migrating it is separate work
-(`plan-v2-migration`).
-
-### The XRD
-
-**Write the XRD yourself** rather than inferring it from an example with `up xrd generate`: an
-example carries values, never constraints, so an inferred schema loses every `required:`,
-`default:`, open-ended map and `status` field you meant to have.
-[`charter/v2-resources.md`](references/charter/v2-resources.md) has the v2 skeleton and what
-inference does to the generated model.
-
-**Then design the schema, do not just transcribe fields.** A schema that parses can still be
-one nobody can consume: no `description` means `kubectl explain` documents nothing, no `enum`
-or `pattern` means bad input fails in the provider rather than at `kubectl apply`, and an empty
-`status` means the caller cannot learn what the composition computed. Because XRD versions must
-round-trip, most of this is permanent from the first version that ships, so it is cheap at
-`v1alpha1` and impossible later.
-[`charter/xrd-design.md`](references/charter/xrd-design.md) has the rules, the CEL patterns, and the
-`--dry-run=server` loop that proves them on a control plane.
 
 ### Set `forProvider`, and stop
 
@@ -273,6 +256,13 @@ best noise and at worst breaks the resource.
 The verified behaviour behind each row (the source lines, the name formula):
 [`charter/v2-resources.md`](references/charter/v2-resources.md).
 
+**The table is about the composed resource's own metadata, not about objects inside
+`forProvider`.** A Kubernetes object embedded in a managed resource — the `manifest` of a
+provider-kubernetes `Object`, for instance — is input to the provider, and nothing fills in its
+namespace. Set it explicitly, normally to the XR's namespace: without it a provider-kubernetes
+`Object` stays `Synced=False` with `an empty namespace may not be set when a resource name is
+provided` (v1.3.3), and composition tests that assert the same omission stay green.
+
 **These are defaults; the project may override them (§2).** When the project's spec or API
 sets `managementPolicies`, `providerConfigRef` or an MR's `metadata.namespace` — an XRD that
 exposes `managementPolicies` as a parameter, a spec that requires a per-XR `providerConfigRef`
@@ -281,17 +271,27 @@ exposes `managementPolicies` as a parameter, a spec that requires a per-XR `prov
 `providerConfigRef.kind: ProviderConfig` as a bug only when no namespaced `ProviderConfig` of
 that name exists in, or is created in, the XR's namespace.
 
-**The table is about the composed resource's own metadata, not about objects inside
-`forProvider`.** A Kubernetes object embedded in a managed resource — the `manifest` of a
-provider-kubernetes `Object`, for instance — is input to the provider, and nothing fills in its
-namespace. Set it explicitly, normally to the XR's namespace: without it a provider-kubernetes
-`Object` stays `Synced=False` with `an empty namespace may not be set when a resource name is
-provided` (v1.3.3), and composition tests that assert the same omission stay green.
-
 **Detail:** [`charter/v2-resources.md`](references/charter/v2-resources.md) has what these CRD
 defaults do to a render (it differs by language), when a `providerConfigRef` is genuinely
 warranted, what a missing or wrong ProviderConfig looks like on a control plane, and the two
 greps that catch a hardcoded one.
+
+### The XRD
+
+**Write the XRD yourself** rather than inferring it from an example with `up xrd generate`: an
+example carries values, never constraints, so an inferred schema loses every `required:`,
+`default:`, open-ended map and `status` field you meant to have.
+[`charter/v2-resources.md`](references/charter/v2-resources.md) has the v2 skeleton and what
+inference does to the generated model.
+
+**Then design the schema, do not just transcribe fields.** A schema that parses can still be
+one nobody can consume: no `description` means `kubectl explain` documents nothing, no `enum`
+or `pattern` means bad input fails in the provider rather than at `kubectl apply`, and an empty
+`status` means the caller cannot learn what the composition computed. Because XRD versions must
+round-trip, most of this is permanent from the first version that ships, so it is cheap at
+`v1alpha1` and impossible later.
+[`charter/xrd-design.md`](references/charter/xrd-design.md) has the rules, the CEL patterns, and the
+`--dry-run=server` loop that proves them on a control plane.
 
 ## 6. The provider schema is a lower bound, not the constraint set
 
