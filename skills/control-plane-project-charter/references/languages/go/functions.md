@@ -22,9 +22,8 @@ was checked against that version's source. The function template passes the thre
 | `fn_test.go` | `TestRunFunction` with an **empty `cases` table** | add cases before you trust it. As generated, `go test` prints `ok` and runs nothing, the same vacuous pass as the stub test in charter §8 |
 | `go.mod` | `function-sdk-go v0.5.0`, plus the models `require` and `replace` | keep the `replace` ([`../go.md`](../go.md#gomod-the-models-replace)) |
 
-The module is a single `package main`, so **`go build ./...` writes a binary named after the directory**
-(`functions/<n>/<n>`, about 55 MB) into the working tree, where the next `git add functions/<n>` commits it
-and history keeps it. Compile with `go vet ./...` or `go build -o /dev/null ./...`, and gitignore `functions/<n>/<n>`.
+Compile with `go vet ./...` or `go build -o /dev/null ./...`, never plain `go build ./...` (Failure modes,
+below), and gitignore `functions/<n>/<n>`.
 
 ## function-sdk-go v0.5: the calls a composition needs
 

@@ -35,17 +35,10 @@ Consequences:
 - **Output must be deterministic.** Never range over a Go map to build a list you assert: map iteration order
   is random, and lists are compared exactly, so the test flakes. No `time.Now()`, no randomness.
 
-## Model import paths
+## Models in a test
 
-| What | Import |
-|---|---|
-| Test objects (`CompositionTest`, `E2ETest`) | `dev.upbound.io/models/io/upbound/dev/meta/v1alpha1` |
-| `ObjectMeta` | `dev.upbound.io/models/io/k8s/meta/v1` |
-| Namespaced managed resources (v2) | `dev.upbound.io/models/io/upbound/m/<provider>/<group>/<version>`, e.g. `…/io/upbound/m/aws/s3/v1beta1` |
-| Your own XR | reverse-domain of the XRD group: `demo.example.org` → `…/org/example/demo/v1alpha1` |
-
-The cluster-scoped `…/io/upbound/aws/s3/…` models exist next to the `.m.` ones; importing them in a v2 project
-is the same mistake as in any other language (charter §5).
+The import paths (test objects, `ObjectMeta`, the `.m.` managed resources, your XR) are in
+[`../go.md`](../go.md#imports-and-models).
 
 **Use typed models for composed-resource expectations** — a misspelt or mis-shaped `forProvider` field does not
 compile, which is the main thing Go buys you over YAML. Every model field is a pointer with `omitempty`, so only
