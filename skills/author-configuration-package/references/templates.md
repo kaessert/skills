@@ -178,7 +178,7 @@ spec:
 
 ## Questions for a new project
 
-Only for what the spec does not say (SKILL.md Phase 2).
+Only for what the spec does not say (SKILL.md Phase 1).
 
 | Field | Example | Notes |
 |-------|---------|-------|

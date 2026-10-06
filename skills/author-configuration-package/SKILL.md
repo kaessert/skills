@@ -15,6 +15,24 @@ Scaffold and modify Crossplane configuration packages — structure, XRDs, depen
 generated composition and function skeletons, examples and the build — in the order the CLI
 needs. Composition logic and tests are other skills' work.
 
+## Before you start
+
+**Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
+the spec and state the assumption, or stop and report. Load `control-plane-project-charter`
+before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
+load it.
+
+Run the phases in order. The two builds bracket function generation: models come from the
+XRD and the dependencies (Phase 6), and the function is generated against them (Phase 7).
+
+- Composition logic → `author-composition`; tests → `author-tests`, which writes each failing
+  test before `author-composition` implements it (charter §3); verification and deploying →
+  the project's own gate, else `verify-configuration`.
+
+This skill stops at a built package. Where a run lands and why a Space context needs the
+user's choice — `--public` publishes their package — is `control-plane-project-charter`
+`charter/targets.md`.
+
 ## Binding rules — they hold even if you open nothing else
 
 These are the core of `control-plane-project-charter`, which this skill does not load for you;
@@ -48,20 +66,20 @@ otherwise, the project wins: say so in your report.
     re-read the section you rely on in that step. Never quote from memory; if the re-read
     contradicts what you wrote, fix it first (charter §1).
 
-## Mode, and the charter
+## Phase 1: Gather the project and resource information
 
-**Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
-the spec and state the assumption, or stop and report. Load `control-plane-project-charter`
-before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
-load it.
+From the spec: project name, API group, cloud, organisation, maintainer; then the resource
+Kind, its plural and its version (`v1alpha1` for a new API, the charter's
+`charter/xrd-design.md`); and the function language for Phase 7 (`kcl`, `python`, `go`,
+`go-templating`) — from the spec or an existing function, else ask: it is a decision, not a
+discoverable fact. New tests follow it (charter §10).
+Interactive and not in the spec: ask, with the tables in
+[templates.md](references/templates.md#questions-for-a-new-project).
 
-Run the phases in order. The two builds bracket function generation: models come from the
-XRD and the dependencies (Phase 6), and the function is generated against them (Phase 7).
-
-## Phase 1: Start or open the project
+## Phase 2: Start or open the project
 
 `test -f upbound.yaml` tells you which. In an existing project, list its APIs
-(`apis/*/definition.yaml`): add a resource from Phase 2, or change one by reading it, editing
+(`apis/*/definition.yaml`): add a resource from Phase 3, or change one by reading it, editing
 it and rebuilding.
 
 **Use the CLI generators for everything but the XRD.** A composition or function layout
@@ -100,16 +118,6 @@ first; its Python layout differs from what `up function generate` produces.
 - Templates leave `examples/example/example.yaml` (`kind: Example`, `spec: {}`), backed by no
   XRD. Delete it; the real example is the file `up example generate` writes.
 
-## Phase 2: Gather the project and resource information
-
-From the spec: project name, API group, cloud, organisation, maintainer; then the resource
-Kind, its plural and its version (`v1alpha1` for a new API, the charter's
-`charter/xrd-design.md`); and the function language for Phase 7 (`kcl`, `python`, `go`,
-`go-templating`) — from the spec or an existing function, else ask: it is a decision, not a
-discoverable fact. New tests follow it (charter §10).
-Interactive and not in the spec: ask, with the tables in
-[templates.md](references/templates.md#questions-for-a-new-project).
-
 ## Phase 3: Write the XRD, and check its design
 
 **Write the XRD yourself** (charter §5 has the reason, `charter/v2-resources.md` the v2 skeleton). For a **new** XRD:
@@ -142,6 +150,10 @@ up function generate compose-bucket apis/storagebuckets/composition.yaml \
     --language <lang>                                                       # Phase 7
 up project build                                                            # Phase 9
 ```
+
+Write the example XRs under `examples/<kind-lowercase>/<xr-name>.yaml` — a minimal one with
+the required fields only, and a complete one
+([templates.md](references/templates.md#example-xrs)).
 
 - **`up example generate` prompts for scope even when every other flag is supplied.** Without
   a TTY it prints `ERROR: ... could not open a new TTY`, then writes the file with the
@@ -225,15 +237,15 @@ package name.
   `https://marketplace.upbound.io/providers/upbound/provider-azure-network`, for the ref and
   latest version. Pages list scope and description, not always exact Kinds — confirm Kinds
   from the generated models after the first build.
-- **Always pass a constraint that caps the major:** `up dep add '<ref>:>=v2.0.0, <v3.0.0'`
-  (accepted by up v0.55.0). A bare `<ref>` records `version: '>=v0.0.0'`, and `'>=v2.0.0'`
-  alone still accepts any later major. Then `up dep update-cache`; do not skip it.
 - **Prefer v2+ Upbound Official family providers** (`provider-<cloud>-<service>`) over the
   monolithic `provider-<cloud>`. A new project needs v2.x: the `.m.` groups ship from v2.0.0.
 - **Base resources live in the family package.** `ResourceGroup`, `ProviderConfig` and other
   cross-service basics ship in `provider-family-<cloud>`. Service providers depend on it
   transitively, but add it explicitly when you compose a base resource directly.
 - When more than one package could fit, ask the user, listing the candidates.
+- **Always pass a constraint that caps the major:** `up dep add '<ref>:>=v2.0.0, <v3.0.0'`
+  (accepted by up v0.55.0). A bare `<ref>` records `version: '>=v0.0.0'`, and `'>=v2.0.0'`
+  alone still accepts any later major. Then `up dep update-cache`; do not skip it.
 - **External pipeline functions must be declared dependencies.** Embedded functions (built
   from `functions/`) are wired automatically. An external `functionRef`
   (`crossplane-contrib-function-auto-ready`, `function-patch-and-transform`) missing from
@@ -277,11 +289,7 @@ Python, before you write the function body: run
 directory containing that skill's SKILL.md, beside this skill's directory (why it comes first:
 the charter's `languages/python.md`).
 
-## Phase 8: Examples and the ProviderConfig
-
-Write the example XRs under `examples/<kind-lowercase>/<xr-name>.yaml` — a minimal one with
-the required fields only, and a complete one
-([templates.md](references/templates.md#example-xrs)).
+## Phase 8: The ProviderConfig
 
 **Every project needs a ProviderConfig, and `--scratch` gives you none.** Create
 `examples/providerconfig.yaml`, matching the provider family from Phase 4: by default a
@@ -297,16 +305,6 @@ list.
 what ran and what it printed, not a checklist (`control-plane-project-charter` §4): the
 commands and exit codes, the layer reached (package build), and what you assumed. The
 template is in [templates.md](references/templates.md#hand-off-report).
-
-This skill stops at a built package. Deploying it (`up project run`) is `verify-configuration`'s
-job; where a run lands and why a Space context needs the user's choice — `--public`
-publishes their package — is `control-plane-project-charter` `charter/targets.md`.
-
-## Boundaries
-
-- Composition logic → `author-composition`; tests → `author-tests`, which writes each failing
-  test before `author-composition` implements it (charter §3); verification and deploying →
-  the project's own gate, else `verify-configuration`.
 
 ## Success criteria
 
@@ -333,4 +331,4 @@ skill succeeds when:
 - [mrap.md](references/mrap.md) — read before writing a ManagedResourceActivationPolicy or
   running `up dep add --api` (Phase 4).
 - [project-templates.md](references/project-templates.md) — read before starting from a
-  language template rather than `--scratch` (Phase 1).
+  language template rather than `--scratch` (Phase 2).
