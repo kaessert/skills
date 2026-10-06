@@ -13,6 +13,26 @@ references:
 Author and modify Crossplane configuration tests, in any language `up test generate` supports,
 and write the assertion that has to fail first.
 
+## Before you start
+
+**Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
+the spec and state the assumption, or stop and report. Load `control-plane-project-charter`
+before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
+load it.
+
+A test's *meaning* is language-agnostic; only its *syntax* differs. Every test, in any
+language, compiles to a `CompositionTest` or an `E2ETest` (`meta.dev.upbound.io/v1alpha1`):
+the rules are in this file, the object model and common mistakes in
+[test-model.md](references/test-model.md), the syntax in the charter's file for the test
+language (Phase 1).
+
+- Writing or changing an `E2ETest`: Phase 4.
+- Planning or executing a test refactor: [refactoring.md](references/refactoring.md) (plan into
+  `.agents/tasks/REFACTOR_TESTS.md` without executing, then one item per run).
+- Not here: building the package or running the whole suite as a gate, except Phase 6
+  (`verify-configuration`); running E2E tests (`e2e-test-configuration`); implementing
+  composition features (`author-composition`).
+
 ## Binding rules — they hold even if you open nothing else
 
 These are the core of `control-plane-project-charter`, which this skill does not load for you;
@@ -46,19 +66,6 @@ otherwise, the project wins: say so in your report.
     re-read the section you rely on in that step. Never quote from memory; if the re-read
     contradicts what you wrote, fix it first (charter §1).
 
-## Mode, and the charter
-
-**Interactive:** ask only what the project can't tell you. **Unattended:** never ask; decide from
-the spec and state the assumption, or stop and report. Load `control-plane-project-charter`
-before you start, or read its `SKILL.md` beside this skill's directory: this skill does not
-load it.
-
-A test's *meaning* is language-agnostic; only its *syntax* differs. Every test, in any
-language, compiles to a `CompositionTest` or an `E2ETest` (`meta.dev.upbound.io/v1alpha1`):
-the rules are in this file, the object model and common mistakes in
-[test-model.md](references/test-model.md), the syntax in the charter's file for the test
-language (Phase 1).
-
 ## Phase 1: Detect the test language — do this first
 
 **Existing tests decide; otherwise the composition language; otherwise YAML** — the rule is
@@ -80,10 +87,32 @@ failure modes (Go: an empty `items` list passes; go-templating: a misspelt key r
    (`apis/*/definition.yaml`, `apis/*/composition.yaml`, the function source, the example XRs
    in `examples/*/*.yaml`) — do not ask. **Modifying a test:** read it, match its language and
    style, and understand its current assertions before you change them.
-2. **Scaffold with `up test generate <name> [--e2e] --language <lang>`** (`kcl`, `python`,
-   `yaml`, `go`, `go-templating`); never create a test directory by hand. Then write the test
-   from the template in the language file. Python: run `setup_venv.py` again after generating
-   each test directory (the charter's `languages/python.md`).
+2. **Checking what is not a render.** `up test run` evaluates `CompositionTest` and `E2ETest`
+   objects and nothing else. For a requirement on a file — dependencies in `upbound.yaml`, a
+   frozen XRD surface, `examples/`, a `ManagedResourceActivationPolicy` — sort it:
+
+   - **What a render reaches, cover with a render.** XRD defaults reach the render through
+     `xrdPath` (charter §2, §8), so assert the defaulted values on the composite. Render a shipped
+     example with `xrPath: examples/<kind>/<file>.yaml` plus `xrdPath`: that proves the function
+     handles it, not that the API server accepts it. A pipeline function missing from `dependsOn`
+     already fails every render (`unknown function`).
+   - **The rest is outside this suite.** `up project build` does not validate `examples/`, and it
+     accepted an MRAP without its API dependency (up v0.55.0).
+     `<author-configuration-package>/scripts/check_xrd_schema.py` checks XRD design, not a frozen
+     surface; `<author-configuration-package>` is the directory containing that skill's SKILL.md,
+     beside this skill's directory. Where the project's gate script already runs such checks, they
+     stay there, beside the build and the test run (charter §2: the project's gate wins).
+   - **Write no test program or checker for these files, and don't copy a skill's script into the
+     project** (charter §3: test-first is for behaviour). Run `check_xrd_schema.py` from its
+     skill's directory; the build and the composition tests that use the files do the rest.
+   - **Never turn a test program into a linter.** A test dir that checks repo files, exits
+     non-zero on a mismatch and prints `items: []` adds zero tests. Passing, it drops out of the
+     count (alone: `No test files found`, exit 0); failing, it stops at `✗ Parsing tests`, which
+     is a broken test, not RED.
+   - **What no check here reaches** — XRD `required` lists, enums and scope; the dependency set —
+     stays uncovered unless the project's gate checks it (charter §4: say what you did not
+     verify).
+
 3. **Organise:**
 
    | Type | Dir prefix | Timeout | `validate` | Purpose |
@@ -95,6 +124,11 @@ failure modes (Go: an empty `items` list passes; go-templating: a misspelt key r
    variants, 3–5 related scenarios. Separate directories: different resource types, complex
    sequential dependencies, and every E2E test. `up test run` runs every matched dir's program,
    so the composition gate is `up test run "tests/test-*"` (charter §7).
+
+4. **Scaffold with `up test generate <name> [--e2e] --language <lang>`** (`kcl`, `python`,
+   `yaml`, `go`, `go-templating`); never create a test directory by hand. Then write the test
+   from the template in the language file. Python: run `setup_venv.py` again after generating
+   each test directory (the charter's `languages/python.md`).
 
 ## Phase 3: Write the assertion that has to fail
 
@@ -137,7 +171,7 @@ charter's `languages/go/functions.md`, unit-test template). A CompositionTest ca
 over the render; it fits only when one helper adds the requirement to every expectation and
 there is one expectation per entry of the exact `resourceRefs` list.
 
-### E2E tests
+## Phase 4: E2E tests
 
 **Read [e2e.md](references/e2e.md) before writing or changing any `E2ETest`** — fields and
 defaults, credentials per target, the ProviderConfig the test creates, a Go template, and what
@@ -156,7 +190,7 @@ counts as an e2e RED.
   `UP_*` variable — and **never set `skipDelete: true`**: it leaves real cloud resources
   running.
 
-## Phase 4: Run it — RED, then GREEN
+## Phase 5: Run it — RED, then GREEN
 
 `control-plane-project-charter` §3 owns the loop (RED → GREEN → REFACTOR), including which
 failures count as RED and deliberate mutation for backfill. This skill writes the assertion
@@ -167,34 +201,6 @@ phase and Phase 6 the whole loop.
 Run the test directly — `up test run "tests/<t>"` — not through `verify-configuration`, which
 builds the package and runs the whole suite and is not an inner loop. `No test files found`
 means nothing ran (binding rule 7).
-
-## Phase 5: Checking what is not a render
-
-`up test run` evaluates `CompositionTest` and `E2ETest` objects and nothing else. For a
-requirement on a file — dependencies in `upbound.yaml`, a frozen XRD surface, `examples/`, a
-`ManagedResourceActivationPolicy` — sort it:
-
-- **What a render reaches, cover with a render.** XRD defaults reach the render through
-  `xrdPath` (charter §2), so assert the defaulted values on the composite. Render a shipped
-  example with `xrPath: examples/<kind>/<file>.yaml` plus `xrdPath`: that proves the function
-  handles it, not that the API server accepts it. A pipeline function missing from `dependsOn`
-  already fails every render (`unknown function`).
-- **The rest is outside this suite.** `up project build` does not validate `examples/`, and it
-  accepted an MRAP without its API dependency (up v0.55.0).
-  `<author-configuration-package>/scripts/check_xrd_schema.py` checks XRD design, not a frozen
-  surface; `<author-configuration-package>` is the directory containing that skill's SKILL.md,
-  beside this skill's directory. Where the project's gate script already runs such checks, they
-  stay there, beside the build and the test run (charter §2: the project's gate wins).
-- **Write no test program or checker for these files, and don't copy a skill's script into the
-  project** (charter §3: test-first is for behaviour). Run `check_xrd_schema.py` from its
-  skill's directory; the build and the composition tests that use the files do the rest.
-- **Never turn a test program into a linter.** A test dir that checks repo files, exits
-  non-zero on a mismatch and prints `items: []` adds zero tests. Passing, it drops out of the
-  count (alone: `No test files found`, exit 0); failing, it stops at `✗ Parsing tests`, which
-  is a broken test, not RED.
-- **What no check here reaches** — XRD `required` lists, enums and scope; the dependency set —
-  stays uncovered unless the project's gate checks it (charter §4: say what you did not
-  verify).
 
 ## Phase 6: The gate, after the loop
 
@@ -208,14 +214,6 @@ Once the suite is green:
   the project's gate — and nothing after it: no E2E, no `up project run` (binding rule 2).
   Where only Upbound Cloud is ruled out, `verify-configuration`'s "Local-only projects and
   projects with their own gate" says what changes.
-
-## Boundaries
-
-- Planning or executing a test refactor: [refactoring.md](references/refactoring.md) (plan into
-  `.agents/tasks/REFACTOR_TESTS.md` without executing, then one item per run).
-- Not here: building the package or running the whole suite as a gate, except Phase 6
-  (`verify-configuration`); running E2E tests (`e2e-test-configuration`); implementing
-  composition features (`author-composition`).
 
 ## Success criteria
 
