@@ -97,8 +97,10 @@ Before you write anything derived from a document — a work item, a test expect
 a field value — re-read the section you rely on in that same step. Never quote from memory. If
 the re-read contradicts what you wrote, fix that first.
 
-**Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) — what each context may and may not do, why a fork's only output channel is prose, and how to hand work to a sub-agent or run a long command when your harness cannot (in band, in the foreground: never detach one yourself).
-
+**Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) has what each
+context may and may not do, why a fork's only output channel is prose, and how to hand work to a
+sub-agent or run a long command when your harness cannot: in band and in the foreground, never
+detached by you.
 
 ## 2. Discover, do not interview
 
@@ -193,7 +195,10 @@ constant stays green (author-tests Phase 3). For a pass-through field, expected 
 correct; prove it by hard-coding the field in the function and seeing a test go red, never by
 editing the expectation.
 
-**Detail:** [`charter/tdd.md`](references/charter/tdd.md) — the two-tier inner loop (every `up test run` pays a full build, so use a fast tier for crashes), and how to backfill tests for code that already works by proving each one can fail: mutate the implementation, never the test's expected value.
+**Detail:** [`charter/tdd.md`](references/charter/tdd.md) has the two-tier inner loop (every
+`up test run` pays a full build, so use a fast tier for crashes), and how to backfill tests for
+code that already works by proving each one can fail: mutate the implementation, never the
+test's expected value.
 
 ## 4. Report the effect, not the intent
 
@@ -298,7 +303,10 @@ namespace. Set it explicitly, normally to the XR's namespace: without it a provi
 `Object` stays `Synced=False` with `an empty namespace may not be set when a resource name is
 provided` (v1.3.3), and composition tests that assert the same omission stay green.
 
-**Detail:** [`charter/v2-resources.md`](references/charter/v2-resources.md) — what these CRD defaults do to a render (it differs by language), when a `providerConfigRef` is genuinely warranted, what a missing or wrong ProviderConfig looks like on a control plane, and the two greps that catch a hardcoded one.
+**Detail:** [`charter/v2-resources.md`](references/charter/v2-resources.md) has what these CRD
+defaults do to a render (it differs by language), when a `providerConfigRef` is genuinely
+warranted, what a missing or wrong ProviderConfig looks like on a control plane, and the two
+greps that catch a hardcoded one.
 
 ## 6. The provider schema is a lower bound, not the constraint set
 
@@ -315,7 +323,10 @@ State the result in your summary: which Kinds you checked, what the schema requi
 which API-level rule you could not confirm. "I checked and found nothing" is a valid result.
 Silently skipping is not.
 
-**Detail:** [`charter/provider-schema.md`](references/charter/provider-schema.md) — examples (an S3 lifecycle rule that renders and fails with `MalformedXML`), the measured hit rates, the one docstring that is always a false positive, and the rule classes only the cloud API docs hold.
+**Detail:** [`charter/provider-schema.md`](references/charter/provider-schema.md) has examples
+(an S3 lifecycle rule that renders and fails with `MalformedXML`), the measured hit rates, the
+one docstring that is always a false positive, and the rule classes only the cloud API docs
+hold.
 
 ---
 
@@ -329,8 +340,9 @@ program that exits non-zero — on a missing input, say — fails a plain `tests
 `✗ Parsing tests`. `no valid CompositionTests found` means the matched dirs produced no
 `CompositionTest` (e.g. `e2etest-*` without `--e2e`): a wrong glob, not a failing test.
 
-**Detail:** [`charter/container.md`](references/charter/container.md) — the per-language table, the `UP_` credential route, the E2E command and the README note, and the tighter second boundary around function rendering.
-
+**Detail:** [`charter/container.md`](references/charter/container.md) has the per-language
+table, the `UP_` credential route, the E2E command and the README note, and the tighter second
+boundary around function rendering.
 
 ## 8. A green run is not evidence
 
@@ -368,8 +380,10 @@ each mock the XR's namespace and the render's name: without the namespace it is 
 it proves: your branch logic, given the status you wrote. It does not prove a provider ever
 reports that status. For that, `--e2e` or a live apply — or say it is unverified.
 
-**Detail:** [`charter/evidence.md`](references/charter/evidence.md) — finding the render artifacts, how `assertResources` matches a resource, asserting `spec.crossplane.resourceRefs` so a surplus resource fails the suite, and what a suite must contain (minimal XR, observed-state branches, status on the composite).
-
+**Detail:** [`charter/evidence.md`](references/charter/evidence.md) has how to find the render
+artifacts, how `assertResources` matches a resource, asserting `spec.crossplane.resourceRefs` so
+a surplus resource fails the suite, and what a suite must contain (minimal XR, observed-state
+branches, status on the composite).
 
 ## 9. Never create infrastructure as a side effect
 
@@ -387,7 +401,10 @@ to make it work is.
   kind cluster and its registry container, a scratch directory — must be removed before
   you report; for anything else, report what you would delete and let the user choose.
 
-**Detail:** [`charter/targets.md`](references/charter/targets.md) — which control plane a run lands on, how to read `up ctx`, how the group defaults to `default`, why a bad `--kubeconfig` silently goes local, what `--public` does and does not change, diagnosing `context deadline exceeded`, and teardown.
+**Detail:** [`charter/targets.md`](references/charter/targets.md) has which control plane a
+run lands on, how to read `up ctx`, how the group defaults to `default`, why a bad
+`--kubeconfig` silently goes local, what `--public` does and does not change, diagnosing
+`context deadline exceeded`, and teardown.
 
 ---
 
@@ -405,4 +422,7 @@ counts; a program that emits none (a Go program printing `items: []`) is not a t
 sets nothing. The reasons and the `init`/`generate` flags:
 [`languages/README.md`](references/languages/README.md#choosing-the-test-language-for-new-tests).
 
-**Detail:** [`charter/generators.md`](references/charter/generators.md) — the accepted `--language` slugs, what each generator actually emits (`up project init` produces a **v1** project; `up test generate` prepends `test-`; `up composition generate` wires only auto-ready; `up xrd generate` drops every constraint).
+**Detail:** [`charter/generators.md`](references/charter/generators.md) has the accepted
+`--language` slugs and what each generator actually emits: `up project init` produces a **v1**
+project, `up test generate` prepends `test-`, `up composition generate` wires only auto-ready,
+and `up xrd generate` drops every constraint.
