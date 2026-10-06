@@ -94,14 +94,10 @@ than once, assert each by the name copied from the render, which is deterministi
 
 ### 2. A composed resource with no assertion at all
 
-`assertResources` is a *partial, positive* check: it verifies the resources you list and
-ignores every other resource the composition emits. Adding a managed resource to a function
-and re-running the suite **passes without testing anything** (verified: a whole extra MR plus
-new `spec` fields left a 2-test suite at 2/2 PASS).
-**Right:** Every resource a composition can emit needs an assertion, including ones behind a
-condition (give those their own test with the triggering XR or observed state). Cross-check
-against the render, read as the charter's `charter/evidence.md` says; asserting the composite's
-`spec.crossplane.resourceRefs` makes a surplus resource fail.
+`assertResources` ignores every resource it does not list (charter §8), so an extra managed
+resource left a 2-test suite at 2/2 PASS. **Right:** assert every resource the composition can
+emit, conditional ones in their own test; cross-check against the render and assert the
+composite's exact `spec.crossplane.resourceRefs` (the charter's `charter/evidence.md`).
 
 ### 3. Assuming you cannot assert the composite's own `status`
 
@@ -138,27 +134,10 @@ programmatic check on composition outputs.
 
 ### 4. Partial for objects, exact for lists — and the two fail differently
 
-Mistake 2 is about whole resources going unasserted. Inside a resource the rule splits
-(charter §8):
-
-| What you assert | Behaviour |
-|---|---|
-| An **object**/mapping | partial, at every depth. Two keys asserted against ten rendered: **passes**. The surplus is never reported. |
-| A **list** | exact. Two entries asserted against five rendered: **fails**, with `lengths of slices don't match`. Order matters too. |
-
-Verified against the assertion engine (`sliceNode.Assert` compares `len` before comparing
-elements) and reproduced end to end. So the two mistakes are opposite:
-
-**Wrong:** asserting two keys of a ten-key mapping and concluding the mapping is correct.
-**Wrong:** asserting a two-entry subset of a five-entry list expecting a lenient pass.
-
-**Right:** for a **list**, assert the whole thing, in order; that also makes the count part of
-the test.
-**Right:** for a **mapping** whose *exact* key set is the property under test, that property is
-not expressible in `assertResources`. Read the rendered object out of the render, or assert
-something that changes when a surplus key appears.
-**Right:** state which you did. "Asserted the keys I expect are present" and "confirmed these
-are the only keys emitted" are different claims.
+Charter §8: an asserted object is partial at every depth (the surplus is never reported); an
+asserted list must match exactly, in length and order (`lengths of slices don't match`).
+**Right:** assert a whole list, in order. An exact key set on a mapping is not expressible in
+`assertResources`: read it from the render, and say which of the two claims you made.
 
 ### 5. Designing coverage without reading the XRD's defaults
 
