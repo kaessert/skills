@@ -159,6 +159,23 @@ class TestLinksCheck(CheckCase):
         findings = validate.check_links()
         self.assertFalse([f for f in findings if "does not exist" in f], findings)
 
+    def test_relative_path_in_a_fence_must_resolve(self):
+        """A detection table in a fence pointed at ../../languages/, which does not exist.
+
+        Fences are skipped for markdown links, so nothing caught it. A bare
+        ../ path in a fence is still one a reader follows.
+        """
+        self.build({"skills/demo-skill/SKILL.md": GOOD_SKILL +
+                    "\n```\nfunctions/*/*.k  → KCL → ../../languages/kcl.md\n```\n"})
+        self.assertFinding(validate.check_links(), "../../languages/kcl.md")
+
+    def test_relative_path_in_a_fence_that_resolves_is_clean(self):
+        self.build({
+            "skills/demo-skill/SKILL.md": GOOD_SKILL + "\n- [a](references/a.md) — read when\n",
+            "skills/demo-skill/references/a.md": "# A\n\n```\nsee ../SKILL.md\n```\n",
+        })
+        self.assertClean(validate.check_links())
+
     def test_external_links_are_ignored(self):
         self.build({"skills/demo-skill/SKILL.md":
                     GOOD_SKILL + "\n[docs](https://docs.upbound.io/) and [#a](#anchor)\n"})
@@ -272,6 +289,61 @@ class TestReadmeCheck(CheckCase):
     def test_missing_markers(self):
         self.build({"README.md": "# skills\n"})
         self.assertFinding(validate.check_readme(), "needs the markers")
+
+
+class TestSharedCheck(CheckCase):
+    RULES = "## Binding rules\n\n1. **Test first.**\n2. **Name what ran.**\n"
+    OWNERS = ("author-configuration-package", "author-composition", "author-tests")
+
+    def skill(self, name: str, rules: str, after: str = "## Next\n\nMore.\n") -> str:
+        return GOOD_SKILL.replace("demo-skill", name) + "\n" + rules + "\n" + after
+
+    def owners(self, **override: str) -> dict[str, str]:
+        """The three skills that carry the rules, each with RULES unless overridden."""
+        files = {f"skills/{n}/SKILL.md": self.skill(n, self.RULES) for n in self.OWNERS}
+        for name, text in override.items():
+            files[f"skills/{name.replace('_', '-')}/SKILL.md"] = text
+        return files
+
+    def test_the_three_named_skills_carry_the_rules(self):
+        self.assertEqual(tuple(validate.SHARED_SECTIONS["## Binding rules"]), self.OWNERS)
+
+    def test_identical_copies_are_clean(self):
+        files = self.owners(author_tests=self.skill("author-tests", self.RULES, after=""))
+        self.build(files)
+        self.assertClean(validate.check_shared())
+
+    def test_a_diverging_copy_is_caught(self):
+        drifted = self.RULES.replace("Name what ran", "Name what you ran")
+        self.build(self.owners(author_tests=self.skill("author-tests", drifted)))
+        findings = list(validate.check_shared())
+        self.assertEqual(len(findings), 1, findings)
+        self.assertFinding(findings, "differs from skills/author-configuration-package/SKILL.md")
+        self.assertIn("author-tests", str(findings[0]))
+
+    def test_a_named_skill_without_the_section_is_caught(self):
+        self.build(self.owners(author_tests=GOOD_SKILL.replace("demo-skill", "author-tests")))
+        findings = list(validate.check_shared())
+        self.assertEqual(len(findings), 1, findings)
+        self.assertFinding(findings, "lacks '## Binding rules'")
+        self.assertIn("author-tests", str(findings[0]))
+
+    def test_a_renamed_heading_is_caught(self):
+        renamed = self.RULES.replace("## Binding rules", "## The rules")
+        self.build(self.owners(author_composition=self.skill("author-composition", renamed)))
+        self.assertFinding(validate.check_shared(), "lacks '## Binding rules'")
+
+    def test_a_missing_named_skill_is_caught(self):
+        files = self.owners()
+        del files["skills/author-tests/SKILL.md"]
+        self.build(files)
+        self.assertFinding(validate.check_shared(), "carries '## Binding rules'")
+
+    def test_another_skill_with_the_heading_is_not_compared(self):
+        other = self.RULES.replace("Test first", "Ask first")
+        self.build(self.owners(upbound_hub=self.skill("upbound-hub", other),
+                               demo_skill=GOOD_SKILL))
+        self.assertClean(validate.check_shared())
 
 
 class TestHygieneCheck(CheckCase):
