@@ -3,3 +3,6 @@
 
 # Documentation and error messages use example.com placeholders.
 hub-api\.internal\.example\.com
+# Placeholder VPC/VNet CIDRs in author-composition code samples, not real hosts.
+10\.0\.0\.0/16
+10\.0\.1\.0/24

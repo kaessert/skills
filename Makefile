@@ -6,7 +6,8 @@ PYTHON ?= python3
 # git ls-files rather than a wildcard: hub-setup downloads a credential helper
 # into a skill's scripts/ and the repository gitignores it, so a glob hands
 # shellcheck a 31 MB binary in any checkout that has actually used the skill.
-SKILL_SCRIPTS := $(shell git ls-files 'skills/*/scripts/*' 2>/dev/null)
+# Shell scripts only; standard-library Python scripts are allowed and shellcheck rejects them.
+SKILL_SCRIPTS := $(shell git ls-files 'skills/*/scripts/*' 2>/dev/null | while read -r f; do head -1 "$$f" | grep -qE '^\#!.*\b(ba|da|k)?sh\b' && echo "$$f"; done)
 
 .PHONY: help
 help: ## Show this help

@@ -1,0 +1,70 @@
+# Two clean XRDs in one file, in different groups. The group-stutter check is
+# scoped per document: `repositoryClass` is a good name under group
+# `artifactory.example.com`, and reading it beside a second XRD in group
+# `repository.example.com` must not report it as stutter.
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: repositories.artifactory.example.com
+spec:
+  scope: Namespaced
+  group: artifactory.example.com
+  names:
+    kind: Repository
+    plural: repositories
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              repositoryClass:
+                type: string
+                description: Class of repository to create
+                enum: [Local, Remote, Virtual]
+              projectKey:
+                type: string
+                description: Project the repository belongs to
+                pattern: '^[a-z][a-z0-9-]{1,31}$'
+              packageType:
+                type: string
+                description: Package format the repository serves
+                enum: [Maven, Docker, npm]
+---
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: mirrors.repository.example.com
+spec:
+  scope: Namespaced
+  group: repository.example.com
+  names:
+    kind: Mirror
+    plural: mirrors
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              upstream:
+                type: string
+                description: Upstream registry the mirror pulls from
+                format: uri
+          status:
+            type: object
+            properties:
+              lastSyncedTime:
+                type: string
+                description: Time of the last successful sync
+                format: date-time

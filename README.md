@@ -56,8 +56,24 @@ moves no files.
 | Skill | Needs |
 |---|---|
 | `upbound-hub` | `bash`, `curl`, `jq`, `shasum`; `kubectl` only for writes |
+| control-plane-project suite | the `up` CLI, `python3` 3.9+, and Docker or Podman for function builds; an Upbound account only for E2E runs and cloud dev control planes |
 
-On first run the skill downloads a credential helper from `storage.googleapis.com` and
+The control-plane-project suite is eight skills that work together:
+`control-plane-project-charter` holds the shared rules and per-language references, and
+`author-composition`, `author-tests`, `author-configuration-package`, `verify-configuration`,
+`e2e-test-configuration`, `plan-v2-migration`, and `execute-v2-migration` reference it.
+Loading a task skill does not load the charter: each one tells the agent to load it as well,
+and agents skip that step. In one unattended pipeline, builders loaded it in 6 of 11 runs and
+reviewers in none of 10. Install them together; copying one of them on its own leaves it
+without the charter.
+
+**Orchestrators: paste the review checks into reviewer prompts.**
+[`review.md`](skills/control-plane-project-charter/references/charter/review.md) is the
+Crossplane review checklist on one page, and in a pipeline of unattended agents a pasted page
+is the one part that is sure to be read. Builders get the core rules inline: the authoring
+skills carry them as their binding rules.
+
+On first run the `upbound-hub` skill downloads a credential helper from `storage.googleapis.com` and
 checks it against a published SHA-256. It asks once for your Hub API endpoint and saves it,
 so there is nothing to set up in advance.
 
@@ -88,7 +104,15 @@ More questions it handles:
 <!-- BEGIN skills-table -->
 | Skill | What it is for |
 |---|---|
+| [`author-composition`](skills/author-composition/SKILL.md) | Use this skill when the user asks to create, extend, modify, or debug a Crossplane composition function in a control-plane project — in any language (KCL, Python, TypeScript, Go). |
+| [`author-configuration-package`](skills/author-configuration-package/SKILL.md) | Use this skill when user requests to create, scaffold, modify, or extend a Crossplane configuration package. |
+| [`author-tests`](skills/author-tests/SKILL.md) | Use this skill when user requests to implement a feature, write, create, author, modify, refactor or plan refactoring of Crossplane configuration tests (composition tests or E2E tests) in a control-plane project - in any language (KCL, Python, YAML, Go, go-templating). |
+| [`control-plane-project-charter`](skills/control-plane-project-charter/SKILL.md) | Shared rules and per-language references for the Upbound control-plane-project skills - agent behaviour, the test-first loop, what a v2 composed resource needs, the container boundary, what a green run proves, how to report, the checks for reviewing a change, and the KCL, Python, TypeScript, Go and YAML references. |
+| [`e2e-test-configuration`](skills/e2e-test-configuration/SKILL.md) | Run Crossplane E2E tests (`up test run --e2e`) for a control-plane project, locally on kind (`--local`) or on an Upbound Space (Upbound Cloud). |
+| [`execute-v2-migration`](skills/execute-v2-migration/SKILL.md) | Use this skill when user requests to execute or implement a Crossplane v2 migration plan. |
+| [`plan-v2-migration`](skills/plan-v2-migration/SKILL.md) | Use this skill when user requests to migrate, upgrade, or plan migration to Crossplane v2. |
 | [`upbound-hub`](skills/upbound-hub/SKILL.md) | Query and mutate Upbound Hub, the central API for an Upbound Platform deployment, which gives one cross-fleet view of control planes, spaces, realms, types, packages, resources, identity providers, and the image catalog. |
+| [`verify-configuration`](skills/verify-configuration/SKILL.md) | Verify a Crossplane configuration package before committing - build it, run its composition tests and read the render, and optionally orchestrate its E2E tests or run the project on a development control plane ("verify the configuration", "validate the project", "is this ready to commit", "run the tests", "run the project", "deploy it", "spin it up", "try it on a control plane", "up project run", "dev control plane"). |
 <!-- END skills-table -->
 
 ## How these skills are built
