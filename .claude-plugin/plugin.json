@@ -1,6 +1,6 @@
 {
   "name": "upbound",
-  "description": "Skills for working with the Upbound Platform: control planes, spaces, realms, packages, and fleet-wide resource queries.",
+  "description": "Skills for working with the Upbound Platform: fleet-wide queries through Upbound Hub, and the control-plane-project suite for authoring, testing, verifying, and migrating Crossplane configuration packages.",
   "version": "0.1.10",
   "author": {
     "name": "Upbound",
@@ -16,6 +16,8 @@
     "kubernetes",
     "platform-engineering",
     "claude-code",
-    "agent-skills"
+    "agent-skills",
+    "composition-functions",
+    "crossplane-v2"
   ]
 }

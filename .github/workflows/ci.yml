@@ -50,7 +50,10 @@ jobs:
           # git ls-files, not a glob: a skill may download something into its own
           # scripts/ and gitignore it, and a glob would hand shellcheck a binary.
           # CI never runs a skill, but the same lines run locally via make lint.
-          mapfile -t files < <(git ls-files 'skills/*/scripts/*' 'hack/hooks/*')
+          # Only shell scripts: CONTRIBUTING also allows standard-library Python, which
+          # shellcheck rejects outright (SC1071).
+          mapfile -t files < <(git ls-files 'skills/*/scripts/*' 'hack/hooks/*' |
+            while read -r f; do head -1 "$f" | grep -qE '^#!.*\b(ba|da|k)?sh\b' && echo "$f"; done)
           [ ${#files[@]} -eq 0 ] && { echo "no scripts"; exit 0; }
           shellcheck -x -S style "${files[@]}"
       - name: SPDX headers
