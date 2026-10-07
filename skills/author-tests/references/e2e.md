@@ -205,19 +205,16 @@ minutes. Check the failure is the Ready assertion (observed: the expected `Ready
 `status: {}`), not a credential error, then revert with git and restore the timeout. Editing
 `defaultConditions` or an expected value is not RED, and an unparsable condition is a broken test.
 
-## Status values cannot be asserted
+## What an E2ETest cannot assert
 
-An `E2ETest` has no field that checks a value such as `status.vpcId`; `assertResources` exists only on
-`CompositionTest`, which is render-only. So a requirement for an e2e check of a live status value is **not
-covered by e2e**: say so, and name the evidence that stands in for it:
+An `E2ETest` checks one thing: each condition type in `defaultConditions` (normally `Ready`) is `True` on
+each object in `spec.manifests`. It cannot assert a status field such as `status.vpcId`, a condition's reason
+or message, or anything on a composed resource; `assertResources` exists only on `CompositionTest`, which is
+render-only. So a requirement for an e2e check of a status field or condition is **not covered by e2e**: say
+so, and name the evidence that stands in for it:
 
 1. a `CompositionTest` whose `observedResources` mock the provider's status, asserting the composite's `status`,
    which proves status derivation;
 2. a function unit test;
 3. a read-back during the run, if you took one, quoted as "read-back, not asserted" (e2e-test-configuration's
    `local.md` reference).
-
-uptest's `uptest.upbound.io/pre-assert-hook` / `post-assert-hook` manifest annotations run a local script, but
-the path resolves against the temp dir `up` writes the manifests to (uptest `internal/tester.go:343`; up
-`cmd/up/test/e2etest.go:242, 278`), where the script does not exist. An advanced, fragile option with no tested
-path pattern: not the default, and if you try it, say so in the report.

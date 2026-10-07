@@ -222,6 +222,6 @@ spec:
   skipDelete: false
 ```
 
-`E2ETest` cannot assert status values, and `defaultConditions` takes condition types, not
-expressions: author-tests' `e2e.md` reference. The Go and go-templating test references are
-[`go/tests.md`](go/tests.md) and [`go-templating.md`](go-templating.md).
+An `E2ETest` cannot assert a status field or a status condition beyond the `defaultConditions` types
+(`Ready`), and those are condition types, not expressions: author-tests' `e2e.md` reference. The Go and
+go-templating test references are [`go/tests.md`](go/tests.md) and [`go-templating.md`](go-templating.md).

@@ -83,20 +83,28 @@ If the run never got past the package install, check that first, before tracing 
 `docker logs <cluster>-registry` (the umask precondition), then `kubectl get pkgrev -o wide` and `kubectl
 describe configuration`. Then use the brief in [troubleshooting.md](troubleshooting.md).
 
-**A live status value.** An `E2ETest` can't assert one (author-tests' `e2e.md` reference). To read one, take it
-inside the one run you need anyway: poll with a bounded loop, as for the `EXIT=` wait in SKILL.md Phase 4, and
-repeat it until the field appears or the run ends:
+**A status field or condition.** An `E2ETest` can't assert one (author-tests' `e2e.md` reference). To read one,
+take it inside the one run you need anyway, and **watch rather than poll**: the delete starts about a second
+after the assert sees `Ready` (observed with up v0.55.0), so a read every few seconds misses the one moment the
+status is complete. Wait, bounded, until the XR exists, then watch that one object (`get managed -w` fails:
+`managed` is a category), bounded too:
 
 ```bash
-for _ in $(seq 1 24); do
+for _ in $(seq 1 60); do                            # until the XR exists, or the run ends
   grep -q '^EXIT=' /tmp/e2e-<n>.log && break
   kind get kubeconfig --name <cluster> > "$KCFG" 2>/dev/null &&
-    kubectl --kubeconfig "$KCFG" get <xr-kind> <xr-name> -n <namespace> -o jsonpath='{.status}' \
-      > /tmp/e2e-<n>-status.json 2>/dev/null &&
-    grep -q '<field>' /tmp/e2e-<n>-status.json && break
+    kubectl --kubeconfig "$KCFG" --request-timeout=5s get <xr-kind> <xr-name> -n <namespace> >/dev/null 2>&1 &&
+    break
   sleep 5
 done
+timeout 600 kubectl --kubeconfig "$KCFG" get <xr-kind> <xr-name> -n <namespace> -w \
+  -o jsonpath='{.status.conditions[?(@.type=="Ready")].status} {.status}{"\n"}' >> /tmp/e2e-<n>-status.txt 2>&1
+grep '^True ' /tmp/e2e-<n>-status.txt | tail -1      # the last read taken while Ready
 ```
+
+The watch prints one line per change and ends with the cluster or at its timeout; size that to one command's
+timeout, and if it ends before `EXIT=` is in the log, start it again (it prints the current state first). Give
+every other `kubectl` call `--request-timeout`: one without it hung for 150 s once the cluster was gone.
 
 Quote it as **"read-back, not asserted"**, with its `Ready` condition: a read while `Ready` is `False` can be
 partial. It is not a provider read. Never re-run a green e2e only to read status: if the window was missed,
