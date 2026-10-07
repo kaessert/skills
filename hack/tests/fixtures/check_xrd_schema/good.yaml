@@ -1,0 +1,85 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: repositories.artifactory.example.com
+spec:
+  scope: Namespaced
+  group: artifactory.example.com
+  names:
+    kind: Repository
+    plural: repositories
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    additionalPrinterColumns:
+    - name: CLASS
+      type: string
+      jsonPath: .spec.repositoryClass
+    - name: KEY
+      type: string
+      jsonPath: .status.repositoryKey
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              projectKey:
+                type: string
+                description: Project the repository belongs to
+                pattern: '^[a-z][a-z0-9-]{1,31}$'
+              vpcId:
+                type: string
+                description: VPC the repository endpoint is reachable from
+                pattern: '^vpc-[0-9a-f]{8,17}$'
+              cacheTtlSeconds:
+                type: integer
+                description: How long responses stay cached
+              repositoryClass:
+                type: string
+                description: Class of repository to create
+                enum: [Local, Remote, Virtual]
+                x-kubernetes-validations:
+                - rule: self == oldSelf
+                  message: repositoryClass is immutable
+              packageType:
+                type: string
+                description: Package format the repository serves
+                enum: [Maven, Docker, npm]
+              tlsConfig:
+                type: object
+                description: TLS settings for the upstream connection
+                properties:
+                  minVersion:
+                    type: string
+                    description: Minimum TLS version accepted
+                    enum: [TLS12, TLS13]
+              adminGroups:
+                type: array
+                description: Groups granted admin on the repository
+                maxItems: 32
+                x-kubernetes-list-type: set
+                items:
+                  type: string
+              xray:
+                type: object
+                description: Xray scanning configuration
+                properties:
+                  indexing:
+                    type: string
+                    description: Whether Xray indexes this repository
+                    enum: [Enabled, Disabled]
+                    default: Disabled
+          status:
+            type: object
+            properties:
+              repositoryKey:
+                type: string
+                description: Key the repository was created with
+                maxLength: 64
+              url:
+                type: string
+                description: Base URL at which the repository can be reached
+                format: uri

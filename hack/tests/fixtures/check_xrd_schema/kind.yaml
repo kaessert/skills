@@ -1,0 +1,45 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: httploadbalancers.net.example.com
+spec:
+  group: net.example.com
+  names:
+    kind: HttpLoadbalancer
+    plural: httploadbalancers
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              vipAddress:
+                type: string
+                description: Virtual IP
+                maxLength: 45
+              apiepPort:
+                type: integer
+                description: Port
+              originPoolId:
+                type: string
+                description: Pool, correctly spelled
+                maxLength: 64
+              backendPoolID:
+                type: string
+                description: Pool, canonicalised where it should not be
+                maxLength: 64
+              vmiId:
+                type: string
+                description: Instance
+                maxLength: 64
+              tlsConfig:
+                type: object
+                description: TLS
+                properties:
+                  caBundle:
+                    type: string
+                    description: PEM
+                    maxLength: 100
