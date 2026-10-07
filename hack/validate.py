@@ -59,6 +59,10 @@ LINK_RE = re.compile(
 )
 BACKTICK_PATH_RE = re.compile(r"`((?:references|scripts)/[^`\s]+)`")
 FENCE_RE = re.compile(r"^(```+|~~~+).*?^\1", re.MULTILINE | re.DOTALL)
+# A bare ../-relative .md path, such as a detection table's `-> ../../languages/kcl.md`.
+# Not one inside a markdown link's parentheses: those are the documentation examples
+# that fences exist to exempt.
+FENCED_PATH_RE = re.compile(r"(?<![\w(/.-])((?:\.\./)+[\w.-]+(?:/[\w.-]+)*\.md)\b")
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 
 BINARY_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".gz", ".zip"}
@@ -108,6 +112,11 @@ def skill_dirs() -> list[Path]:
 def prose(text: str) -> str:
     """Drop fenced blocks so documentation examples are not link-checked."""
     return FENCE_RE.sub("", text)
+
+
+def fenced(text: str) -> str:
+    """Only the fenced blocks: what prose() drops."""
+    return "\n".join(m.group(0) for m in FENCE_RE.finditer(text))
 
 
 def git_lines(*args: str) -> list[str] | None:
@@ -231,16 +240,19 @@ def check_links() -> Iterator[Finding]:
         linked: set[str] = set()
         for doc in sorted(skill.rglob("*.md")):
             try:
-                text = prose(read(doc))
+                raw = read(doc)
             except OSError as exc:
                 yield Finding(doc, f"cannot be read: {exc}")
                 continue
+            text = prose(raw)
 
             # Markdown links resolve from the document, as markdown says. A
             # backticked bare path in prose means the skill root, which is how a
-            # reader takes it.
+            # reader takes it. A ../ path in a fence resolves from the document too:
+            # fences exempt example links, not paths a reader is told to follow.
             targets = [(t, doc.parent) for t in set(LINK_RE.findall(text))]
             targets += [(t, skill) for t in set(BACKTICK_PATH_RE.findall(text))]
+            targets += [(t, doc.parent) for t in set(FENCED_PATH_RE.findall(fenced(raw)))]
 
             for target, base in sorted(targets):
                 if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", target) or target.startswith("#"):
@@ -429,6 +441,51 @@ def _load_json(path: Path) -> dict | Finding:
 PLACEHOLDER_RE = re.compile(
     r"INSERT [A-Z ]+|<[a-z-]+@[a-z.-]+>|TODO|FIXME|XXX|example\.com", re.IGNORECASE
 )
+
+# Sections that several skills carry word for word, because an agent that loads
+# one skill never sees the others. Edit every copy in the same change. Each
+# heading names exactly the skills that carry it: only those are compared, and
+# one that lacks the section is a finding rather than silently skipped.
+SHARED_SECTIONS: dict[str, tuple[str, ...]] = {
+    "## Binding rules": ("author-configuration-package", "author-composition", "author-tests"),
+}
+
+
+def _section(text: str, heading: str) -> tuple[int, str] | None:
+    """The section under `heading` up to the next `#`/`##` heading, with its line."""
+    lines = text.splitlines()
+    for start, line in enumerate(lines):
+        if line.startswith(heading):
+            end = next((i for i in range(start + 1, len(lines))
+                        if re.match(r"#{1,2} ", lines[i])), len(lines))
+            return start + 1, "\n".join(lines[start:end]).rstrip()
+    return None
+
+
+def check_shared() -> Iterator[Finding]:
+    """A section several skills share is present and identical in each of them."""
+    for heading, owners in SHARED_SECTIONS.items():
+        copies: dict[Path, tuple[int, str]] = {}
+        for name in owners:
+            md = SKILLS / name / "SKILL.md"
+            if not md.is_file():
+                yield Finding(md, f"carries {heading!r} per SHARED_SECTIONS but does not "
+                                  f"exist; update the list in hack/validate.py")
+            elif found := _section(read(md), heading):
+                copies[md] = found
+            else:
+                yield Finding(md, f"lacks {heading!r}, which {', '.join(owners)} carry "
+                                  f"word for word")
+        texts = [text for _, text in copies.values()]
+        if len(set(texts)) < 2:
+            continue
+        # The majority is the reference, so one drifted copy is the one reported.
+        majority = max(texts, key=texts.count)
+        reference = next(md for md, (_, text) in copies.items() if text == majority)
+        for md, (line, text) in copies.items():
+            if text != majority:
+                yield Finding(md, f"{heading!r} differs from {rel(reference)}; the copies "
+                                  f"must stay identical", line=line)
 
 
 def check_governance() -> Iterator[Finding]:
@@ -675,6 +732,7 @@ CHECKS: dict[str, Callable[[], Iterable[Finding]]] = {
     "hygiene": check_hygiene,
     "secrets": check_secrets,
     "governance": check_governance,
+    "shared": check_shared,
 }
 
 

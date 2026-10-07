@@ -109,6 +109,11 @@ CI also checks a handful of things the table cannot show:
 - Every script is mentioned in some `.md` in its skill, has a shebang, is executable, and carries an
   `SPDX-License-Identifier` header.
 - Links resolve, are relative, and do not point outside the skill's own directory.
+- A section several skills carry word for word — today the `## Binding rules` block of
+  `author-configuration-package`, `author-composition` and `author-tests` — is present and
+  identical in each skill `SHARED_SECTIONS` in `hack/validate.py` lists for it; other skills are
+  not compared. An agent that loads one skill never sees the others, so the rules are
+  duplicated on purpose; edit every copy in the same change.
 - No private hostname, RFC1918 address, private key, or JWT-shaped string appears in any tracked file.
   A redacted transcript containing a `10.x` address will trip this; quote it differently or add a case
   to `hack/denylist/strings-allow.txt`.
@@ -162,6 +167,20 @@ hand — multi-call pagination, credential handling, deterministic output shapin
   working directory or an agent-specific variable.
 - Support `--help`, exiting 0 without touching the network.
 - Bash or standard-library Python only. No `npm install` or `pip install` at runtime.
+
+### Adding a language to the control-plane-project suite
+
+Language references live in `skills/control-plane-project-charter/references/languages/`, not
+inside a task skill. A new file carries only what is specific to the language: layout, import or
+type paths, the function bootstrap, how each language-agnostic pattern is expressed, test
+templates, toolchain, and language-specific mistakes. A rule that would be true in any language
+belongs in the charter: put it there and link to it. Add the detection marker to the table in
+that directory's `README.md`.
+
+A reference that outgrows one file becomes an index plus a same-named directory of detail files
+(`python.md` + `python/`, `kcl.md` + `kcl/`). Keep each file small enough to read in one go: a
+large one gets redirected into a scratch file instead of returned. The index keeps the toolchain
+commands.
 
 ## Writing style
 
