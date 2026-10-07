@@ -17,7 +17,9 @@ Never scaffold a **function or test directory** by hand. `up function generate` 
 `up test generate` produce the layout the CLI expects — `pyproject.toml` pins, the models
 path, the pipeline step in the composition — and the layout differs between a
 template-initialised project and a generated one; match what the project already uses rather
-than imposing a preference.
+than imposing a preference. That includes a stub function to make an early build pass: a
+project builds with no function at all, and its first build has to run before
+`up function generate` (author-configuration-package, Phases 6–7).
 
 The XRD is the exception (§5): nothing wires it up, and `up project build` reads whatever is in
 `apis/`.
