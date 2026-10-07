@@ -155,9 +155,9 @@ resource with `kubectl describe <kind> <name> -n <ns>` — conditions **and** ev
 
 | You see | It means |
 |---|---|
-| `Synced=False` and a `CannotConnectToProvider` warning event (`cannot get referenced ProviderConfig …` from Upbound providers) | the reference names a ProviderConfig that does not exist, or the wrong `kind`. Check with `kubectl get clusterproviderconfig,providerconfig -A` |
+| `Synced=False` and a `CannotConnectToProvider` warning event (`cannot get referenced ProviderConfig …` from Upbound providers) | the reference names a ProviderConfig that does not exist, or the wrong `kind`. Check with `kubectl get clusterproviderconfig,providerconfig -A`. A missing *namespaced* one may show nothing at all (last row) |
 | blank conditions | observed but not reconciled yet. Wait, then read it again |
-| no conditions and no events, for minutes | nothing is reconciling the kind: the provider is not installed or not healthy (`kubectl get providers.pkg.crossplane.io`, `INSTALLED` and `HEALTHY`), its pod is not running, or the MR's CRD is not established (`kubectl get crd <plural>.<group>`). Check the ProviderConfig too, but it is not what causes the silence |
+| no conditions and no events, for minutes | either nothing is reconciling the kind — the provider is not installed or not healthy (`kubectl get providers.pkg.crossplane.io`, `INSTALLED` and `HEALTHY`), its pod is not running, or the MR's CRD is not established (`kubectl get crd <plural>.<group>`) — or the MR references a namespaced `ProviderConfig` that does not exist in its namespace. Observed with provider-aws-ec2 v2.8.2 on kind: MRs silent for 20 min, and creating the missing `ProviderConfig` got them reconciled within 16 s. Compare the MR's `providerConfigRef` with `kubectl get providerconfig -n <ns>` |
 
 ---
 
