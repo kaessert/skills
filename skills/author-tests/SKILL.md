@@ -178,6 +178,9 @@ counts as an e2e RED.
 - **Never put long-lived credentials in a test** — use web identity, or a Secret filled from a
   `UP_*` variable — and **never set `skipDelete: true`**: it leaves real cloud resources
   running.
+- **Never print a generated `E2ETest`, or a Secret, with real credential values**: its
+  `extraResources` carry the credential. Check it with a dummy value
+  ([e2e.md](references/e2e.md#credentials-depend-on-the-target)).
 
 ## Phase 5: Run it — RED, then GREEN
 

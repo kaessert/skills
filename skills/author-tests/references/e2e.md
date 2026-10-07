@@ -105,6 +105,11 @@ export UP_AWS_CREDENTIALS="$(printf '[default]\naws_access_key_id = %s\naws_secr
 A `--local` run started under `umask 077`, a common way to protect a credentials file, never gets its package
 ready (e2e-test-configuration's `local.md` reference). If you must write a file, `chmod 600` that file instead.
 
+**The program's output carries the credential.** The Secret in `extraResources` holds the variable's value, so
+whatever prints the generated `E2ETest` prints the credential. Check the program with a dummy value
+(`UP_AWS_CREDENTIALS=x go run .`), or select `.items[].spec.manifests`; never print its output, or any Secret,
+with real values, and never write it to a file.
+
 ## Go template (`tests/e2etest-<n>/main.go`)
 
 Compiles and parses (`✓ Parsing tests`); its spec mirrors a Go E2ETest that passed on a local control plane
