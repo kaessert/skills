@@ -8,6 +8,8 @@ runs, and could change between versions.
 
 - **Docker must be reachable** (`docker info` exits 0). `up` creates the cluster itself through the kind
   library; the `kind` CLI is only needed to look inside or clean up.
+- **List `kind get clusters` and `docker ps -a` before the run, and keep the lists.** Anything already there
+  is not this run's, even with this project's `<project>-uptest-` name (SKILL.md, Never): report it.
 - **Don't run `up ctx`, or check a repository, `--public` or the group.** `--local` ignores the context and
   sideloads the package instead of pushing it (`control-plane-project-charter` `charter/targets.md`), so a failing
   `up ctx . --short` is not a failed precondition here.
@@ -65,11 +67,11 @@ Size `timeoutSeconds` to what you provision (author-tests' `e2e.md` reference); 
 
 The cluster exists only during the run. Its name is `<project>-uptest-<test>` shortened: observed with up
 v0.55.0, a 56-character name became its first 49 characters, ending in `-`. Don't derive it, and don't wait on
-a word such as `cluster`: find it with `kind get clusters`, the entry starting `<project>-uptest-`. The
-registry container is `<cluster>-registry`.
+a word such as `cluster`: find it with `kind get clusters`, the entry starting `<project>-uptest-` that was not
+in your list from before the run. The registry container is `<cluster>-registry`.
 
 ```bash
-kind get clusters                                   # the entry starting <project>-uptest-
+kind get clusters                                   # the new entry starting <project>-uptest-
 KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
 kind get kubeconfig --name <cluster> > "$KCFG"
 kubectl --kubeconfig "$KCFG" get managed -A
@@ -120,7 +122,7 @@ After the run the cluster is gone, so `kubectl get managed` afterwards is imposs
 - **Leftovers, checked in the provider's API** by the names or tags the test used, not in Kubernetes. Don't
   assume a provider CLI exists: `command -v <cli>` first, then use whatever is installed (observed: no `aws`
   CLI, but an SDK such as boto3). If neither is available, say the leftovers were not checked.
-- **`kind get clusters`** lists no `<project>-uptest-*` cluster.
+- **`kind get clusters`** lists no `<project>-uptest-*` cluster beyond those in your list from before the run.
 
 ## Leaks
 
