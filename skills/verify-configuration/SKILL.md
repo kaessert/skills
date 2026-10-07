@@ -23,6 +23,9 @@ summary.
 - This skill changes no code and fixes nothing: fixes go to the authoring skills, new tests to
   `author-tests`. It runs E2E only through `e2e-test-configuration`.
 - **Asked to run, deploy or try the project:** Phase 5; verification alone stops at Phase 3.
+- **Reviewing someone else's change:** read the charter's
+  `control-plane-project-charter/references/charter/review.md` first: what to re-run, and what
+  to check beyond the gate.
 
 ### Local-only projects and projects with their own gate
 
