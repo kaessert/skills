@@ -314,6 +314,50 @@ if rsp.GetDesired().GetResources()["bucket"].GetReady() != fnv1.Ready_READY_UNSP
 }
 ```
 
+### A path that must return Fatal
+
+The template fails on any Fatal. For an input the function must reject, write a sibling test that
+expects one: a composition test can't (author-tests, "A Fatal result"). It asserts the message, that
+nothing was composed, and that no success condition was set. Nothing composed is measurable here
+because a request built with `Observed` only carries no desired state for `response.To` to copy.
+
+```go
+// fatalMessages returns the message of every Fatal result in rsp.
+func fatalMessages(rsp *fnv1.RunFunctionResponse) []string {
+	var msgs []string
+	for _, r := range rsp.GetResults() {
+		if r.GetSeverity() == fnv1.Severity_SEVERITY_FATAL {
+			msgs = append(msgs, r.GetMessage())
+		}
+	}
+	return msgs
+}
+
+func TestRunFunctionMissingRegion(t *testing.T) {
+	req := &fnv1.RunFunctionRequest{Observed: &fnv1.State{Composite: &fnv1.Resource{
+		Resource: resource.MustStructJSON(`{"apiVersion":"demo.example.org/v1alpha1","kind":"Bucket","metadata":{"name":"example","namespace":"default"},"spec":{}}`),
+	}}}
+	rsp, err := (&Function{log: logging.NewNopLogger()}).RunFunction(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := fatalMessages(rsp); len(got) != 1 || got[0] != "spec.region is required" {
+		t.Errorf("fatal results: want [spec.region is required], got %q", got)
+	}
+	if n := len(rsp.GetDesired().GetResources()); n != 0 {
+		t.Errorf("desired resources: want none, got %d", n)
+	}
+	for _, c := range rsp.GetConditions() {
+		if c.GetType() == "FunctionSuccess" {
+			t.Error("FunctionSuccess set on a fatal path")
+		}
+	}
+}
+```
+
+Checked against function-sdk-go v0.5.0 with a function that returns this Fatal the way the template
+does: it passes, and disabling the Fatal branch turns all three checks red.
+
 ## Failure modes
 
 | What you do | What happens |

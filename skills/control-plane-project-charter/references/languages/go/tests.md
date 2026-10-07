@@ -244,6 +244,7 @@ run would then pass parsing without the credential and fail only at the provider
 | What you do | What `up test run` does |
 |---|---|
 | Wrong expected value | that test FAILs (good) |
+| An XR that makes the function return a Fatal result | that test FAILs at render, `cannot render composite resource: … returned a fatal result: <msg>`, before any assertion; no field expects an error. Test the fatal path in a unit test ([`functions.md`](functions.md#a-path-that-must-return-fatal)) |
 | Function mutant (`if versioning` → `if true`) | only a test with a `resourceRefs` guard FAILs; without it the suite stays green |
 | Compile error, panic or non-zero exit in `main.go` | the **whole run** fails at `✗ Parsing tests` (`failed to generate test files: … failed to execute 'go run .'`), no test executes. It reads as a broken test, never as RED |
 | E2E program exits on a missing variable under `up test run "tests/*"` | the composition gate fails at `✗ Parsing tests` (`failed to execute 'go run .': <your message>`), though no composition test is wrong. Run the gate as `"tests/test-*"`, or, if the project's own gate is `tests/*`, set the variable for it too ([`charter/container.md`](../../charter/container.md)) |

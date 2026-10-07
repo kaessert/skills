@@ -138,6 +138,17 @@ not search the CLI for one.
 | A composed **resource** | Assert the composite's `spec.crossplane.resourceRefs` as the exact list from the render. Lists match exactly, so a surplus resource fails it. The templates in the charter's `languages/go/tests.md` and `languages/go-templating.md` show this guard; detail in its `charter/evidence.md` |
 | A **field** | Not expressible in a composition test. Use a unit test on the function's desired state, in the function's own language (Go: `go test ./...` in `functions/<n>/`), or confirm it once in the render and report it as not asserted |
 
+### A Fatal result
+
+A `CompositionTest` cannot assert a Fatal result. `up test run` renders through Crossplane,
+which stops at the Fatal before any assertion: the test fails with `… returned a fatal result:
+<message>` (observed with up v0.55.0), and a `CompositionTest` has no field for an expected
+error, so not even a `resourceRefs: []` guard runs. A Fatal case under `tests/test-*` fails the
+gate. Test each fatal path in a function unit test (the message, nothing composed; Go: the
+charter's `languages/go/functions.md`, "A path that must return Fatal"), keep composition tests
+on inputs the function accepts, and don't search the CLI, its binaries or the web for another
+way.
+
 ### Asserting a requirement on every resource
 
 When a requirement applies to *every* composed resource (a label, a policy, a config ref, a

@@ -95,7 +95,8 @@ syntax (Python: `languages/python/tests.md`; Go: `languages/go/tests.md`; YAML:
 a second example file. Inline `xr` and `xrPath` are mutually exclusive, so a test helper that
 takes `xrPath` needs an `xr` parameter, never both at once. This is where "the user wrote the
 obvious minimal manifest" bugs live: the shipped example usually sets every optional field, so
-the omitted branch never renders.
+the omitted branch never renders. An input the function rejects with a Fatal result is the
+exception: no `CompositionTest` can assert it (author-tests, "A Fatal result").
 
 Besides `xr`, the test takes these inline fields, all optional: `composition` and `xrd` (inline
 instead of `*Path`), `extraResources`, `context`, and `functionCredentialsPath`.
