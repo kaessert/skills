@@ -16,8 +16,9 @@ git branch --list migrate-to-v2
 
 From the plan, take: the project name, the counts, each function's language and the test
 language, the decisions and assumptions, the dependency targets, and which tests cover which
-function. If the plan names no language, detect it with `control-plane-project-charter`
-`languages/README.md`. Read that language file before stage 5.
+function. If the plan names no language, detect it with
+`control-plane-project-charter/references/languages/README.md`. Read that language file before
+stage 5.
 
 ## Stage 1: Prepare
 
@@ -64,7 +65,7 @@ For each function, in the plan's order:
 
 3. **What no test turned red.** A plan item whose change no updated test detected — a deleted
    `providerConfigRef`, a mapped `deletionPolicy` — gets a test, proven by mutation
-   (`control-plane-project-charter` `charter/tdd.md`), or is reported as not covered.
+   (`control-plane-project-charter/references/charter/tdd.md`), or is reported as not covered.
 
 E2E tests are updated after the functions they exercise, with the same test brief minus the
 RED step: they run in stage 7.

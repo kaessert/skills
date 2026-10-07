@@ -2,8 +2,8 @@
 
 The files this skill writes by hand, the questions to ask when the spec does not answer them,
 what to check when a build fails, and the hand-off report. The
-order of the work is SKILL.md's phases; function and test syntax is in the charter's
-`languages/` files.
+order of the work is SKILL.md's phases; function and test syntax is in the
+files under `control-plane-project-charter/references/languages/`.
 
 - [Templates](#templates)
 - [Questions for a new project](#questions-for-a-new-project)
@@ -15,8 +15,8 @@ order of the work is SKILL.md's phases; function and test syntax is in the chart
 
 ## Templates
 
-The XRD has no template here: write it from the v2 skeleton in the charter's
-`charter/v2-resources.md` (SKILL.md Phase 3).
+The XRD has no template here: write it from the v2 skeleton in
+`control-plane-project-charter/references/charter/v2-resources.md` (SKILL.md Phase 3).
 
 ### upbound.yaml
 
@@ -135,7 +135,7 @@ Then the resource:
 |-------|---------|---------|
 | Resource Kind | VPC, Database | required |
 | Plural name | vpcs, databases | from the Kind |
-| Version | v1alpha1 | `v1alpha1` (the charter's `charter/xrd-design.md`) |
+| Version | v1alpha1 | `v1alpha1` (`control-plane-project-charter/references/charter/xrd-design.md`) |
 
 In an existing project, ask instead whether to add a resource or change an existing one.
 

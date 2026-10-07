@@ -45,7 +45,8 @@ verification. Run `up project build`. If it fails, report the error and stop.
 
 Run `up test run "tests/test-*"`. If any fail, report the failures and stop. If it prints
 `No test files found`, no test ran, though it exits 0: report that, never a pass (charter §8).
-Each run pays a full project build (timings: `control-plane-project-charter` `charter/tdd.md`).
+Each run pays a full project build (timings:
+`control-plane-project-charter/references/charter/tdd.md`).
 
 Keep the `test-*` glob: `up test run` runs the program of every dir it matches, e2e ones
 too even without `--e2e`, so `tests/*` fails at `✗ Parsing tests` whenever an e2e input is
@@ -53,10 +54,10 @@ unset. `no valid CompositionTests found` means the matched dirs produced no
 `CompositionTest` (e.g. only `e2etest-*` dirs): a wrong glob, not a failing test (charter §7).
 
 **Read the render, not just the exit code.** `up test run` checks only the resources a test
-asserts: an extra managed resource added to a function left a 2-test suite at 2/2 PASS. When
-the change added or modified a composed resource, re-run with `--function-logs` and list what
-the function emitted as `control-plane-project-charter` `charter/evidence.md` shows (use the
-directory the run prints). Check that every resource the change should produce is in the
+asserts: an extra managed resource added to a function left a 2-test suite at 2/2 PASS. When the
+change added or modified a composed resource, re-run with `--function-logs` and list what the
+function emitted as `control-plane-project-charter/references/charter/evidence.md` shows (use
+the directory the run prints). Check that every resource the change should produce is in the
 render, and that each is asserted. A resource in the render but not in the assertions is a gap
 to report, not a pass.
 
@@ -72,7 +73,7 @@ Two things a composition run does not prove, so don't report them as verified (c
   prove the branch logic, not that a provider reports that status.
 - **`providerConfigRef` correctness**: a reference to a ProviderConfig that does not exist
   renders and asserts cleanly and fails only on a real control plane
-  (`control-plane-project-charter` `charter/v2-resources.md`).
+  (`control-plane-project-charter/references/charter/v2-resources.md`).
 
 Then E2E, unless the project rules it out:
 
@@ -119,7 +120,7 @@ run in flight: in many agents a session's jobs die with it, leaving a half-creat
 (`up-<project>`) and no result.
 
 **Tear down with `up project stop`** from the project root (what a hand-deleted cluster leaves
-behind: `control-plane-project-charter` `charter/targets.md`).
+behind: `control-plane-project-charter/references/charter/targets.md`).
 
 ### Never
 

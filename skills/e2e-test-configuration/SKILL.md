@@ -43,7 +43,7 @@ before you run anything**:
 - **A test that can only pass on one target decides.** A ProviderConfig with `source: Upbound` works only on
   a Space. Report the mismatch rather than running it elsewhere.
 - **Always pass the target flags.** Without them the current context decides where the run lands, without
-  saying so (`control-plane-project-charter` `charter/targets.md`).
+  saying so (`control-plane-project-charter/references/charter/targets.md`).
 - **State the target in one line before the run** ("running e2e on local kind" or "running e2e on Space
   `<space>/<group>`"), and check it against the run's first progress line (Phase 4).
 
@@ -64,10 +64,10 @@ first failure:
 
 1. **The project builds:** `up project build`.
 2. **The composition tests pass:** `up test run "tests/test-*"`. That is `test-*` by default, not `tests/*`:
-   `up test run` runs every matched dir's program, e2e ones too, even without `--e2e`, and fails at `✗ Parsing
-   tests` when an e2e input is unset. If the project's own gate or spec runs `up test run tests/*`, use it, with
-   the e2e inputs (check 3) set for that run too, and say so in the report (the charter's
-   `charter/container.md`).
+   `up test run` runs every matched dir's program, e2e ones too, even without `--e2e`, and fails at
+   `✗ Parsing tests` when an e2e input is unset. If the project's own gate or spec runs `up test run tests/*`,
+   use it, with the e2e inputs (check 3) set for that run too, and say so in the report
+   (`control-plane-project-charter/references/charter/container.md`).
 3. **Credentials.** List what the test programs read, in any language, and check each:
 
    ```bash

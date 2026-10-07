@@ -105,7 +105,7 @@ writing a test: it carries the templates and the silent failure modes.
 4. **Scaffold with `up test generate <name> [--e2e] --language <lang>`** (`kcl`, `python`,
    `yaml`, `go`, `go-templating`); never create a test directory by hand. Then write the test
    from the template in the language file. Python: run `setup_venv.py` again after generating
-   each test directory (the charter's `languages/python.md`).
+   each test directory (`control-plane-project-charter/references/languages/python.md`).
 
 ## Phase 3: Write the assertion that has to fail
 
@@ -116,13 +116,14 @@ Four things make an assertion bite:
 | **Assert the field, not the existence.** | `assertResources` is partial and positive. An entry naming only `kind` passes against any resource of that kind, whatever it contains. Name the field you are adding. |
 | **Assert on the composite too.** | Every `status` field the function writes needs an assertion on the XR itself. It is the only programmatic check on composition outputs. |
 | **Cover the minimal XR.** | Use the inline `xr` field with every optional property omitted. That is the shape a real user writes first, and the one the scaffold never generates. |
-| **Use distinguishing inputs.** | Every parameter the function passes through (region, config names, CIDRs, the XR's own name, …) gets a non-default value, unique across fields, in at least one test; a required field with no default needs two tests with different values. An input equal to the default or to a sibling field can't tell pass-through from a hard-coded constant. Backfill check: the charter's `charter/tdd.md`. |
+| **Use distinguishing inputs.** | Every parameter the function passes through (region, config names, CIDRs, the XR's own name, …) gets a non-default value, unique across fields, in at least one test; a required field with no default needs two tests with different values. An input equal to the default or to a sibling field can't tell pass-through from a hard-coded constant. Backfill check: `control-plane-project-charter/references/charter/tdd.md`. |
 
 - **Define the XR inline** where the format supports it, with `namespace: default` (v2).
 - **Assert list membership on the parsed list**, not by substring matching on a joined string:
   a short token matches inside a longer one (`rt` inside `rta-…`).
-- **Composed-resource names:** never guess one; the naming rule is in the charter's
-  `charter/evidence.md` ([test-model.md, mistake 1](references/test-model.md#1-guessed-composed-resource-names)).
+- **Composed-resource names:** never guess one; the naming rule is in
+  `control-plane-project-charter/references/charter/evidence.md`
+  ([test-model.md, mistake 1](references/test-model.md#1-guessed-composed-resource-names)).
 - **Managed resources in a test follow binding rule 4**, written as the import path in KCL,
   Python and Go and as the `apiVersion` string in YAML. Assert `providerConfigRef` and
   `managementPolicies` only where the project's spec or API sets them (whether a render keeps
@@ -135,29 +136,29 @@ not search the CLI for one.
 
 | Must be absent | How |
 |---|---|
-| A composed **resource** | Assert the composite's `spec.crossplane.resourceRefs` as the exact list from the render. Lists match exactly, so a surplus resource fails it. The templates in the charter's `languages/go/tests.md` and `languages/go-templating.md` show this guard; detail in its `charter/evidence.md` |
+| A composed **resource** | Assert the composite's `spec.crossplane.resourceRefs` as the exact list from the render. Lists match exactly, so a surplus resource fails it. The "Composition test template" sections of `control-plane-project-charter/references/languages/go/tests.md` and `control-plane-project-charter/references/languages/go-templating.md` show this guard; detail in `control-plane-project-charter/references/charter/evidence.md`, "How `assertResources` matches" |
 | A **field** | Not expressible in a composition test. Use a unit test on the function's desired state, in the function's own language (Go: `go test ./...` in `functions/<n>/`), or confirm it once in the render and report it as not asserted |
 
 ### A Fatal result
 
-A `CompositionTest` cannot assert a Fatal result. `up test run` renders through Crossplane,
-which stops at the Fatal before any assertion: the test fails with `… returned a fatal result:
-<message>` (observed with up v0.55.0), and a `CompositionTest` has no field for an expected
-error, so not even a `resourceRefs: []` guard runs. A Fatal case under `tests/test-*` fails the
-gate. Test each fatal path in a function unit test (the message, nothing composed; Go: the
-charter's `languages/go/functions.md`, "A path that must return Fatal"), keep composition tests
-on inputs the function accepts, and don't search the CLI, its binaries or the web for another
-way.
+A `CompositionTest` cannot assert a Fatal result. `up test run` renders through Crossplane, which
+stops at the Fatal before any assertion: the test fails with
+`… returned a fatal result: <message>` (observed with up v0.55.0), and a `CompositionTest` has no
+field for an expected error, so not even a `resourceRefs: []` guard runs. A Fatal case under
+`tests/test-*` fails the gate. Test each fatal path in a function unit test (the message, nothing
+composed; Go: `control-plane-project-charter/references/languages/go/functions.md`, "A path that
+must return Fatal"), keep composition tests on inputs the function accepts, and don't search the
+CLI, its binaries or the web for another way.
 
 ### Asserting a requirement on every resource
 
 When a requirement applies to *every* composed resource (a label, a policy, a config ref, a
 region), assert it in one test that ranges over all desired resources, not in per-resource
-expectations: those inherit each row's omissions, so a resource that misses it stays green.
-The tier that can range is a function unit test over the desired state (Go sketch: the
-charter's `languages/go/functions.md`, unit-test template). A CompositionTest cannot iterate
-over the render; it fits only when one helper adds the requirement to every expectation and
-there is one expectation per entry of the exact `resourceRefs` list.
+expectations: those inherit each row's omissions, so a resource that misses it stays green. The
+tier that can range is a function unit test over the desired state (Go sketch:
+`control-plane-project-charter/references/languages/go/functions.md`, unit-test template). A
+CompositionTest cannot iterate over the render; it fits only when one helper adds the requirement
+to every expectation and there is one expectation per entry of the exact `resourceRefs` list.
 
 ## Phase 4: E2E tests
 

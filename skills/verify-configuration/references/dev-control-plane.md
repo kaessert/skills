@@ -4,7 +4,7 @@
 cannot pull, confirming the run reconciled, and what to do when a run hangs on
 `Waiting for package to be ready`. The skill's Phase 5 holds the never-rules. Where a run lands,
 the non-interactive `up ctx` forms, what `--public` does, and why a private repository wedges
-the run are in `control-plane-project-charter` `charter/targets.md`: read it with this.
+the run are in `control-plane-project-charter/references/charter/targets.md`: read it with this.
 
 ---
 
@@ -17,7 +17,8 @@ up ctx . --short                                  # never bare `up ctx`: it need
 up ctp list >/dev/null 2>&1 && echo "Space reachable"
 ```
 
-Read the result as `charter/targets.md` describes; do not guess from the first segment.
+Read the result as `control-plane-project-charter/references/charter/targets.md` describes; do
+not guess from the first segment.
 
 **2. Not on a Space?** Local KIND is already the default:
 
@@ -43,7 +44,7 @@ caller and stop.
 | Option | Command | What it costs them |
 |---|---|---|
 | **A. Cloud control plane, with pull access** | `up project run --timeout=20m`, once the control plane can pull | Nothing, if they can point you at a pull secret or `ImageConfig`: ask where it is rather than assuming. The only option that tests what they connected to |
-| **B. Publish the repository** | `up project run --public --timeout=20m` | **Permanently publishes their package**, and does not change a repository that already exists (`charter/targets.md`). A disclosure decision, never made on their behalf |
+| **B. Publish the repository** | `up project run --public --timeout=20m` | **Permanently publishes their package**, and does not change a repository that already exists (`control-plane-project-charter/references/charter/targets.md`). A disclosure decision, never made on their behalf |
 | **C. Local KIND control plane** | `up project run --local --timeout=20m` | Nothing is pushed, so the pull failure cannot occur, and it still creates real cloud resources through their provider credentials. But it is not the Space they pointed you at, and Space-specific behaviour goes uncovered |
 
 **5. Run it streaming.** Let the output stream, or `tee` it to a file.
@@ -58,9 +59,9 @@ kubectl get <xr-kind> -A
 kubectl describe <xr-kind> <name> -n <ns>    # conditions AND events, also on each composed resource
 ```
 
-Read what you see as `control-plane-project-charter` `charter/v2-resources.md` describes (a
-missing or wrong ProviderConfig, a resource not reconciled yet, and a kind nothing reconciles
-look different). The checks behind those causes:
+Read what you see as `control-plane-project-charter/references/charter/v2-resources.md`
+describes (a missing or wrong ProviderConfig, a resource not reconciled yet, and a kind nothing
+reconciles look different). The checks behind those causes:
 
 ```bash
 kubectl get clusterproviderconfig,providerconfig -A   # does the referenced object exist?
@@ -89,9 +90,9 @@ verified at the provider".
 ## When a run hangs on "Waiting for package to be ready"
 
 It ends with only `up: error: context deadline exceeded`, which names no control plane and no
-package. Do not retry. Check the context first (`up ctx .`): a failed run can leave kubeconfig on
-a different control plane, whose healthy package then misleads you. Then diagnose as
-`control-plane-project-charter` `charter/targets.md` ("A run stuck on `Waiting for package to be
-ready`") says: the real error is on the `Configuration`, and a pull failure hands back step 4's
-choice, never `--public` as a workaround. Report the underlying condition message, not "the run
-timed out".
+package. Do not retry. Check the context first (`up ctx .`): a failed run can leave kubeconfig
+on a different control plane, whose healthy package then misleads you. Then diagnose as
+`control-plane-project-charter/references/charter/targets.md` ("A run stuck on
+`Waiting for package to be ready`") says: the real error is on the `Configuration`, and a pull
+failure hands back step 4's choice, never `--public` as a workaround. Report the underlying
+condition message, not "the run timed out".

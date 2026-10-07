@@ -5,14 +5,14 @@ guess, and the credential prerequisite for the README. The skill's Phase 8 state
 
 ---
 
-A `--scratch` project has no `examples/providerconfig.yaml`; only the *language templates*
-ship one. So a scratch project builds, its tests pass, it installs on a control plane — and
-every managed resource it composes sits unauthenticated, because Crossplane v2 defaults an
-omitted `providerConfigRef` to `{kind: ClusterProviderConfig, name: default}` and nothing in
-the project creates that object. Nothing in the workflow prompts for it, and no check
-verifies that the ProviderConfig a composition implicitly depends on exists. What a missing
-or wrong ProviderConfig looks like on the cluster: `control-plane-project-charter`
-`charter/v2-resources.md`.
+A `--scratch` project has no `examples/providerconfig.yaml`; only the *language templates* ship
+one. So a scratch project builds, its tests pass, it installs on a control plane — and every
+managed resource it composes sits unauthenticated, because Crossplane v2 defaults an omitted
+`providerConfigRef` to `{kind: ClusterProviderConfig, name: default}` and nothing in the project
+creates that object. Nothing in the workflow prompts for it, and no check verifies that the
+ProviderConfig a composition implicitly depends on exists. What a missing or wrong
+ProviderConfig looks like on the cluster:
+`control-plane-project-charter/references/charter/v2-resources.md`.
 
 Create it in Phase 8, matching the provider family you added in Phase 4. The default is a
 `ClusterProviderConfig` named `default`, below. When the project's spec or API names another

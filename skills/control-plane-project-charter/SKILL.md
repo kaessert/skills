@@ -44,12 +44,15 @@ your row names:
 
 | Work | Load | And read |
 |---|---|---|
-| XRD, `upbound.yaml`, dependencies, examples, ProviderConfig, MRAP | author-configuration-package | its `mrap.md` for an MRAP |
-| function code | author-composition | the language file (§10), e.g. `languages/go/functions.md` |
-| anything under `tests/` | author-tests | the test language's file, e.g. `languages/go/tests.md`; an `E2ETest`: its `e2e.md` |
-| running E2E tests | e2e-test-configuration | its `local.md` or `space.md` |
-| reviewing | no task skill | [`charter/review.md`](references/charter/review.md), and the language file's failure modes for what changed |
+| XRD, `upbound.yaml`, dependencies, examples, ProviderConfig, MRAP | author-configuration-package | `author-configuration-package/references/mrap.md` for an MRAP |
+| function code | author-composition | the language file (§10), e.g. `references/languages/go/functions.md` |
+| anything under `tests/` | author-tests | the test language's file, e.g. `references/languages/go/tests.md`; an `E2ETest`: `author-tests/references/e2e.md` |
+| running E2E tests | e2e-test-configuration | `e2e-test-configuration/references/local.md` or `space.md` beside it |
+| reviewing | no task skill | [`references/charter/review.md`](references/charter/review.md), and the language file's failure modes for what changed |
 | specifying work for someone else | the skills that work needs | — |
+
+A path starting `references/` is in this skill's directory; one starting with a skill's name is
+in that skill's directory, beside this one.
 
 This file holds the rules, none of them language-specific and none optional. The evidence and
 worked examples sit in [`charter/`](references/charter/), the syntax in

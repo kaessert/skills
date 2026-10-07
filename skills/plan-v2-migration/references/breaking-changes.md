@@ -1,9 +1,9 @@
 # Crossplane v1 → v2: the breaking changes
 
-What changes when a v1 control-plane project moves to Crossplane v2, independent of the
-function language. The YAML below is language-neutral; how a function or test spells the same
-thing (import paths, model types, the XR bootstrap) is in the charter's language file for the
-project — `control-plane-project-charter` `languages/README.md` says which one. The rules for a
+What changes when a v1 control-plane project moves to Crossplane v2, independent of the function
+language. The YAML below is language-neutral; how a function or test spells the same thing
+(import paths, model types, the XR bootstrap) is in the charter's language file for the project
+— `control-plane-project-charter/references/languages/README.md` says which one. The rules for a
 v2 composed resource are `control-plane-project-charter` §5; this file maps v1 onto them.
 
 ## Summary
@@ -89,7 +89,7 @@ apiextensions.crossplane.io/v2`. `defaultCompositeDeletePolicy` only governs cla
 too. The schema under `versions[]` carries over, apart from the parameters in
 [deletionPolicy](#deletionpolicy) and [Secret references](#secret-references). Schema quality
 (open-ended maps such as tags as `additionalProperties`, `required`, `status`) is
-`control-plane-project-charter` `charter/xrd-design.md`.
+`control-plane-project-charter/references/charter/xrd-design.md`.
 
 ## Kind and the X prefix
 
@@ -98,10 +98,11 @@ XRD may keep `XNetwork`.
 
 Renaming the Kind is a new API, not a migration step: `spec.names` is immutable on an XRD
 (`Value is immutable`), so a new Kind means a new XRD (`<plural>.<group>`), and existing objects
-of the old Kind are not converted (`control-plane-project-charter` `charter/xrd-design.md`). Do
-it only as a deliberate, recorded decision — for example when users only ever wrote claims and
-the claim Kind (`Network`) is the name they know. The rename then carries into
-`compositeTypeRef.kind`, every example and test, and optionally the directories
+of the old Kind are not converted
+(`control-plane-project-charter/references/charter/xrd-design.md`). Do it only as a deliberate,
+recorded decision — for example when users only ever wrote claims and the claim Kind (`Network`)
+is the name they know. The rename then carries into `compositeTypeRef.kind`, every example and
+test, and optionally the directories
 ([Directory and function names](#directory-and-function-names)).
 
 ## Provider API groups
@@ -163,11 +164,10 @@ Omit it if and only if `ClusterProviderConfig/default` exists and is the right o
 | `providerConfigRef: {name: team-a}` | keep it as `{kind: ClusterProviderConfig, name: team-a}`, and record that the platform needs a `ClusterProviderConfig` of that name in the provider's `.m.` group — the v1 `ProviderConfig` is not one |
 | a name the XR passes in | keep the parameter; add the `kind` |
 
-Deleting a non-`default` reference silently repoints those resources at the default
-credentials. `kind: ProviderConfig` selects a *namespaced* config in the resource's namespace:
-it is a bug only when no `ProviderConfig` of that name exists in, or is created in, the XR's
-namespace. The symptom of a missing one: `control-plane-project-charter`
-`charter/v2-resources.md`.
+Deleting a non-`default` reference silently repoints those resources at the default credentials.
+`kind: ProviderConfig` selects a *namespaced* config in the resource's namespace: it is a bug
+only when no `ProviderConfig` of that name exists in, or is created in, the XR's namespace. The
+symptom of a missing one: `control-plane-project-charter/references/charter/v2-resources.md`.
 
 ## Secret references
 
@@ -263,10 +263,11 @@ spec:
 
 - **Composition tests:** the XR input changes like an example (namespace, `spec.crossplane`,
   Kind as kept). Expected managed resources use the `.m.` `apiVersion` at the version the models
-  show. Do not add `providerConfigRef`, `managementPolicies` or a namespace to
-  an expected resource (a namespaced MR has no `deletionPolicy`) unless the function sets it — what a render shows of the CRD defaults
-  differs by language (`control-plane-project-charter` `charter/v2-resources.md`). Assert a
-  composed connection `Secret` with `observedResources`.
+  show. Do not add `providerConfigRef`, `managementPolicies` or a namespace to an expected
+  resource (a namespaced MR has no `deletionPolicy`) unless the function sets it — what a render
+  shows of the CRD defaults differs by language
+  (`control-plane-project-charter/references/charter/v2-resources.md`). Assert a composed
+  connection `Secret` with `observedResources`.
 - **Test code** in KCL, Python or Go switches its imports the way the function does.
 - **E2E tests:** manifests become namespaced XRs; `spec.crossplane.version`, if set, names a
   Crossplane v2 release; the ProviderConfig the test creates follows `author-tests`

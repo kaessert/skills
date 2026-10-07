@@ -15,10 +15,12 @@ supports, test first.
 
 A composition's *meaning* is language-agnostic; only its *syntax* differs. Read three layers:
 the charter (the rules), [patterns.md](references/patterns.md) (what each pattern means), and
-the charter's `languages/` file for your language (the syntax).
+your language's file under `control-plane-project-charter/references/languages/` (the
+syntax).
 
-- **Reviewing function code:** the checks are in the charter's `charter/review.md`. **A test
-  passes but the resource misbehaves on a control plane:**
+- **Reviewing function code:** the checks are in
+  `control-plane-project-charter/references/charter/review.md`. **A test passes but the resource
+  misbehaves on a control plane:**
   [patterns.md](references/patterns.md#a-green-test-with-a-misbehaving-resource).
 - Tests → `author-tests`; XRD design and scaffolding → `author-configuration-package`; the
   gate and deploying → `verify-configuration`; live cloud runs → `e2e-test-configuration`;
@@ -68,11 +70,12 @@ project is; migrating it is `plan-v2-migration`'s work, not cleanup in passing.
 
 ## Phase 2: Discover — do not ask
 
-Make sure the XRD and a composition exist so the test has something to point at. Write the
-XRD yourself (`author-configuration-package`; the charter's `charter/v2-resources.md` has the
-v2 skeleton), scaffold the composition with `up composition generate`, which emits only an
-auto-ready step, and wire your function in with `up function generate <n> <composition-path>`.
-The function body stays empty or unchanged.
+Make sure the XRD and a composition exist so the test has something to point at. Write the XRD
+yourself (`author-configuration-package`;
+`control-plane-project-charter/references/charter/v2-resources.md` has the v2 skeleton),
+scaffold the composition with `up composition generate`, which emits only an auto-ready step,
+and wire your function in with `up function generate <n> <composition-path>`. The function body
+stays empty or unchanged.
 
 `control-plane-project-charter` §2 has the general table. The composition-specific additions:
 
@@ -81,7 +84,8 @@ The function body stays empty or unchanged.
 | **Models missing entirely** (fresh clone) | `.up/` is gitignored and starts empty. Run `up dep update-cache`, then `up project build`; every model import fails until you do |
 | Function layout, import line, class names, field names and types | the generated models under `.up/<language>/`, read as the language file says |
 
-**Python:** before Phase 3, run what the charter's `languages/python.md` says with this skill's
+**Python:** before Phase 3, run what
+`control-plane-project-charter/references/languages/python.md` says with this skill's
 [`scripts/`](scripts/): `scripts/setup_venv.py`, `scripts/probe_project.py` (layout, imports,
 fields, generation) and `scripts/run_function.py` (the fast tier).
 
@@ -153,18 +157,21 @@ round again. Before you call anything covered (charter §8):
 
 1. **Check provider validity**, not just v2 conformance, as charter §6 says, and write the
    result in your summary.
-2. **Grep your own function** with the two greps in the charter's `charter/v2-resources.md`
-   and judge each hit rather than counting them. Legitimate: a `namespace` chosen by a
-   cluster-scoped XR or set on an object embedded inside `forProvider` (a provider-kubernetes
-   `Object` manifest); a `providerConfigRef` where the right config is not
-   `ClusterProviderConfig/default`, with a `kind` naming an object that exists; any field the
-   project's spec or API sets. A `namespace` on a composed Secret or ConfigMap of a namespaced
-   XR is not legitimate: Crossplane overwrites it.
+2. **Grep your own function** with the two greps in
+   `control-plane-project-charter/references/charter/v2-resources.md` and judge each hit rather
+   than counting them. Legitimate: a `namespace` chosen by a cluster-scoped XR or set on an
+   object embedded inside `forProvider` (a provider-kubernetes `Object` manifest); a
+   `providerConfigRef` where the right config is not `ClusterProviderConfig/default`, with a
+   `kind` naming an object that exists; any field the project's spec or API sets. A `namespace`
+   on a composed Secret or ConfigMap of a namespaced XR is not legitimate: Crossplane overwrites
+   it.
 3. **Read the render, not the assertions:** `up test run "tests/test-*" --function-logs`, then
-   read it as `charter/evidence.md` says (the directory the run prints). Add each emitted
-   resource to `assertResources`; until you do it is untested, though the suite is green.
-4. **The suite satisfies the charter's `charter/evidence.md` "Coverage"**: each input shape
-   including a minimal XR, each observed-state branch, every `status` field on the composite.
+   read it as `control-plane-project-charter/references/charter/evidence.md` says (the directory
+   the run prints). Add each emitted resource to `assertResources`; until you do it is untested,
+   though the suite is green.
+4. **The suite satisfies `control-plane-project-charter/references/charter/evidence.md`
+   "Coverage"**: each input shape including a minimal XR, each observed-state branch, every
+   `status` field on the composite.
 
 ## Phase 7: Report
 

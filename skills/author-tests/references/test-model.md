@@ -1,8 +1,8 @@
 # The test model, patterns and common mistakes (language-agnostic)
 
-The object model, structuring patterns and mistakes that apply to Crossplane configuration
-tests in every language. The syntax is in the charter's `languages/` files
-(`control-plane-project-charter`, indexed by `languages/README.md`); writing an `E2ETest` is
+The object model, structuring patterns and mistakes that apply to Crossplane configuration tests in
+every language. The syntax is in the charter's language files, indexed by
+`control-plane-project-charter/references/languages/README.md`; writing an `E2ETest` is
 [e2e.md](e2e.md).
 
 - [The test object model](#the-test-object-model)
@@ -68,15 +68,16 @@ Test resource **dependencies** and **status-driven branches** without a cloud, b
 
 - Test N asserts what renders given the observed state of prior resources.
 - Keep `validate: false`: you are deliberately mocking status the schema would not populate.
-- Mock only the status fields the composition reads (e.g. `status.atProvider.state: deployed`,
-  a condition `type: Ready, status: "True"`, or a provider-specific contract like
+- Mock only the status fields the composition reads (e.g. `status.atProvider.state: deployed`, a
+  condition `type: Ready, status: "True"`, or a provider-specific contract like
   `status.eks.clusterArn`). What a mock needs to be observed at all (the annotation, and for a
-  namespaced XR its namespace and the render's name) and the condition rules: the charter's
-  `charter/evidence.md`, "Coverage".
+  namespaced XR its namespace and the render's name) and the condition rules:
+  `control-plane-project-charter/references/charter/evidence.md`, "Coverage".
 
-This verifies "resource B only renders once resource A is Ready" and "the XR surfaces field X
-once the observed endpoint is known". Examples: the charter's language file for your test
-language (Go: `languages/go/tests.md`, `status-from-observed-bucket`; YAML: `languages/yaml.md`).
+This verifies "resource B only renders once resource A is Ready" and "the XR surfaces field X once
+the observed endpoint is known". Examples: the charter's language file for your test language (Go:
+`control-plane-project-charter/references/languages/go/tests.md`, `status-from-observed-bucket`;
+YAML: `control-plane-project-charter/references/languages/yaml.md`).
 
 ---
 
@@ -90,14 +91,14 @@ dump-mode mistakes live in their language files.
 **Wrong:** `name: test-vpc` (a guess).
 **Right:** omit `metadata.name` when a kind appears once in the render; when it appears more
 than once, assert each by the name copied from the render, which is deterministic there
-(the charter's `charter/evidence.md`).
+(`control-plane-project-charter/references/charter/evidence.md`).
 
 ### 2. A composed resource with no assertion at all
 
-`assertResources` ignores every resource it does not list (charter §8), so an extra managed
-resource left a 2-test suite at 2/2 PASS. **Right:** assert every resource the composition can
-emit, conditional ones in their own test; cross-check against the render and assert the
-composite's exact `spec.crossplane.resourceRefs` (the charter's `charter/evidence.md`).
+`assertResources` ignores every resource it does not list (charter §8), so an extra managed resource
+left a 2-test suite at 2/2 PASS. **Right:** assert every resource the composition can emit,
+conditional ones in their own test; cross-check against the render and assert the composite's exact
+`spec.crossplane.resourceRefs` (`control-plane-project-charter/references/charter/evidence.md`).
 
 ### 3. Assuming you cannot assert the composite's own `status`
 

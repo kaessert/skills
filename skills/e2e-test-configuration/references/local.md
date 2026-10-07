@@ -11,8 +11,8 @@ runs, and could change between versions.
 - **List `kind get clusters` and `docker ps -a` before the run, and keep the lists.** Anything already there
   is not this run's, even with this project's `<project>-uptest-` name (SKILL.md, Never): report it.
 - **Don't run `up ctx`, or check a repository, `--public` or the group.** `--local` ignores the context and
-  sideloads the package instead of pushing it (`control-plane-project-charter` `charter/targets.md`), so a failing
-  `up ctx . --short` is not a failed precondition here.
+  sideloads the package instead of pushing it (`control-plane-project-charter/references/charter/targets.md`),
+  so a failing `up ctx . --short` is not a failed precondition here.
 - **Credentials are a static Secret** in `extraResources`: `credentials.source: Secret` plus
   `secretRef: {namespace, name, key}`, built from a `UP_*` variable. `source: Upbound` web identity does not work
   on kind. The shapes, the AWS credentials-file format and how to build it in memory are in author-tests'
@@ -132,6 +132,7 @@ After the run the cluster is gone, so `kubectl get managed` afterwards is imposs
   and `docker ps -a`.
 - **Remove only what this run created:** the cluster `kind get clusters` lists for this run, with
   `kind delete cluster --name <cluster>`. Anything else on the machine is the user's.
-- **`kind delete cluster` leaves the registry container behind** (`charter/targets.md`). If you delete a
-  leaked cluster by hand, check `docker ps -a` for this run's registry container (`upbound/olareg`) and remove it
-  with `docker rm -f -v <container>`.
+- **`kind delete cluster` leaves the registry container behind**
+  (`control-plane-project-charter/references/charter/targets.md`). If you delete a leaked cluster by hand, check
+  `docker ps -a` for this run's registry container (`upbound/olareg`) and remove it with
+  `docker rm -f -v <container>`.

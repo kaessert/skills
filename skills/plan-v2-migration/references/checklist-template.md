@@ -70,8 +70,8 @@ against the unmigrated function, then migrate the function until they pass.
 - [ ] Function (`author-composition`): [imports → `.m.`; providerConfigRef: delete | keep
       `{kind: ClusterProviderConfig, name: [n]}`; deletionPolicy: delete | map the parameter;
       secret refs: drop `namespace`; connection Secret]. `up test run "tests/test-*"` passes
-- [ ] [No test covers [behaviour]] prove it by mutation (`control-plane-project-charter`
-      `charter/tdd.md`)
+- [ ] [No test covers [behaviour]] prove it by mutation
+      (`control-plane-project-charter/references/charter/tdd.md`)
 
 ### 5.[m] E2E test `tests/[e2etest-name]`
 

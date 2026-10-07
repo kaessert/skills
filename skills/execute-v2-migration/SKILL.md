@@ -41,10 +41,10 @@ interactive; unattended, take the default named at each point and state it in th
 
 ## Stage 0: Pre-flight
 
-Check that the plan exists, the project is still v1 where the plan says so, the worktree state,
-and whether `migrate-to-v2` exists (commands: [phases.md](references/phases.md#stage-0-pre-flight)).
-Take the languages from the plan, or detect them with `control-plane-project-charter`
-`languages/README.md`, and read the language file.
+Check that the plan exists, the project is still v1 where the plan says so, the worktree state, and
+whether `migrate-to-v2` exists (commands: [phases.md](references/phases.md#stage-0-pre-flight)).
+Take the languages from the plan, or detect them with
+`control-plane-project-charter/references/languages/README.md`, and read the language file.
 
 | Point | Interactive | Unattended |
 |---|---|---|
@@ -64,12 +64,12 @@ Edit each file with the plan's items. **Checkpoint:** `yq '.' <file>` parses, pe
 
 ## Stage 5: Tests, then functions
 
-Tests lead. A migration starts from working code, so there is no natural RED: for each
-function, first update its tests to v2 and watch them fail against the unmigrated function —
-for the v2 reason, not a compile error — then migrate the function until they pass. That is the
-loop in `control-plane-project-charter` §3. A plan item no updated test turned red is proven by
-mutation (`charter/tdd.md`) or reported as uncovered. Procedure and briefs:
-[phases.md](references/phases.md#stage-5-tests-then-functions).
+Tests lead. A migration starts from working code, so there is no natural RED: for each function,
+first update its tests to v2 and watch them fail against the unmigrated function — for the v2
+reason, not a compile error — then migrate the function until they pass. That is the loop in
+`control-plane-project-charter` §3. A plan item no updated test turned red is proven by mutation
+(`control-plane-project-charter/references/charter/tdd.md`) or reported as uncovered. Procedure and
+briefs: [phases.md](references/phases.md#stage-5-tests-then-functions).
 
 **Checkpoints:** after the tests, `up test run "tests/<test>"` fails on a v2 difference; after
 the function, the language's compile check (KCL `kcl`, Python `ast` parse, Go `go vet`), then

@@ -1,10 +1,11 @@
 # Composition patterns — what they mean
 
 The language-agnostic half of composition authoring: what each pattern is *for*, when it
-applies, and how it fails. The syntax is in the charter's `languages/` files
-(`control-plane-project-charter`, indexed by `languages/README.md`), under the same pattern
-names. What a v2 managed resource needs, the container boundary, the TDD loop and what a green
-run proves are the charter's and are not repeated here.
+applies, and how it fails. The syntax is in the charter's language files,
+indexed by `control-plane-project-charter/references/languages/README.md`, under the same
+pattern names.
+What a v2 managed resource needs, the container boundary, the TDD loop and what a green run
+proves are the charter's and are not repeated here.
 
 ---
 
@@ -16,7 +17,7 @@ Three parts of it matter, and they are identical in every language:
 | Part | What it is | The mistake it invites |
 |---|---|---|
 | `req.observed.composite` | the XR as it currently exists, including `status` | reading it as a plain map when the language gives you a typed object, or vice versa |
-| `req.observed.resources` | composed resources **that already exist**, keyed by composition key | assuming it is populated. In a composition test it is `{}` unless the test supplies `observedResources`, and for a namespaced XR each mock carries the XR's namespace (the charter's `charter/evidence.md`, Coverage) |
+| `req.observed.resources` | composed resources **that already exist**, keyed by composition key | assuming it is populated. In a composition test it is `{}` unless the test supplies `observedResources`, and for a namespaced XR each mock carries the XR's namespace (`control-plane-project-charter/references/charter/evidence.md`, Coverage) |
 | `rsp.desired.resources["key"]` | what you want to exist, keyed by composition key | treating the key as cosmetic. It becomes `crossplane.io/composition-resource-name`, and Crossplane derives the resource name from it |
 
 **The composition key is an API.** Renaming a key on an existing platform orphans the
@@ -213,13 +214,13 @@ rename is a migration (top of this file).
 ## A green test with a misbehaving resource
 
 Reviewing function code, or checking your own before you report: the checks are in
-`control-plane-project-charter`'s `charter/review.md`.
+`control-plane-project-charter/references/charter/review.md`.
 
 **When a test passes but the resource misbehaves on a control plane:**
-1. Read the render (`control-plane-project-charter` `charter/evidence.md`) — the test may never
-   have asserted the resource.
+1. Read the render (`control-plane-project-charter/references/charter/evidence.md`) — the test
+   may never have asserted the resource.
 2. Look for a `providerConfigRef` whose `kind` and name match no object that exists; the
-   symptoms are in `charter/v2-resources.md`.
+   symptoms are in `control-plane-project-charter/references/charter/v2-resources.md`.
 3. Check the guard-clause chain and readiness branches; neither is exercised locally.
 
 Language-specific error messages — Pydantic validation, KCL type errors, TypeScript

@@ -17,12 +17,12 @@ GROUP=$(up ctx . --short | cut -d/ -f3)
 ```
 
 No group in the context, or a group that does not exist: report it, and never create one (SKILL.md Never). How
-`up` picks the group and the non-interactive `up ctx` forms: `control-plane-project-charter`
-`charter/targets.md`.
+`up` picks the group and the non-interactive `up ctx` forms:
+`control-plane-project-charter/references/charter/targets.md`.
 
-**2. The repository the package is pushed to is pullable.** A private one wedges the run on `Waiting for
-package to be ready` and ends it with `context deadline exceeded` (why: `charter/targets.md`). A one-second
-check predicts it:
+**2. The repository the package is pushed to is pullable.** A private one wedges the run on
+`Waiting for package to be ready` and ends it with `context deadline exceeded` (why:
+`control-plane-project-charter/references/charter/targets.md`). A one-second check predicts it:
 
 ```bash
 REPO=$(yq -r '.spec.repository // .metadata.name' upbound.yaml | sed 's|.*/||')
@@ -33,7 +33,7 @@ up repository get "$REPO" --format=json 2>/dev/null \
 
 `public = True` → go on. Anything else needs a decision that is not yours: `--public` only makes a repository
 it *creates* public, so it fixes "does not exist yet" and changes nothing for an existing private one
-(`charter/targets.md`).
+(`control-plane-project-charter/references/charter/targets.md`).
 
 - If the caller already chose `--public` (in the brief, or earlier in the conversation), use it and do not ask
   again.
@@ -48,10 +48,11 @@ works too. Shapes: author-tests' `e2e.md` reference.
 
 ## Target flags
 
-Write the kubeconfig fresh in this run and check it parses, as `charter/targets.md` ("`--kubeconfig` is an
-input") shows: a stale file sends the run to local kind. Shell variables do not survive to your next command, so
-reuse the group and the file path as values. Pass `--control-plane-group` explicitly even when the context names
-the group. The target flags for SKILL.md Phase 4's run idiom are then:
+Write the kubeconfig fresh in this run and check it parses, as
+`control-plane-project-charter/references/charter/targets.md` ("`--kubeconfig` is an input") shows: a stale file
+sends the run to local kind. Shell variables do not survive to your next command, so reuse the group and the
+file path as values. Pass `--control-plane-group` explicitly even when the context names the group. The target
+flags for SKILL.md Phase 4's run idiom are then:
 
 ```bash
 up test run "tests/e2etest-<n>" --e2e --control-plane-group="<group>" --kubeconfig "<kubeconfig>"
@@ -79,10 +80,11 @@ message truncated mid-word (the `up ctp list` MESSAGE column), not a failure. Al
 
 ## Stuck on a Space
 
-Check the package installed before any managed resource. If the run never got past `Waiting for package to be
-ready`, no XR exists and tracing resources is wasted effort: read the `Configuration` as `charter/targets.md`
-("A run stuck on `Waiting for package to be ready`") says. A `401 Unauthorized` there is precondition 2's
-private repository: retrying does not help; hand back that precondition's options.
+Check the package installed before any managed resource. If the run never got past
+`Waiting for package to be ready`, no XR exists and tracing resources is wasted effort: read the `Configuration`
+as `control-plane-project-charter/references/charter/targets.md` ("A run stuck on
+`Waiting for package to be ready`") says. A `401 Unauthorized` there is precondition 2's private repository:
+retrying does not help; hand back that precondition's options.
 
 For the brief in [troubleshooting.md](troubleshooting.md), get the test control plane's kubeconfig while it
 exists:

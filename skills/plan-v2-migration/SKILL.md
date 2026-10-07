@@ -49,10 +49,10 @@ ls -1d functions/*/ tests/test-*/ tests/e2etest-*/ 2>/dev/null
 ls -1 examples/ 2>/dev/null
 ```
 
-Detect each function's language and the test language with `control-plane-project-charter`
-`languages/README.md`, and read that language file: the import spelling and the XR bootstrap
-you will plan come from it. Map which composition calls which function (`functionRef.name`) and
-which tests cover which composition.
+Detect each function's language and the test language with
+`control-plane-project-charter/references/languages/README.md`, and read that language file: the
+import spelling and the XR bootstrap you will plan come from it. Map which composition calls which
+function (`functionRef.name`) and which tests cover which composition.
 
 ## Phase 3: Check the dependencies
 

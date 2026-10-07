@@ -23,9 +23,9 @@ XRD and the dependencies (Phase 6), and the function is generated against them (
   test before `author-composition` implements it (charter §3); verification and deploying →
   the project's own gate, else `verify-configuration`.
 
-This skill stops at a built package. Where a run lands and why a Space context needs the
-user's choice — `--public` publishes their package — is `control-plane-project-charter`
-`charter/targets.md`.
+This skill stops at a built package. Where a run lands and why a Space context needs the user's
+choice — `--public` publishes their package — is
+`control-plane-project-charter/references/charter/targets.md`.
 
 ## Binding rules — they hold even if you open nothing else
 
@@ -53,12 +53,12 @@ work item or gate wins over these: say where you departed.
 
 ## Phase 1: Gather the project and resource information
 
-From the spec: project name, API group, cloud, organisation, maintainer; then the resource
-Kind, its plural and its version (`v1alpha1` for a new API, the charter's
-`charter/xrd-design.md`); and the function language for Phase 7 (`kcl`, `python`, `go`,
-`go-templating`) — from the spec or an existing function, else ask: it is a decision, not a
-discoverable fact. New tests follow it (charter §10).
-Interactive and not in the spec: ask, with the tables in
+From the spec: project name, API group, cloud, organisation, maintainer; then the resource Kind,
+its plural and its version (`v1alpha1` for a new API,
+`control-plane-project-charter/references/charter/xrd-design.md`); and the function language for
+Phase 7 (`kcl`, `python`, `go`, `go-templating`) — from the spec or an existing function, else
+ask: it is a decision, not a discoverable fact. New tests follow it (charter §10). Interactive
+and not in the spec: ask, with the tables in
 [templates.md](references/templates.md#questions-for-a-new-project).
 
 ## Phase 2: Start or open the project
@@ -77,7 +77,7 @@ did not wire; the XRD is the one file you write (Phase 3).
 | `up example generate [<xrd>]` | wizard, or an XRD → `examples/<kind-lowercase>/<xr-name>.yaml`; the name defaults to the lowercase Kind (`examples/network/network.yaml`, up v0.55.0). Find the file; don't assume `example.yaml` |
 | `up xrd generate <example.yaml>` | an example XR → an inferred `apis/<plural>/definition.yaml` + language models. Not for the XRD you ship (Phase 3) |
 | `up composition generate <xrd\|xr>` | XRD or XR → `apis/<plural>/composition.yaml`, and adds the required function packages as dependencies |
-| `up function generate <name> [<pipeline-path>]` | → `functions/<name>/…`, and wires it into that composition's pipeline. On an existing `functions/<name>` it prompts to overwrite and, without a TTY, cancels: wire the step by hand (the charter's `charter/generators.md`) |
+| `up function generate <name> [<pipeline-path>]` | → `functions/<name>/…`, and wires it into that composition's pipeline. On an existing `functions/<name>` it prompts to overwrite and, without a TTY, cancels: wire the step by hand (`control-plane-project-charter/references/charter/generators.md`) |
 | `up test generate <name> [--e2e]` | → `tests/test-<name>/…` (or `tests/e2etest-<name>/…`) |
 
 The generators disagree on pluralization — `examples/storagebucket/` vs
@@ -87,7 +87,7 @@ The generators disagree on pluralization — `examples/storagebucket/` vs
 `--template <t> --language <lang> [--test-language <lang>]`). A language template gives a
 complete, passing **v1** project whose Python functions use the embedded layout (`main.py` +
 `requirements.txt`), not what `up function generate` produces: code you add matches what the
-project has (the charter's `languages/python.md`).
+project has (`control-plane-project-charter/references/languages/python.md`).
 
 - `--scratch` ignores `--language` (it logs `... for kcl` regardless). Harmless — the scratch
   template has no functions — but don't read it as the project's language.
@@ -96,18 +96,21 @@ project has (the charter's `languages/python.md`).
   included (up v0.55.0).
 - The scratch template leaves its own values behind: `upbound.yaml` `source`
   (`github.com/upbound/project-template-scratch`), a placeholder `maintainer`,
-  `repository: xpkg.upbound.io/example/<name>`, and `module
-  github.com/upbound/project-template-scratch/tests/<dir>` in generated Go tests' `go.mod`.
-  **Set `repository`, `source` and `maintainer` before any generator runs** — `spec.repository`
-  names the embedded function in every `functionRef` (the charter's `charter/generators.md`) —
-  and fix any test `go.mod` that still names the template. An `upbound.yaml` and a
-  `.gitignore` to start from: [templates.md](references/templates.md#upboundyaml).
+  `repository: xpkg.upbound.io/example/<name>`, and
+  `module github.com/upbound/project-template-scratch/tests/<dir>` in generated Go tests'
+  `go.mod`. **Set `repository`, `source` and `maintainer` before any generator runs** —
+  `spec.repository` names the embedded function in every `functionRef`
+  (`control-plane-project-charter/references/charter/generators.md`) — and fix any test `go.mod`
+  that still names the template. An `upbound.yaml` and a `.gitignore` to start from:
+  [templates.md](references/templates.md#upboundyaml).
 - Templates leave `examples/example/example.yaml` (`kind: Example`, `spec: {}`), backed by no
   XRD. Delete it; the real example is the file `up example generate` writes.
 
 ## Phase 3: Write the XRD, and check its design
 
-**Write the XRD yourself** (charter §5 has the reason, `charter/v2-resources.md` the v2 skeleton). For a **new** XRD:
+**Write the XRD yourself** (charter §5 has the reason,
+`control-plane-project-charter/references/charter/v2-resources.md` the v2 skeleton). For a
+**new** XRD:
 
 | Field | Value |
 |---|---|
@@ -118,8 +121,9 @@ project has (the charter's `languages/python.md`).
 
 An existing v1 project stays v1 until it is migrated deliberately (`plan-v2-migration`), and a
 migration keeps its existing Kind, `X` prefix included: renaming a Kind is a new API, and
-existing objects are not converted (the charter's `charter/xrd-design.md`). Don't copy a
-template's XRD as a v2 starting point: the templates are v1.
+existing objects are not converted
+(`control-plane-project-charter/references/charter/xrd-design.md`). Don't copy a template's XRD
+as a v2 starting point: the templates are v1.
 
 **The fastest correct route for a new API is example-first:** write the XR you want users to
 write, then write the XRD to match it, then generate the composition from it.
@@ -168,12 +172,12 @@ the required fields only, and a complete one
   in [templates.md](references/templates.md#xrd-field-wizard), and keep every constraint you
   add compatible with the user's draft XR.
 
-**A field list is not the schema.** It cannot tell you that a field is `vpcId` while the Kind
-is `VPC`, that a repeated group prefix may or may not be stutter, that an unbounded array
-leaves no CEL budget, or that redefining `READY` prints the column twice. XRD versions must
-round-trip, so all of that is permanent from the first version that ships.
-`control-plane-project-charter`'s `charter/xrd-design.md` has the rules; run the mechanical
-ones before the first build, with the script in this skill's directory
+**A field list is not the schema.** It cannot tell you that a field is `vpcId` while the Kind is
+`VPC`, that a repeated group prefix may or may not be stutter, that an unbounded array leaves no
+CEL budget, or that redefining `READY` prints the column twice. XRD versions must round-trip, so
+all of that is permanent from the first version that ships.
+`control-plane-project-charter/references/charter/xrd-design.md` has the rules; run the
+mechanical ones before the first build, with the script in this skill's directory
 (`<author-configuration-package>`, the directory containing this SKILL.md). Run it from there:
 don't copy it into the project, and don't write a test for the XRD (charter §3).
 
@@ -233,14 +237,15 @@ package name.
 - **Always pass a constraint that caps the major:** `up dep add '<ref>:>=v2.0.0, <v3.0.0'`
   (accepted by up v0.55.0). A bare `<ref>` records `version: '>=v0.0.0'`, and `'>=v2.0.0'`
   alone still accepts any later major. Then `up dep update-cache`; do not skip it.
-- **External pipeline functions must be declared dependencies.** Embedded functions (built
-  from `functions/`) are wired automatically. An external `functionRef`
+- **External pipeline functions must be declared dependencies.** Embedded functions (built from
+  `functions/`) are wired automatically. An external `functionRef`
   (`crossplane-contrib-function-auto-ready`, `function-patch-and-transform`) missing from
-  `dependsOn` or the cache makes `up test run`'s render fail with `unknown function … is it
-  listed in the render input?`. Fix it by declaring the dependency, not by deleting a step the
-  project needs: declared external functions do render. The one step to delete is the
-  duplicate auto-ready step of Phase 5. An embedded function whose `functionRef.name` departs
-  from the generated one gives the same error (the charter's `charter/generators.md`).
+  `dependsOn` or the cache makes `up test run`'s render fail with
+  `unknown function … is it listed in the render input?`. Fix it by declaring the dependency,
+  not by deleting a step the project needs: declared external functions do render. The one step
+  to delete is the duplicate auto-ready step of Phase 5. An embedded function whose
+  `functionRef.name` departs from the generated one gives the same error
+  (`control-plane-project-charter/references/charter/generators.md`).
 
 Writing a ManagedResourceActivationPolicy, or running `up dep add --api crossplane:<tag>`:
 read [mrap.md](references/mrap.md) first. The manifest must sit under `apis/` or it is
@@ -277,7 +282,7 @@ Only after the first build: `up function generate <name> apis/<plural>/compositi
 Python, before you write the function body: run
 `python3 <author-composition>/scripts/setup_venv.py`, where `<author-composition>` is the
 directory containing that skill's SKILL.md, beside this skill's directory (why it comes first:
-the charter's `languages/python.md`).
+`control-plane-project-charter/references/languages/python.md`).
 
 ## Phase 8: The ProviderConfig
 
