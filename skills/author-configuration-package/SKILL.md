@@ -239,7 +239,8 @@ package name.
   `dependsOn` or the cache makes `up test run`'s render fail with `unknown function … is it
   listed in the render input?`. Fix it by declaring the dependency, not by deleting a step the
   project needs: declared external functions do render. The one step to delete is the
-  duplicate auto-ready step of Phase 5.
+  duplicate auto-ready step of Phase 5. An embedded function whose `functionRef.name` departs
+  from the generated one gives the same error (the charter's `charter/generators.md`).
 
 Writing a ManagedResourceActivationPolicy, or running `up dep add --api crossplane:<tag>`:
 read [mrap.md](references/mrap.md) first. The manifest must sit under `apis/` or it is

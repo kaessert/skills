@@ -74,7 +74,8 @@ and judge each hit; "no output" is not the pass condition.
   `'>=v0.0.0'` a bare `up dep add <ref>` or `up composition generate` writes
   (author-configuration-package).
 - An external pipeline function missing from `dependsOn` fails every render with
-  `unknown function`.
+  `unknown function`; so does an embedded function's `functionRef.name` that departs from
+  [`generators.md`](generators.md)'s formula.
 
 ## What the report claims
 

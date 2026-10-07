@@ -38,6 +38,11 @@ concatenated with no separator between the repository name and the directory, ta
 `spec.repository`, so changing it afterwards leaves every `functionRef` naming the old function,
 and they must be regenerated or rewritten with this formula.
 
+A `functionRef.name` that departs from the formula names no function the render knows: every
+render fails with `unknown function`, the same error as an external function missing from
+`dependsOn`. Keep the generated name; don't hand-edit it, and don't take a name from a work item
+over the formula.
+
 `up function generate <n> <composition-path>` on an existing `functions/<n>` asks whether to
 overwrite it. Without a TTY it prints `operation cancelled by user` and exits 1 (observed with
 up v0.55.0). To wire a function that already exists, add the step by hand instead: a
