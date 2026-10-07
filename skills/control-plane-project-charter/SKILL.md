@@ -193,6 +193,13 @@ Before writing any summary:
 
 ## 5. Crossplane v2: what a composed resource actually needs
 
+**The project's spec overrides this section's defaults (§2).** When its spec or API sets
+`managementPolicies`, `providerConfigRef` or an MR's `metadata.namespace` — an XRD that exposes
+`managementPolicies`, a spec that requires a per-XR `providerConfigRef` — set it as specified
+from the first composed resource you write, have the E2E test create the ProviderConfig the
+reference names (author-tests' `e2e.md`), and say so in your report. How a review judges these
+fields: [`charter/review.md`](references/charter/review.md).
+
 **These rules are for a v2 project.** A v1 project — which is what every `up project init`
 template produces (§10) — keeps its v1 APIs and its Kinds; migrating it is separate work
 (`plan-v2-migration`).
@@ -228,12 +235,6 @@ provider-kubernetes `Object`, for instance — is input to the provider, and not
 namespace. Set it explicitly, normally to the XR's namespace: without it a provider-kubernetes
 `Object` stays `Synced=False` with `an empty namespace may not be set when a resource name is
 provided` (v1.3.3), and composition tests that assert the same omission stay green.
-
-**These are defaults; the project may override them (§2).** When the project's spec or API
-sets `managementPolicies`, `providerConfigRef` or an MR's `metadata.namespace` — an XRD that
-exposes `managementPolicies` as a parameter, a spec that requires a per-XR `providerConfigRef`
-— set it as specified and say so in your report. How a review judges these fields:
-[`charter/review.md`](references/charter/review.md).
 
 **Detail:** [`charter/v2-resources.md`](references/charter/v2-resources.md) has the verified
 behaviour behind each row of the table, what these CRD defaults do to a render (it differs by language), when a `providerConfigRef` is genuinely
