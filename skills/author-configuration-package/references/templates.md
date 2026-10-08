@@ -1,9 +1,8 @@
 # Templates: files, questions and reports for a configuration package
 
 The files this skill writes by hand, the questions to ask when the spec does not answer them,
-what to check when a build fails, and the hand-off report. The
-order of the work is SKILL.md's phases; function and test syntax is in the
-files under `control-plane-project-charter/references/languages/`.
+what to check when a build fails, and the hand-off report. The order of the work is SKILL.md's
+phases; function and test syntax is under `control-plane-project-charter/references/languages/`.
 
 - [Templates](#templates)
 - [Questions for a new project](#questions-for-a-new-project)

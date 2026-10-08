@@ -66,12 +66,12 @@ and not in the spec: ask, with the tables in
 ## Phase 2: Start or open the project
 
 `test -f upbound.yaml` tells you which. In an existing project, list its APIs
-(`apis/*/definition.yaml`): add a resource from Phase 3, or change one by reading it, editing
-it and rebuilding.
+(`apis/*/definition.yaml`): add a resource from Phase 3, or change one: read it, edit it,
+rebuild.
 
-**Use the CLI generators for everything but the XRD.** A composition or function layout
-written by hand is what produces `mode: Resources`, `apiVersion: v1` and a pipeline the CLI
-did not wire; the XRD is the one file you write (Phase 3).
+**Use the CLI generators for everything but the XRD.** A hand-written composition or function
+layout is what produces `mode: Resources`, `apiVersion: v1` and a pipeline the CLI did not
+wire; the XRD is the one file you write (Phase 3).
 
 | Command | Input → Output |
 |---|---|
@@ -122,8 +122,8 @@ project has (`control-plane-project-charter/references/languages/python.md`).
 | `names.kind` | exactly the user's XR Kind (`Network`): no `X` prefix, no `claimNames` |
 
 An existing v1 project stays v1 until it is migrated deliberately (`plan-v2-migration`), and a
-migration keeps its existing Kind, `X` prefix included: renaming a Kind is a new API, and
-existing objects are not converted
+migration keeps its Kind, `X` prefix included: renaming a Kind is a new API, and existing
+objects are not converted
 (`control-plane-project-charter/references/charter/xrd-design.md`). Don't copy a template's XRD
 as a v2 starting point: the templates are v1.
 
@@ -180,10 +180,10 @@ the required fields only, and a complete one
 `VPC`, that a repeated group prefix may or may not be stutter, that an unbounded array leaves no
 CEL budget, or that redefining `READY` prints the column twice. XRD versions must round-trip, so
 all of that is permanent from the first version that ships.
-`control-plane-project-charter/references/charter/xrd-design.md` has the rules; run the
-mechanical ones before the first build, with the script in this skill's directory
-(`<author-configuration-package>`, the directory containing this SKILL.md). Run it from there:
-don't copy it into the project, and don't write a test for the XRD (charter §3).
+`control-plane-project-charter/references/charter/xrd-design.md` has the rules. Run the
+mechanical ones before the first build with the script in this skill's directory
+(`<author-configuration-package>`, the directory containing this SKILL.md), from there: don't
+copy it into the project, and don't write a test for the XRD (charter §3).
 
 ```bash
 python3 <author-configuration-package>/scripts/check_xrd_schema.py \
@@ -271,8 +271,8 @@ scaffold emits `Pipeline`; don't hand-edit it.
 
 `up project build` generates the models from the XRD and the dependencies on disk; check the
 model tree under `.up/<language>/` exists and holds the Kinds and API versions you will
-compose. **Re-run it after every XRD change** — the models come from the XRD, so an edit
-leaves them stale (a `status` field added by hand is absent from the model until a rebuild).
+compose. **Re-run it after every XRD change**: an edit leaves the models stale (a `status`
+field added by hand is absent from the model until a rebuild).
 No `.m.` models: the provider is v1.x, or the cache was not updated. Any build that fails, or
 an XR that never gets Ready:
 [templates.md](references/templates.md#when-a-build-fails-or-the-xr-never-gets-ready).
@@ -302,13 +302,12 @@ list.
 
 `up project build` again; it produces the package under `_output/` (`.uppkg`). Then report
 what ran and what it printed, not a checklist (`control-plane-project-charter` §4): the
-commands and exit codes, the layer reached (package build), and what you assumed. The
-template is in [templates.md](references/templates.md#hand-off-report).
+commands and exit codes, the layer reached (package build), and what you assumed. Template:
+[templates.md](references/templates.md#hand-off-report).
 
 ## Success criteria
 
-Checks for you before you report, not a report format (charter §4: report what ran). The
-skill succeeds when:
+Checks for you before you report, not a report format (charter §4: report what ran):
 
 - Project structure created, with `upbound.yaml` metadata set before any generator ran
 - XRD written by hand, with the schema the user or spec defined, and `check_xrd_schema.py` run

@@ -48,8 +48,7 @@ Two things to confirm rather than guess:
   cluster-scoped one named `default` unless the project's spec or API calls for per-namespace
   credentials. An E2E test creates its own (author-tests' `e2e.md` reference).
 
-Also add the credential secret to the README's prerequisites, since it is not part of the
-package:
+Also add the credential secret to the README's prerequisites; it is not part of the package:
 
 ```bash
 kubectl -n crossplane-system create secret generic aws-creds \
