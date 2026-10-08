@@ -1,18 +1,17 @@
 # Composition patterns — what they mean
 
 The language-agnostic half of composition authoring: what each pattern is *for*, when it
-applies, and how it fails. The syntax is in the charter's language files,
-indexed by `control-plane-project-charter/references/languages/README.md`, under the same
-pattern names.
+applies, and how it fails. The syntax is in the charter's language files, indexed by
+`control-plane-project-charter/references/languages/README.md`, under the same pattern names.
 What a v2 managed resource needs, the container boundary, the TDD loop and what a green run
-proves are the charter's and are not repeated here.
+proves are in the charter, not here.
 
 ---
 
 ## The object model every language builds
 
 A composition function receives a `RunFunctionRequest` and returns a `RunFunctionResponse`.
-Three parts of it matter, and they are identical in every language:
+Three parts matter, identical in every language:
 
 | Part | What it is | The mistake it invites |
 |---|---|---|
@@ -33,16 +32,15 @@ parameter extraction, the config object, and calls into the modules. A single fl
 accumulates guard clauses (below), and the guard chain is the failure composition tests
 cannot see; splitting by domain keeps each conditional local to the resources it governs.
 
-A single-file function is fine for a genuinely simple composition. The test is whether you
-can name the domains; if you can, split.
+A single-file function is fine for a simple composition. If you can name the domains, split.
 
 ---
 
 ## Pattern: the configuration object
 
 Extract the XR's parameters **once**, into a single object, and pass that to every module.
-Each module reaching into the XR itself means a schema change touches every module, and a
-defaulted field gets defaulted differently in two places.
+If each module reads the XR itself, a schema change touches every module and a defaulted
+field gets defaulted differently in two places.
 
 Include the core parameters, the feature flags, the lists, and the merged tags. Apply
 defaults there, so there is exactly one answer to "what does this field mean when the user
@@ -69,7 +67,7 @@ and place it above unrelated guards. When you add to an existing function, read 
 above your insertion point before you write anything.
 
 The matching test: one per input shape, including a **minimal XR that omits every optional
-field**. That is the test that catches an unintended guard.
+field**, which catches an unintended guard.
 
 ---
 
@@ -120,7 +118,7 @@ API:
 1. **Are the elements independent?** Or can two of them conflict — overlapping prefixes,
    overlapping CIDR ranges, duplicate keys?
 2. **Does the API want one aggregate object holding N entries**, rather than N objects? S3
-   lifecycle is exactly this: one `BucketLifecycleConfiguration` holding N rules.
+   lifecycle does: one `BucketLifecycleConfiguration` holding N rules.
 3. **Is there an account- or region-scoped limit** that N elements would breach?
 
 `control-plane-project-charter` §6 has the rule classes and where they are written down. If
@@ -161,11 +159,10 @@ render has none. Cover it with `observedResources` in a test, or say it is unver
 
 ## Pattern: ProviderConfig readiness
 
-`function-auto-ready` cannot judge a ProviderConfig you compose (a Helm or Kubernetes
-ProviderConfig pointing at a cluster you just created), or anything else it cannot judge, so
-the function must mark it ready explicitly or the XR never becomes ready.
-Whether the flag is set before or after writing the resource makes no difference (measured on
-function-sdk-python 0.11.0 and 0.5.0).
+The function must mark ready explicitly anything `function-auto-ready` cannot judge, such as a
+ProviderConfig you compose (a Helm or Kubernetes ProviderConfig pointing at a cluster you just
+created), or the XR never becomes ready. Setting the flag before or after writing the resource
+makes no difference (measured on function-sdk-python 0.11.0 and 0.5.0).
 
 ---
 
@@ -206,8 +203,8 @@ See the language file.
 ## Naming
 
 `{type}-{resourceName}-{qualifier}` — e.g. `subnet-web-public-a`. Predictable keys make
-`render.log` readable, which is the thing you actually debug against. Keep them stable: a
-rename is a migration (top of this file).
+`render.log`, which you debug against, readable. Keep them stable: a rename is a migration
+(top of this file).
 
 ---
 

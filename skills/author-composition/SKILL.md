@@ -72,12 +72,12 @@ project is; migrating it is `plan-v2-migration`'s work, not cleanup in passing.
 
 ## Phase 2: Discover — do not ask
 
-Make sure the XRD and a composition exist so the test has something to point at. Write the XRD
-yourself (`author-configuration-package`;
-`control-plane-project-charter/references/charter/v2-resources.md` has the v2 skeleton),
-scaffold the composition with `up composition generate`, which emits only an auto-ready step,
-and wire your function in with `up function generate <n> <composition-path>`. The function body
-stays empty or unchanged.
+Make sure the XRD and a composition exist: the test points at them. Write the XRD yourself
+(`author-configuration-package`;
+`control-plane-project-charter/references/charter/v2-resources.md` has the v2 skeleton).
+Scaffold the composition with `up composition generate`, which emits only an auto-ready step,
+and wire your function in with `up function generate <n> <composition-path>`. Leave the
+function body empty or unchanged.
 
 `control-plane-project-charter` §2 has the general table. The composition-specific additions:
 
@@ -126,14 +126,14 @@ Phases 1–4, Phase 2 for what no render reaches). This skill runs RED (below), 
 `author-tests` Phase 6 describes. A run that only adds or changes tests stays in `author-tests`
 throughout.
 
-Run the test with `up test run "tests/<t>"` and keep the failure text, for a reason charter §3's
+Run `up test run "tests/<t>"` and keep the failure text; the reason must be one charter §3's
 table counts as RED. Adding to a composition that already works: confirm the new assertion
 fails while the others pass.
 
 ## Phase 5: GREEN — implement until the test passes
 
 Implement until the test passes, and no further. Re-run `up test run "tests/<t>"` and report
-the RED→GREEN transition, not merely the final green.
+the RED→GREEN transition, not only the final green.
 
 The language file has the bootstrap and the syntax. Language-independent, in order:
 
@@ -154,11 +154,11 @@ It supplements the loop and never replaces it.
 
 ## Phase 6: REFACTOR and verify — coverage, not a green exit code
 
-With the suite green, tidy the implementation, then add the next failing assertion and go
-round again. Before you call anything covered (charter §8):
+With the suite green, tidy the implementation, then add the next failing assertion and
+repeat. Before you call anything covered (charter §8):
 
-1. **Check provider validity**, not just v2 conformance, as charter §6 says, and write the
-   result in your summary.
+1. **Check provider validity**, not only v2 conformance, as charter §6 says; write the result
+   in your summary.
 2. **Grep your own function** with the two greps in
    `control-plane-project-charter/references/charter/v2-resources.md` and judge each hit rather
    than counting them. Legitimate: a `namespace` chosen by a cluster-scoped XR or set on an
@@ -169,8 +169,8 @@ round again. Before you call anything covered (charter §8):
    it.
 3. **Read the render, not the assertions:** `up test run "tests/test-*" --function-logs`, then
    read it as `control-plane-project-charter/references/charter/evidence.md` says (the directory
-   the run prints). Add each emitted resource to `assertResources`; until you do it is untested,
-   though the suite is green.
+   the run prints). Add each emitted resource to `assertResources`; until you do, it is
+   untested even though the suite is green.
 4. **The suite satisfies `control-plane-project-charter/references/charter/evidence.md`
    "Coverage"**: each input shape including a minimal XR, each observed-state branch, every
    `status` field on the composite.
