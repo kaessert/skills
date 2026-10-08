@@ -105,7 +105,10 @@ The fields, and which `credentials` block each target needs, are in author-tests
 reference. This template is the Python syntax for the static-Secret (local control plane) case.
 
 ```python
+# Generates the E2ETest. Its output carries the credential Secret: by hand (incl. diffs) run it only
+# with UP_AZURE_CREDENTIALS=x, never print or save it with real values.
 import os
+import sys
 import yaml
 from models.io.k8s.api.core import v1 as corev1
 from models.io.k8s.apimachinery.pkg.apis.meta import v1 as k8s
@@ -113,10 +116,11 @@ from models.io.upbound.dev.meta.e2etest import v1alpha1 as e2etest
 from models.io.upbound.m.azure.clusterproviderconfig import v1beta1 as pcv1beta1
 from models.io.example.platform.network import v1alpha1 as networkv1alpha1
 
-# UP_ prefix: only these cross into the generation container (charter §7). Indexing, not .get,
-# so a missing value fails here, before a control plane exists. That also fails a plain
+# UP_ prefix: only these cross into the generation container (charter §7). A missing or empty
+# value fails here, before a control plane exists. That also fails a plain
 # `up test run "tests/*"`, which runs this program too: the composition gate is "tests/test-*".
-azure_creds = os.environ["UP_AZURE_CREDENTIALS"]
+azure_creds = os.environ.get("UP_AZURE_CREDENTIALS") or sys.exit(
+    "UP_AZURE_CREDENTIALS is not set: set it for up test run --e2e; to read this output by hand, set it to x")
 
 azure_secret = corev1.Secret(
     apiVersion="v1",

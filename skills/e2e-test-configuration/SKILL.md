@@ -221,6 +221,8 @@ Shape (templates in [report-templates.md](references/report-templates.md)):
 - Derive a duration from file timestamps, or estimate one.
 - Report readiness or provider state you did not read.
 - Re-run a green e2e only to read a status value: read it during the run, or report "not read back".
+- Run an e2e test program by hand with real credentials, or print or save its output: it carries the
+  credential Secret. Check or diff it with a dummy `UP_*` value (author-tests' `e2e.md` reference).
 - Local: connect to, apply to or delete a kind cluster or container this run did not create. Names
   such as `<project>-uptest-<test>` repeat across runs, and a cluster you find may hold live cloud
   resources; how to tell yours: [local.md](references/local.md#preconditions).

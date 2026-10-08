@@ -98,6 +98,7 @@ Build `UP_AWS_CREDENTIALS` in memory from the session's `AWS_*` variables, in th
 for long-lived keys). In e2e-test-configuration's run block, put the `export` first:
 
 ```bash
+# For up test run only. To read or diff a program's output: UP_AWS_CREDENTIALS=x go run .
 export UP_AWS_CREDENTIALS="$(printf '[default]\naws_access_key_id = %s\naws_secret_access_key = %s\naws_session_token = %s\n' \
   "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" "$AWS_SESSION_TOKEN")"
 up test run "tests/e2etest-<n>" --e2e <target flags>
@@ -109,7 +110,9 @@ ready (e2e-test-configuration's `local.md` reference). If you must write a file,
 **The program's output carries the credential.** The Secret in `extraResources` holds the variable's value, so
 whatever prints the generated `E2ETest` prints the credential. Check the program with a dummy value
 (`UP_AWS_CREDENTIALS=x go run .`), or select `.items[].spec.manifests`; never print its output, or any Secret,
-with real values, and never write it to a file.
+with real values, and never write it to a file. To compare output across commits, diff two dummy runs: the
+Secret's value is the only difference real values make. The template below says so in its header comment and
+its fail message: keep both in every copy, since later runs read the program, not this page.
 
 ## Go template (`tests/e2etest-<n>/main.go`)
 
@@ -119,6 +122,8 @@ Rename the placeholders; keep the shape.
 
 ```go
 // Package main generates the E2ETest for <Kind>: apply the example XR, wait for Ready, delete everything.
+// Its output carries the credential Secret: by hand (incl. diffs) run it only with UP_AWS_CREDENTIALS=x,
+// never print or save it with real values.
 package main
 
 import (
@@ -144,7 +149,7 @@ func main() {
 	// gate that globs "tests/*" runs this program too and needs this variable set.
 	creds := os.Getenv(credsVar)
 	if creds == "" {
-		fail("%s is not set: export it before running this e2e test", credsVar)
+		fail("%s is not set: set it for up test run --e2e; to read this output by hand, set it to x", credsVar)
 	}
 	raw, err := os.ReadFile(exampleXR)
 	if err != nil {

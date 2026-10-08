@@ -284,7 +284,9 @@ and Python programs run in a container that sees only `UP_*` variables and no `~
 every test input `UP_*`, and run the composition gate as `up test run "tests/test-*"`: one e2e
 program that exits non-zero — on a missing input, say — fails a plain `tests/*` run at
 `✗ Parsing tests`. `no valid CompositionTests found` means the matched dirs produced no
-`CompositionTest` (e.g. `e2etest-*` without `--e2e`): a wrong glob, not a failing test.
+`CompositionTest` (e.g. `e2etest-*` without `--e2e`): a wrong glob, not a failing test. **An e2e
+program's output carries its credential Secret:** run one by hand only with a dummy `UP_*` value,
+and never print or save it with real ones (author-tests' `e2e.md`).
 
 **Detail:** [`charter/container.md`](references/charter/container.md) has the per-language
 table, the `UP_` credential route, the E2E command and the README note, and the tighter second
