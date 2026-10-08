@@ -17,7 +17,7 @@ runs, and could change between versions.
   `secretRef: {namespace, name, key}`, built from a `UP_*` variable. `source: Upbound` web identity does not work
   on kind. The shapes, the AWS credentials-file format and how to build it in memory are in author-tests'
   `e2e.md` reference.
-- **Run under the default umask (`022`), never `umask 077`.** `up` writes the local registry's TLS certificate
+- **Why the default umask (SKILL.md Phase 2).** `up` writes the local registry's TLS certificate
   and key (`/tmp/up-local-registry/<cluster>/.certs/`) with your umask, and the registry container runs as a
   non-root user. Under `umask 077` it can't read them and exits, and the run waits at `Waiting for package to
   be ready` until `context deadline exceeded`, about 10 min later (observed with up v0.55.0). `docker logs

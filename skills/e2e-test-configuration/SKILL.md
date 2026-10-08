@@ -1,6 +1,6 @@
 ---
 name: e2e-test-configuration
-description: Run Crossplane E2E tests (`up test run --e2e`) for a control-plane project, locally on kind (`--local`) or on an Upbound Space (Upbound Cloud). Use when asked to run, execute or debug E2E tests or an E2ETest, to check a configuration against a real cloud, or when an E2E run hangs, times out or fails. Covers preconditions (build, composition tests, credentials), choosing and stating the target, a run whose log keeps its exit code and duration, stuck detection from the test's timeoutSeconds, failure analysis, cleanup checks and an evidence-based report. Use it instead of running raw `up test run --e2e`. Not for writing or changing an E2ETest (fields, defaultConditions, credentials) - use author-tests.
+description: Run Crossplane E2E tests (`up test run --e2e`) for a control-plane project, locally on kind (`--local`) or on an Upbound Space (Upbound Cloud). Use when asked to run, re-run (also to review or verify a change), execute or debug E2E tests or an E2ETest, to check a configuration against a real cloud, or when an E2E run hangs, times out or fails. Covers preconditions (build, composition tests, credentials), choosing and stating the target, a run whose log keeps its exit code and duration, stuck detection from the test's timeoutSeconds, failure analysis, cleanup checks and an evidence-based report. Load it before any `up test run --e2e`, a re-run included, instead of running it raw. Not for writing or changing an E2ETest (fields, defaultConditions, credentials) - use author-tests.
 license: Apache-2.0
 references:
   - references/local.md
@@ -83,7 +83,9 @@ first failure:
    becomes an empty Secret, which surfaces only when the provider rejects it, after a control plane and real
    resources exist.
 4. **The target's own preconditions:** [local.md](references/local.md) (Docker) or
-   [space.md](references/space.md) (context, group, repository visibility).
+   [space.md](references/space.md) (context, group, repository visibility). Local: run under the default
+   umask (`022`), never `umask 077`; under `077` the package is never ready and the run ends in
+   `context deadline exceeded` ([local.md](references/local.md#preconditions) has why and the symptom).
 
 **If you cannot complete a precondition, stop and say so. Do not start the run.** That includes a check that
 is blocked rather than failed: a permission prompt you cannot answer, a command the sandbox refuses, a

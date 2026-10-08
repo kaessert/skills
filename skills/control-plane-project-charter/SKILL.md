@@ -1,6 +1,6 @@
 ---
 name: control-plane-project-charter
-description: Shared rules and per-language references for the Upbound control-plane-project skills - agent behaviour, the test-first loop, what a v2 composed resource needs, the container boundary, what a green run proves, how to report, the checks for reviewing a change, and the KCL, Python, TypeScript, Go and YAML references. Load it on its own to review a change to a control-plane project ("review this change", "review the PR", "check this work"). To do the work, load it alongside the task skill (task skills reference it but do not load it, so loading one leaves this unread) - author-composition for composition function code, author-tests for composition or E2E tests, author-configuration-package for scaffolding, XRDs and dependencies, verify-configuration to build, verify or run the project, e2e-test-configuration to run E2E tests, and plan-v2-migration or execute-v2-migration for a Crossplane v2 migration.
+description: Shared rules and per-language references for the Upbound control-plane-project skills - agent behaviour, the test-first loop, what a v2 composed resource needs, the container boundary, what a green run proves, how to report, and the KCL, Python, TypeScript, Go and YAML references. To review a change to a control-plane project ("review this change", "review the PR", "check this work"), load it on its own and open its references/charter/review.md, where the review checks are. To do the work, or to specify it for someone else (a work item, its acceptance criteria and required tests), load it alongside the task skill (a task skill does not load it) - author-composition for composition function code, author-tests for composition or E2E tests, author-configuration-package for scaffolding, XRDs and dependencies, verify-configuration to build, verify or run the project, e2e-test-configuration to run E2E tests, and plan-v2-migration or execute-v2-migration for a Crossplane v2 migration.
 license: Apache-2.0
 references:
   - references/charter/agent-context.md
@@ -44,11 +44,11 @@ your row names:
 
 | Work | Load | And read |
 |---|---|---|
+| reviewing | no task skill | open [`references/charter/review.md`](references/charter/review.md) now: the review checks are there, not in this file. Then the language file's failure modes for what changed |
 | XRD, `upbound.yaml`, dependencies, examples, ProviderConfig, MRAP | author-configuration-package | `author-configuration-package/references/mrap.md` for an MRAP |
 | function code | author-composition | the language file (§10), e.g. `references/languages/go/functions.md` |
 | anything under `tests/` | author-tests | the test language's file, e.g. `references/languages/go/tests.md`; an `E2ETest`: `author-tests/references/e2e.md` |
-| running E2E tests | e2e-test-configuration | `e2e-test-configuration/references/local.md` or `space.md` beside it |
-| reviewing | no task skill | [`references/charter/review.md`](references/charter/review.md), and the language file's failure modes for what changed |
+| running E2E tests, re-runs included | e2e-test-configuration | `e2e-test-configuration/references/local.md` or `space.md` beside it |
 | specifying work for someone else | the skills that work needs | — |
 
 A path starting `references/` is in this skill's directory; one starting with a skill's name is
