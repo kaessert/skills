@@ -76,6 +76,13 @@ This is the one assertion that catches a resource nothing else names. Its order 
 renderer's and is not part of any published contract — a reordering upstream breaks the
 assertion loudly rather than letting a real surplus through, which is the safe direction.
 
+**One exact `resourceRefs` assertion per input shape, not per case.** Give each distinct composed
+set (the shipped example, the minimal XR, each branch that adds or drops a resource) one guard;
+other cases of that shape, and sibling suites rendering it, leave it out. Every exact list
+changes when a resource is added, so a guard in every case turns each new resource into an edit
+of every suite. A function unit test that asserts the exact set of names (Go:
+`languages/go/functions.md`, unit-test template) guards surplus resources too.
+
 **That covers surplus resources, not absent fields.** `assertResources` has no absence
 operator, so "this field is not set" cannot be asserted in a composition test, and searching
 the CLI for one is wasted time. Assert it in a unit test on the function's desired state, in
