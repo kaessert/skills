@@ -111,7 +111,12 @@ every other `kubectl` call `--request-timeout`: one without it hung for 150 s on
 
 Quote it as **"read-back, not asserted"**, with its `Ready` condition: a read while `Ready` is `False` can be
 partial. It is not a provider read. Never re-run a green e2e only to read status: if the window was missed,
-report "not read back".
+report "not read back". It is report evidence, never a pass condition (author-tests' `e2e.md` reference).
+
+**A provider read** (the cloud's own API, by the resources' external ids) works from the moment those ids
+appear, in the XR's status or on the managed resources, until the assert sees `Ready`: nothing deletes the
+resources before then. Take it as soon as the ids appear, not at `Ready`: a read taken at `Ready` raced the
+delete and got NotFound (observed once with up v0.55.0).
 
 ## Evidence and cleanup
 

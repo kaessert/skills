@@ -230,3 +230,8 @@ so, and name the evidence that stands in for it:
 2. a function unit test;
 3. a read-back during the run, if you took one, quoted as "read-back, not asserted" (e2e-test-configuration's
    `local.md` reference).
+
+**A read-back is report evidence, never a pass condition.** Take it once, inside the one gate run, and report
+what it showed or "not read back". Gate nothing on it, commit no read-back or comparison program,
+and never re-run a green e2e for it: whatever it shows, the requirement stays not covered by e2e. When a
+provider read works: `local.md`, "A status field or condition".

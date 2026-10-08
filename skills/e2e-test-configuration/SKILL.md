@@ -202,7 +202,7 @@ Then:
   taken while the control plane exists: both targets tear it down after every test. A status value read during
   the run is quoted as "read-back, not asserted" (how, on kind: [local.md](references/local.md)).
 - **A claim about the provider comes from the provider:** its own read (CLI or SDK, whichever is installed),
-  taken before teardown, and quoted. Reading back the XR or your manifest proves only that your input
+  taken before teardown (when: [local.md](references/local.md#reaching-the-cluster-while-it-runs)), and quoted. Reading back the XR or your manifest proves only that your input
   round-tripped. Without that read, say "not verified at the provider".
 - **Cleanup:** the target's reference says what proves it.
 - **Re-read your evidence before the verdict.** Grep what you are about to paste for `False`, `Creating`,

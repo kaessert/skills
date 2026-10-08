@@ -172,7 +172,8 @@ counts as an e2e RED.
 - An `E2ETest` cannot assert a status field or a status condition: it waits only for the
   `defaultConditions` types (`Ready`). A requirement for one is not covered by e2e: say so and
   name the substitute evidence (an `observedResources` CompositionTest, a unit test, a read-back
-  during the run; [e2e.md](references/e2e.md#what-an-e2etest-cannot-assert)). Do not search the
+  during the run, reported and never a pass condition;
+  [e2e.md](references/e2e.md#what-an-e2etest-cannot-assert)). Do not search the
   `up` binary or the web for another mechanism.
 - Set `timeoutSeconds` explicitly, sized to what you provision. Credentials depend on the
   target: `source: Upbound` works only on a Spaces control plane.
