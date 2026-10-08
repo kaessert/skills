@@ -23,8 +23,8 @@ summary.
 - This skill changes no code and fixes nothing: fixes go to the authoring skills, new tests to
   `author-tests`. It runs E2E only through `e2e-test-configuration`.
 - **Asked to run, deploy or try the project:** Phase 5; verification alone stops at Phase 3.
-- **Reviewing someone else's change:** read the charter's
-  `control-plane-project-charter/references/charter/review.md` first: what to re-run, and what
+- **Reviewing someone else's change:** read
+  `control-plane-project-charter/references/charter/review.md` first: what to re-run and what
   to check beyond the gate.
 
 ### Local-only projects and projects with their own gate
@@ -48,18 +48,17 @@ Run `up test run "tests/test-*"`. If any fail, report the failures and stop. If 
 Each run pays a full project build (timings:
 `control-plane-project-charter/references/charter/tdd.md`).
 
-Keep the `test-*` glob: `up test run` runs the program of every dir it matches, e2e ones
-too even without `--e2e`, so `tests/*` fails at `✗ Parsing tests` whenever an e2e input is
-unset. `no valid CompositionTests found` means the matched dirs produced no
-`CompositionTest` (e.g. only `e2etest-*` dirs): a wrong glob, not a failing test (charter §7).
+Keep the `test-*` glob: `tests/*` also runs the e2e test programs, even without `--e2e`, and
+fails at `✗ Parsing tests` whenever an e2e input is unset. `no valid CompositionTests found`
+means the matched dirs produced no `CompositionTest` (e.g. only `e2etest-*` dirs): a wrong glob,
+not a failing test (charter §7).
 
 **Read the render, not just the exit code.** `up test run` checks only the resources a test
 asserts: an extra managed resource added to a function left a 2-test suite at 2/2 PASS. When the
 change added or modified a composed resource, re-run with `--function-logs` and list what the
 function emitted as `control-plane-project-charter/references/charter/evidence.md` shows (use
 the directory the run prints). Check that every resource the change should produce is in the
-render, and that each is asserted. A resource in the render but not in the assertions is a gap
-to report, not a pass.
+render and asserted: one rendered but not asserted is a gap to report, not a pass.
 
 ## Phase 3: Report, then offer E2E
 

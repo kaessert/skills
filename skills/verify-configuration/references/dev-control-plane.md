@@ -52,7 +52,7 @@ caller and stop.
 **6. If it wedges anyway**, follow the next section. Another blind attempt costs another ~10
 minutes and usually fails the same way.
 
-**7. Confirm it actually reconciled**, rather than trusting the exit code:
+**7. Confirm it reconciled**; don't trust the exit code:
 
 ```bash
 kubectl get <xr-kind> -A
