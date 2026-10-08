@@ -1,10 +1,10 @@
 # Crossplane v1 → v2: the breaking changes
 
-What changes when a v1 control-plane project moves to Crossplane v2, independent of the function
-language. The YAML below is language-neutral; how a function or test spells the same thing
-(import paths, model types, the XR bootstrap) is in the charter's language file for the project
-— `control-plane-project-charter/references/languages/README.md` says which one. The rules for a
-v2 composed resource are `control-plane-project-charter` §5; this file maps v1 onto them.
+What changes when a v1 control-plane project moves to Crossplane v2, in language-neutral YAML.
+How a function or test spells it (import paths, model types, the XR bootstrap) is in the
+project's language file in the charter —
+`control-plane-project-charter/references/languages/README.md` says which one. The rules for a v2
+composed resource are `control-plane-project-charter` §5; this file maps v1 onto them.
 
 ## Summary
 
@@ -24,8 +24,8 @@ v2 composed resource are `control-plane-project-charter` §5; this file maps v1 
 | `compositionSelector`, `compositionRef`, … on the XR | `spec.<field>` | `spec.crossplane.<field>` | [Examples](#examples) |
 | Example XRs | cluster-scoped, or a claim | the XRD's Kind, with `metadata.namespace` | [Examples](#examples) |
 
-Rolling the result out over a control plane where the v1 API is installed is a separate
-problem: [Installed v1 APIs](#installed-v1-apis).
+Rolling out to a control plane where the v1 API is installed is a separate problem:
+[Installed v1 APIs](#installed-v1-apis).
 
 ## Project file
 
@@ -93,8 +93,8 @@ too. The schema under `versions[]` carries over, apart from the parameters in
 
 ## Kind and the X prefix
 
-Keep the existing Kind. The X prefix is a v1 naming convention, not a v2 requirement, and a v2
-XRD may keep `XNetwork`.
+Keep the existing Kind. The X prefix is a v1 naming convention, not a v2 requirement; a v2 XRD
+may keep `XNetwork`.
 
 Renaming the Kind is a new API, not a migration step: `spec.names` is immutable on an XRD
 (`Value is immutable`), so a new Kind means a new XRD (`<plural>.<group>`), and existing objects
@@ -282,8 +282,7 @@ deliberate Kind rename, and never add a language suffix (`-python`, `-kcl`, `-go
 
 ## Installed v1 APIs
 
-This migration changes the project. It does not move a control plane where the v1 version is
-installed:
+This migration changes the project, not a control plane where the v1 version is installed:
 
 - `spec.scope`, `spec.names` and `spec.group` are immutable on an XRD (`Value is immutable`),
   so the v2 XRD cannot replace an installed `LegacyCluster` XRD of the same name in place.

@@ -18,7 +18,7 @@ Load `control-plane-project-charter` first, or read its `SKILL.md` beside this s
 directory; this skill does not load it. The only questions are Phase 5's decisions, asked only
 when interactive (charter §1).
 
-- Analysis only. You write the plan file and nothing else: no code changes, builds, tests or
+- Analysis only: write the plan file and nothing else — no code changes, builds, tests or
   commits.
 - Every change you plan comes from [breaking-changes.md](references/breaking-changes.md). Point
   at its sections; do not restate them in the plan. Upstream: the
@@ -35,9 +35,9 @@ grep -n '^apiVersion:' upbound.yaml                         # meta.dev.upbound.i
 grep -rl 'kind: CompositeResourceDefinition' apis/ | xargs grep -l 'apiextensions.crossplane.io/v1$'
 ```
 
-The second command lists the XRDs still on v1; it filters on the kind because Compositions
-are `apiextensions.crossplane.io/v1` in both versions. If nothing is v1, report that and stop.
-If the project is partly migrated, plan only what is left and say so.
+The second command lists the XRDs still on v1, filtering on the kind because Compositions are
+`apiextensions.crossplane.io/v1` in both versions. If nothing is v1, report that and stop. If
+the project is partly migrated, plan only what is left and say so.
 
 ## Phase 2: Map the project
 
@@ -50,8 +50,8 @@ ls -1 examples/ 2>/dev/null
 ```
 
 Detect each function's language and the test language with
-`control-plane-project-charter/references/languages/README.md`, and read that language file: the
-import spelling and the XR bootstrap you will plan come from it. Map which composition calls which
+`control-plane-project-charter/references/languages/README.md`, and read that language file: it
+gives the import spelling and XR bootstrap you will plan. Map which composition calls which
 function (`functionRef.name`) and which tests cover which composition.
 
 ## Phase 3: Check the dependencies
@@ -80,8 +80,8 @@ URL you verified it on.
 
 ## Phase 4: Analyze each component
 
-Check every file against [breaking-changes.md](references/breaking-changes.md) and note, per
-file, which sections apply.
+Check every file against [breaking-changes.md](references/breaking-changes.md) and note which
+sections apply to each.
 
 ```bash
 # XRDs: version, scope, Kind, claim and connection-secret fields
@@ -105,8 +105,8 @@ config stays, a `deletionPolicy` parameter gets mapped.
 
 ## Phase 5: Decide
 
-Four questions have no answer in the code. Interactive: ask the user the ones that are open.
-Unattended: take the default and write it into the plan as an assumption.
+Four questions have no answer in the code. Interactive: ask the user the open ones. Unattended:
+take the default and record it in the plan as an assumption.
 
 | Decision | Default |
 |---|---|
