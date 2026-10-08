@@ -14,8 +14,8 @@ does one item per run.
 ## Executing
 
 1. Check for `.agents/tasks/REFACTOR_TESTS.md`.
-2. If it is missing, do the Planning steps above and stop there; report the plan rather than
-   executing it (charter §1: never block on a question nobody can answer).
+2. If it is missing, do the Planning steps above and stop: report the plan, don't execute it
+   (charter §1: never block on a question nobody can answer).
 3. Execute only the highest-priority unchecked item.
 4. Run the gate once the suite is green, as in SKILL.md Phase 6: the project's own gate if it
    has one, else `verify-configuration`. E2E or a deploy only where the project, the user or

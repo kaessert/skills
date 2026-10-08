@@ -15,10 +15,10 @@ and write the assertion that has to fail first.
 
 ## Before you start
 
-A test's *meaning* is language-agnostic; only its *syntax* differs. Every test, in any
-language, compiles to a `CompositionTest` or an `E2ETest` (`meta.dev.upbound.io/v1alpha1`):
-the rules are in this file, the object model, structuring patterns and common mistakes in
-[test-model.md](references/test-model.md) (read it before your first test in a project), the
+A test's *meaning* is language-agnostic; only its *syntax* differs. Every test compiles to a
+`CompositionTest` or an `E2ETest` (`meta.dev.upbound.io/v1alpha1`). The rules are in this file;
+the object model, structuring patterns and common mistakes in
+[test-model.md](references/test-model.md) (read it before your first test in a project); the
 syntax in the charter's file for the test language (Phase 1).
 
 - Writing or changing an `E2ETest`: Phase 4.
@@ -78,9 +78,9 @@ writing a test: it carries the templates and the silent failure modes.
    - **The rest is outside this suite.** `up project build` does not validate `examples/`, and it
      accepted an MRAP without its API dependency (up v0.55.0).
      `<author-configuration-package>/scripts/check_xrd_schema.py` checks XRD design, not a frozen
-     surface; `<author-configuration-package>` is the directory containing that skill's SKILL.md,
-     beside this skill's directory. Where the project's gate script already runs such checks, they
-     stay there, beside the build and the test run (charter §2: the project's gate wins).
+     surface; `<author-configuration-package>` is that skill's directory, beside this one. Where
+     the project's gate script already runs such checks, they stay there, beside the build and the
+     test run (charter §2: the project's gate wins).
    - **Write no test program or checker for these files, and don't copy a skill's script into the
      project** (charter §3: test-first is for behaviour). Run `check_xrd_schema.py` from its
      skill's directory; the build and the composition tests that use the files do the rest.
@@ -133,8 +133,8 @@ Four things make an assertion bite:
 
 ### Asserting absence
 
-`assertResources` cannot assert that something is absent — it has no absence operator, so do
-not search the CLI for one.
+`assertResources` cannot assert absence: it has no absence operator, so do not search the CLI
+for one.
 
 | Must be absent | How |
 |---|---|
@@ -189,8 +189,8 @@ counts as an e2e RED.
 
 ## Phase 5: Run it — RED, then GREEN
 
-Charter §3's loop, run directly with `up test run "tests/<t>"`. In a run that also changes the
-function, `author-composition` Phase 4 says which skill runs RED, GREEN and the gate; only when
+Charter §3's loop, run directly with `up test run "tests/<t>"`. If the run also changes the
+function, `author-composition` Phase 4 says which skill runs RED, GREEN and the gate. Only when
 you add or change tests alone are this phase and Phase 6 the whole loop.
 
 ## Phase 6: The gate, after the loop

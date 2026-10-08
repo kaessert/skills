@@ -18,9 +18,8 @@ every language. The syntax is in the charter's language files, indexed by
 
 ## The test object model
 
-Every test, in any language, produces one of two objects under
-`apiVersion: meta.dev.upbound.io/v1alpha1`. KCL, Python and Go builders and raw YAML all
-render to exactly this shape.
+Every test produces one of two objects under `apiVersion: meta.dev.upbound.io/v1alpha1`. KCL,
+Python and Go builders and raw YAML all render to exactly this shape.
 
 ### CompositionTest (fast, local, no cloud)
 
@@ -103,7 +102,7 @@ conditional ones in their own test; cross-check against the render and assert th
 ### 3. Assuming you cannot assert the composite's own `status`
 
 `assertResources` is named for composed resources and typed
-`Optional[List[Dict[str, Any]]]`, so it looks like composed resources are all it takes.
+`Optional[List[Dict[str, Any]]]`, so it looks like it takes only composed resources.
 **It matches the rendered composite too.** Drop the XR itself into `assertResources` with a
 `status` block and composition outputs become testable.
 
@@ -142,7 +141,7 @@ asserted list must match exactly, in length and order (`lengths of slices don't 
 
 ### 5. Designing coverage without reading the XRD's defaults
 
-A test's input is not the XR you wrote — it is the XR **after the XRD's defaults have been
+A test's input is not the XR you wrote but the XR **after the XRD's defaults have been
 applied**. A field you omitted to exercise the "unset" branch is not unset if the XRD gives it
 a `default`, and the branch you meant to cover never runs.
 

@@ -1,7 +1,7 @@
 # Writing an E2ETest
 
 Read before writing or changing any `E2ETest`, in any language. Running one (target, monitoring, report) is
-`e2e-test-configuration`'s job. Facts are from the up v0.55.0 source and runs, and could change between
+`e2e-test-configuration`'s job. Facts come from the up v0.55.0 source and runs; they may change between
 versions.
 
 ## What happens on the control plane
@@ -16,7 +16,7 @@ On any target, in this order:
    `skipDelete: true` or `--skip-control-plane-cleanup` leaves the control plane up.
 
 `--function-logs` is rejected with `--e2e`: an e2e run writes no `render.log`, so its output and exit code are
-the only record. Choosing the target and running it: `e2e-test-configuration`.
+the only record.
 
 ## Fields
 
@@ -208,8 +208,8 @@ too; say so in the README and the report (`control-plane-project-charter/referen
 
 ## E2E RED
 
-An e2e RED is optional (charter §3): it costs a real control-plane run, so take it when it is cheap, and
-otherwise report the E2ETest as unproven. RED is still required for the composition and unit tests.
+An e2e RED is optional (charter §3): it costs a real control-plane run, so take it when it is cheap, else
+report the E2ETest as unproven. Composition and unit tests still require RED.
 
 A valid e2e RED is an **implementation mutation** the control plane rejects or never readies: drop a composed
 resource the others depend on, or break a selector. Run it with a short `timeoutSeconds` (300) so the RED costs
@@ -233,6 +233,6 @@ covered by e2e**: say so, and name the evidence that stands in for it:
    `local.md` reference).
 
 **A read-back is report evidence, never a pass condition.** Take it once, inside the one gate run, and report
-what it showed or "not read back". Gate nothing on it, commit no read-back or comparison program,
-and never re-run a green e2e for it: whatever it shows, the requirement stays not covered by e2e. When a
-provider read works: `local.md`, "A status field or condition".
+what it showed or "not read back". Gate nothing on it, commit no read-back or comparison program, and never
+re-run a green e2e for it: whatever it shows, the requirement stays not covered by e2e. When a provider read
+works: `local.md`, "A status field or condition".
