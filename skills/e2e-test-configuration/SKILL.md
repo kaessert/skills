@@ -29,9 +29,9 @@ output (charter §2, §4). Everything below still applies to reading its output.
 
 ## Phase 1: Choose the target and the tests
 
-A local kind control plane and an Upbound Space are equally valid targets, and this skill has no default.
-Use the one your caller, the brief or the project's own gate names, then **read that target's reference
-before you run anything**:
+A local kind control plane and an Upbound Space are equally valid targets; this skill has no default. Use
+the one your caller, the brief or the project's own gate names, then **read that target's reference before
+you run anything**:
 
 | Target | Target flags | Read first | Test credentials |
 |---|---|---|---|
@@ -42,8 +42,8 @@ before you run anything**:
   Do not pick one.
 - **A test that can only pass on one target decides.** A ProviderConfig with `source: Upbound` works only on
   a Space. Report the mismatch rather than running it elsewhere.
-- **Always pass the target flags.** Without them the current context decides where the run lands, without
-  saying so (`control-plane-project-charter/references/charter/targets.md`).
+- **Always pass the target flags.** Without them the current context silently decides where the run lands
+  (`control-plane-project-charter/references/charter/targets.md`).
 - **State the target in one line before the run** ("running e2e on local kind" or "running e2e on Space
   `<space>/<group>`"), and check it against the run's first progress line (Phase 4).
 
@@ -59,8 +59,8 @@ list what did not run.
 ## Phase 2: Preconditions
 
 An `--e2e` run creates a control plane and real cloud resources, so everything cheap comes first. **A
-precondition that fails ends the run**; it is not a warning you carry forward. In this order, stopping at the
-first failure:
+precondition that fails ends the run**; it is not a warning you carry forward. Check in this order and stop
+at the first failure:
 
 1. **The project builds:** `up project build`.
 2. **The composition tests pass:** `up test run "tests/test-*"`. That is `test-*` by default, not `tests/*`:
@@ -78,10 +78,10 @@ first failure:
 
    A variable built from others (author-tests' `e2e.md` reference) must be exported inside the Phase 4 run
    block, before `up test run`, since one exported in an earlier command is gone: check its inputs (`AWS_*`)
-   here instead. KCL and Python programs see only `UP_`-prefixed variables and no `~/.aws`; a Go program runs
-   locally and can read any name, so check its `os.Getenv` calls too. An unset variable the program does not fail on
-   becomes an empty Secret, which surfaces only when the provider rejects it, after a control plane and real
-   resources exist.
+   here instead. KCL and Python programs see only `UP_`-prefixed variables and no `~/.aws`; a Go program
+   runs locally and can read any name, so check its `os.Getenv` calls too. An unset variable the program
+   does not fail on becomes an empty Secret. That surfaces only when the provider rejects it, after a
+   control plane and real resources exist.
 4. **The target's own preconditions:** [local.md](references/local.md) (Docker) or
    [space.md](references/space.md) (context, group, repository visibility). Local: run under the default
    umask (`022`), never `umask 077`; under `077` the package is never ready and the run ends in
@@ -124,7 +124,7 @@ One idiom on both targets; only the target flags differ:
   after the redirect goes to stdout, and a wait for it in the log never ends.
 - `--function-logs` is rejected with `--e2e` and no `_output/e2e*` is ever written: this log is the only
   evidence. Without it you have nothing, and nothing is not a pass.
-- **Foreground** when the worst case fits the longest timeout your harness allows for one command. The call
+- **Foreground** when the worst case fits the longest timeout your harness allows for one command: the call
   returns the complete log in one result.
 - **Otherwise in the background**, with your harness's own facility (charter §1; never detach it yourself with
   `nohup` or `&`). **Whatever runs it in the background must not have a shorter timeout than the run:** give
@@ -142,7 +142,7 @@ One idiom on both targets; only the target flags differ:
   reached, not an outcome. With no background facility, run in the foreground with the longest timeout you
   have, and treat a timeout the same way.
 - **Never write a verdict from a poll.** A partial log is a progress view: resources routinely reach `Ready`
-  after your last look. The run is over when `EXIT=` is in the log, and not before.
+  after your last look. The run is over only when `EXIT=` is in the log.
 - If you stop a run early (wrong target, stuck), say it was **terminated** and why. A killed run has no
   outcome.
 
@@ -163,7 +163,7 @@ is no evidence about the other.
 
 ## Phase 5: While it runs
 
-Between bounded waits, read the log's tail to keep the user informed and to spot a stuck run. Mention errors
+Between bounded waits, read the log's tail to keep the user informed and spot a stuck run. Mention errors
 briefly with a timestamp; analyse only when stuck.
 
 **Most alarming strings during provisioning are transient**, and calling one fatal stops a run that was about
@@ -199,14 +199,15 @@ Then:
   derive a duration from file timestamps (a log's or any file's birth or modification time), and never
   estimate: an unrelated file's timestamp once turned a 6-minute run into "~95 min".
 - **Readiness is what you read.** The assert step passing in the log is the evidence. A resource read must be
-  taken while the control plane exists: both targets tear it down after every test. A status value read during
-  the run is quoted as "read-back, not asserted" (how, on kind: [local.md](references/local.md)).
+  taken while the control plane exists: both targets tear it down after every test. Quote a status value read
+  during the run as "read-back, not asserted" (how, on kind: [local.md](references/local.md)).
 - **A claim about the provider comes from the provider:** its own read (CLI or SDK, whichever is installed),
-  taken before teardown (when: [local.md](references/local.md#reaching-the-cluster-while-it-runs)), and quoted. Reading back the XR or your manifest proves only that your input
-  round-tripped. Without that read, say "not verified at the provider".
+  taken before teardown (when: [local.md](references/local.md#reaching-the-cluster-while-it-runs)), and
+  quoted. Reading back the XR or your manifest proves only that your input round-tripped. Without that
+  read, say "not verified at the provider".
 - **Cleanup:** the target's reference says what proves it.
 - **Re-read your evidence before the verdict.** Grep what you are about to paste for `False`, `Creating`,
-  `Failed`, `FAIL`. If any appears, either explain it or correct the verdict.
+  `Failed`, `FAIL`. If any appears, explain it or correct the verdict.
 - Never call anything "production-ready"; that is the caller's judgement.
 
 Shape (templates in [report-templates.md](references/report-templates.md)):

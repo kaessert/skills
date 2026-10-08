@@ -1,13 +1,13 @@
 # Running E2E on a local kind control plane (`--local`)
 
 Read before running `up test run --e2e --local`. [SKILL.md](../SKILL.md) has what both targets share:
-preconditions, the run idiom, stuck detection and the report. Facts below are from the up v0.55.0 source and
-runs, and could change between versions.
+preconditions, the run idiom, stuck detection and the report. Facts below come from the up v0.55.0 source and
+runs, and may change between versions.
 
 ## Preconditions
 
 - **Docker must be reachable** (`docker info` exits 0). `up` creates the cluster itself through the kind
-  library; the `kind` CLI is only needed to look inside or clean up.
+  library; you need the `kind` CLI only to look inside or clean up.
 - **List `kind get clusters` and `docker ps -a` before the run, and keep the lists.** Anything already there
   is not this run's, even with this project's `<project>-uptest-` name (SKILL.md, Never): report it.
 - **Don't run `up ctx`, or check a repository, `--public` or the group.** `--local` ignores the context and
@@ -17,9 +17,9 @@ runs, and could change between versions.
   `secretRef: {namespace, name, key}`, built from a `UP_*` variable. `source: Upbound` web identity does not work
   on kind. The shapes, the AWS credentials-file format and how to build it in memory are in author-tests'
   `e2e.md` reference.
-- **Why the default umask (SKILL.md Phase 2).** `up` writes the local registry's TLS certificate
-  and key (`/tmp/up-local-registry/<cluster>/.certs/`) with your umask, and the registry container runs as a
-  non-root user. Under `umask 077` it can't read them and exits, and the run waits at `Waiting for package to
+- **Why the default umask (SKILL.md Phase 2).** `up` writes the local registry's TLS certificate and key
+  (`/tmp/up-local-registry/<cluster>/.certs/`) with your umask, and the registry container runs as a
+  non-root user. Under `umask 077` it can't read them and exits; the run waits at `Waiting for package to
   be ready` until `context deadline exceeded`, about 10 min later (observed with up v0.55.0). `docker logs
   <cluster>-registry` shows `open /registry-data/.certs/tls.crt: permission denied`. To protect a credentials
   file, `chmod 600` that file; better, write no file at all.
@@ -34,8 +34,8 @@ inside the run idiom in SKILL.md Phase 4. Optional:
 
 - `--control-plane-version <version>` pins UXP (otherwise `spec.crossplane.version`, otherwise the latest
   stable UXP).
-- `--skip-control-plane-cleanup` keeps the cluster after the test. Then deleting it, and checking the cloud,
-  is yours to do or to report.
+- `--skip-control-plane-cleanup` keeps the cluster after the test. Deleting it and checking the cloud are
+  then yours to do or to report.
 
 ## What the run does
 
@@ -82,7 +82,7 @@ Use `kind get kubeconfig`, not a kubeconfig `up` leaves in `/tmp`: observed with
 `/tmp/up-*.kubeconfig` was empty (0 bytes), and the test's own `/tmp/<test><random>/kubeconfig.yaml` was gone by
 the next read.
 
-If the run never got past the package install, check that first, before tracing any managed resource:
+If the run never got past the package install, check that before tracing any managed resource:
 `docker logs <cluster>-registry` (the umask precondition), then `kubectl get pkgrev -o wide` and `kubectl
 describe configuration`. Then use the brief in [troubleshooting.md](troubleshooting.md).
 
@@ -120,7 +120,7 @@ delete and got NotFound (observed once with up v0.55.0).
 
 ## Evidence and cleanup
 
-After the run the cluster is gone, so `kubectl get managed` afterwards is impossible. The evidence is:
+After the run the cluster is gone, so `kubectl get managed` no longer works. The evidence is:
 
 - **The log's `Cleanup summary: N deleted, 0 remaining` line**, quoted.
 - **A provider read taken during the run**, quoted. Without one, the report says "not verified at the

@@ -1,8 +1,8 @@
 # Running E2E on an Upbound Space (Upbound Cloud)
 
 Read before running `up test run --e2e` against a Space. [SKILL.md](../SKILL.md) has what both targets share:
-preconditions, the run idiom, stuck detection and the report. Facts are from the up v0.55.0 source and earlier
-runs of this skill, and could change between versions.
+preconditions, the run idiom, stuck detection and the report. Facts come from the up v0.55.0 source and earlier
+runs of this skill, and may change between versions.
 
 ## Preconditions
 
@@ -35,7 +35,7 @@ up repository get "$REPO" --format=json 2>/dev/null \
 it *creates* public, so it fixes "does not exist yet" and changes nothing for an existing private one
 (`control-plane-project-charter/references/charter/targets.md`).
 
-- If the caller already chose `--public` (in the brief, or earlier in the conversation), use it and do not ask
+- If the caller already chose `--public` (in the brief or earlier in the conversation), use it; don't ask
   again.
 - Otherwise, before burning a run, name the options: publish publicly, change the existing repository's
   visibility (the user's call, outside this skill), push to a repository the control plane can already pull
@@ -75,14 +75,14 @@ up test run "tests/e2etest-<n>" --e2e --control-plane-group="<group>" --kubeconf
 up v0.55.0.
 
 **Known transient:** `Creating: Waiting for control plane API: cannot provision contr...` is a progress
-message truncated mid-word (the `up ctp list` MESSAGE column), not a failure. All conditions may still settle
+message truncated mid-word (the `up ctp list` MESSAGE column), not a failure; all conditions may still settle
 `True`.
 
 ## Stuck on a Space
 
 Check the package installed before any managed resource. If the run never got past
-`Waiting for package to be ready`, no XR exists and tracing resources is wasted effort: read the `Configuration`
-as `control-plane-project-charter/references/charter/targets.md` ("A run stuck on
+`Waiting for package to be ready`, no XR exists and there is nothing to trace: read the `Configuration` as
+`control-plane-project-charter/references/charter/targets.md` ("A run stuck on
 `Waiting for package to be ready`") says. A `401 Unauthorized` there is precondition 2's private repository:
 retrying does not help; hand back that precondition's options.
 
