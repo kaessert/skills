@@ -210,6 +210,15 @@ field survives then depends on the request: `response.To` shares the request's d
 the response, so it survives when the request carries one, and is lost when it does not, as in a
 unit-test request built with `Observed` only (checked against v0.5.0).
 
+**There is no stale status to clear.** Crossplane starts every pipeline run with an empty desired
+state ("The Function pipeline starts with empty desired state", in the composite controller's
+`composition_functions.go`; `crossplane render` does the same), so the first step starts the XR's
+desired status from nothing on every reconcile; only a later step receives an earlier step's
+desired state. Crossplane then applies the XR status with server-side apply, as the pipeline's
+fully specified intent, so a field the pipeline stops writing is removed, not left behind
+(checked in the Crossplane source, v1.20 to v2.2). Write no code or test that clears status
+left by an earlier reconcile.
+
 ## Unit-test template: the fast tier (`functions/<n>/fn_test.go`)
 
 `go test ./...` in `functions/<n>/` calls `RunFunction` directly: about a second, no project build. It is
