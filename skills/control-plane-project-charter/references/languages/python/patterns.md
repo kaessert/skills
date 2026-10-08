@@ -1,8 +1,8 @@
 # Python: composition function patterns
 
-The function bootstrap, building a managed resource, and the data-shape traps that are specific
-to Python: tag maps, `resource.update()` semantics, optional XRD objects, namespaces, and XRD
-schemas that generate clean models. The Python index is [`../python.md`](../python.md).
+The function bootstrap, building a managed resource, and the Python-specific data-shape traps:
+tag maps, `resource.update()` semantics, optional XRD objects, namespaces, and XRD schemas that
+generate clean models. The Python index is [`../python.md`](../python.md).
 
 ## Function bootstrap
 
@@ -42,14 +42,13 @@ class FunctionRunner(grpcv1.FunctionRunnerService):
 
 **Why `struct_to_dict`:** `req.observed.composite.resource` is a `google.protobuf.Struct` in
 every SDK version. `Kind(**req.observed.composite.resource)` unpacks the top level, but the
-nested values are still `Struct`, and Pydantic fails at construction with a message that names
-nothing useful:
+nested values are still `Struct`, and Pydantic fails at construction with an unhelpful message:
 
 ```
 AttributeError: get
 ```
 
-`'Struct' object has no attribute 'spec'` is the other one: it comes from touching
+The other, `'Struct' object has no attribute 'spec'`, comes from reading
 `req.observed.composite.resource.spec` directly.
 
 In the embedded layout the same body lives in `def compose(req, rsp):` in
@@ -132,7 +131,7 @@ resource.update(rsp.desired.composite, {"status": {
 }})
 ```
 
-Nothing crashes and the suite stays green; the XR just reports three outputs as absent. Assert
+Nothing crashes and the suite stays green; the XR reports three outputs as absent. Assert
 every status field on the composite ([`tests.md`](tests.md)).
 
 ## An optional XRD object is a `dict` when absent and a model when present
@@ -172,11 +171,11 @@ Fix it in one of two places:
 
 It bites only where nothing applies the XRD: `up test run` without `xrdPath`, bare
 `crossplane render`, and `run_function.py`. With `xrdPath` set, and on a real API server, the
-`{}` becomes a model before the function runs, so a minimal-XR test does not catch it. The test
-that proves the guard is one with `xrdPath` deliberately unset; if every test sets `xrdPath`,
-the guard is dead code.
+`{}` becomes a model before the function runs, so a minimal-XR test does not catch it. Only a
+test with `xrdPath` deliberately unset proves the guard; if every test sets `xrdPath`, the guard
+is dead code.
 
-Against a typed field none of this applies, and defending against it anyway is dead code:
+None of this applies to a typed field, and defending against it anyway is dead code:
 `hasattr` on a Pydantic field is always `True`, and `isinstance(x, dict)` on a typed list element
 is always `False`. Keep dict handling for genuinely untyped input: `struct_to_dict()` output,
 `context`, and the `= {}` case above.

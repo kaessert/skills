@@ -70,8 +70,8 @@ An expected resource reported as `no actual resource found`: read what rendered
 
 ## Migrating a Python function from v1 to v2
 
-What changes in a v1 → v2 migration, language-neutral, is in `plan-v2-migration`'s
-`breaking-changes.md` reference. In Python it shows up as the import (`models.io.upbound.<cloud>…`
+The language-neutral v1 → v2 changes are in `plan-v2-migration`'s `breaking-changes.md`
+reference. In Python they show up as the import (`models.io.upbound.<cloud>…`
 → `models.io.upbound.m.<cloud>…`), test `apiVersion`s gaining `.m.`, and connection details moving
 from `rsp.desired.composite.connection_details` to a composed Secret
 ([`readiness.md`](readiness.md#connection-secrets)).

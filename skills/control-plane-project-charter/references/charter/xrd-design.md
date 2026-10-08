@@ -27,7 +27,7 @@ If you script a casing fix, match on **word boundaries**: end of string, or foll
 
 **Do not repeat the group or kind in a field name.** With group `artifactory.example.com` and kind `Repository`, `spec.artifactoryRepositoryName` reads as `artifactory.Repository.artifactoryRepositoryName`. It wants to be `spec.name`. The stutter usually arrives on only some fields, so the API ends up inconsistent as well as verbose.
 
-**But a field that merely starts with the group's word is not automatically stutter**, and this is the one place the rule is regularly over-applied. Three field names on a `Route` in group `gateway.example.com` look identical to a prefix match and are not the same thing:
+**But a field that merely starts with the group's word is not automatically stutter**, and this is the one place the rule is regularly over-applied. Three field names on a `Route` in group `gateway.example.com` look identical to a prefix match but are not the same thing:
 
 | Field | Verdict |
 |---|---|
@@ -35,7 +35,7 @@ If you script a casing fix, match on **word boundaries**: end of string, or foll
 | `gatewayName` | Fine. It names a **different** object, the gateway this route attaches to. `name` would be worse, because it no longer says whose. |
 | `gatewayTimeoutSeconds` | Fine, or at least arguable. "Gateway Timeout" is HTTP 504, a compound term rather than a repeated qualifier. `timeoutSeconds` is still the better name here, but for concision, not stutter. |
 
-The test is whether the word is restating *this* object or naming another one. That is semantic, so treat a prefix match as a question to answer rather than a defect to fix.
+The test: does the word restate *this* object or name another one? That is semantic, so treat a prefix match as a question to answer, not a defect to fix.
 
 **An initialism is a casing decision, and the two surfaces answer it differently.**
 
@@ -65,7 +65,7 @@ Comparing names case-insensitively catches `projectID` beside `ProjectId`, but n
 
 ## Constrain every string, and say what it is
 
-A field with only `type: string` and no `description` accepts anything and documents nothing (§5). Descriptions are what `kubectl explain` and the console render; without them the schema cannot be consumed without reading the composition.
+A field with only `type: string` and no `description` accepts anything and documents nothing (§5). Descriptions are what `kubectl explain` and the console render; without them, consuming the schema means reading the composition.
 
 | Add | When |
 |---|---|
@@ -74,7 +74,7 @@ A field with only `type: string` and no `description` accepts anything and docum
 | `pattern`, `minLength`, `maxLength` | The backend will reject some strings |
 | `default` | There is a safe value, especially the most restrictive one |
 
-**Verify bounds against vendor documentation, not from memory.** Guessing produces confident, wrong constraints in both directions: too tight rejects the user's own valid input, too loose defers the failure again. Backend key rules in particular are rarely what you assume, and they often vary by resource subtype, which a single `pattern` cannot express. Those parts belong in CEL (below).
+**Verify bounds against vendor documentation, not from memory.** Guessing produces confident, wrong constraints in both directions: too tight rejects the user's own valid input, too loose defers the failure again. Backend key rules especially are rarely what you assume, and often vary by resource subtype, which a single `pattern` cannot express; those parts belong in CEL (below).
 
 ---
 
@@ -127,7 +127,7 @@ Write each exception down with its reason — in the field's description, and in
 
 ## Required is permanent; a default is not
 
-When you add a required field, assume you will never remove it. Prefer optional with a sensible default, and reserve `required` for fields with genuinely no safe value.
+When you add a required field, assume you will never remove it. Prefer optional with a sensible default, and reserve `required` for fields with no safe value.
 
 Defaulting to the most restrictive option is the strongest form of this: if `access` defaults to `Private`, forgetting the field cannot publish anything. Defaults also make the fallback discoverable through `kubectl explain` instead of hiding it in the composition, and they shrink what users have to type.
 
@@ -159,7 +159,7 @@ x-kubernetes-list-type: set
 
 Without `x-kubernetes-list-type`, a list is atomic: duplicates are accepted, and two controllers or two people doing server-side apply clobber each other instead of merging. Use `set` for unordered unique scalars and `atomic` where order is meaningful, such as a virtual repository's resolution order. `maxItems` is not only hygiene: CEL rules are costed against the declared maximum, so an unbounded list can leave no budget for the validations you want later.
 
-**Never reach for `uniqueItems: true`.** It is the obvious way to write "the backend rejects duplicates" and it is forbidden in a CRD schema: the API server refuses to create the CRD at all, with `uniqueItems cannot be set to true since the runtime complexity becomes quadratic`. `x-kubernetes-list-type: set` is the construct that means this, and it is enforced on admission rather than quadratically.
+**Never reach for `uniqueItems: true`.** It is the obvious way to write "the backend rejects duplicates", and it is forbidden in a CRD schema: the API server refuses to create the CRD at all, with `uniqueItems cannot be set to true since the runtime complexity becomes quadratic`. `x-kubernetes-list-type: set` means this, and is enforced on admission rather than quadratically.
 
 ---
 
@@ -179,7 +179,7 @@ status:
 
 ## Printer columns: add the ones Crossplane does not
 
-`kubectl get` with no `additionalPrinterColumns` shows name and age. It is the highest value per line in the whole file, with one trap:
+`kubectl get` with no `additionalPrinterColumns` shows name and age. Printer columns are the highest value per line in the file, with one trap:
 
 **Crossplane already appends `SYNCED`, `READY`, `COMPOSITION`, `COMPOSITIONREVISION` and `AGE` to every XR.** Defining any of them yourself prints it twice:
 
@@ -195,7 +195,7 @@ Add only columns Crossplane cannot know: the spec fields that distinguish one in
 
 Under `scope: Namespaced` the namespace is already a tenancy boundary. Before adding a field that names an environment, tenant or team, ask whether the namespace carries it. Stating it twice creates drift you cannot prevent, such as an object in namespace `default` carrying `environment: Stage`.
 
-This is a real design decision rather than a rule: a team may keep the field deliberately, for instance when the value selects a backend instance rather than an isolation boundary. If it stays, give it an enum and an immutability rule, and note in the schema that nothing ties it to the namespace.
+This is a design decision, not a rule: a team may keep the field deliberately, for instance when the value selects a backend instance rather than an isolation boundary. If it stays, give it an enum and an immutability rule, and note in the schema that nothing ties it to the namespace.
 
 ---
 
@@ -206,13 +206,13 @@ Run author-configuration-package's `check_xrd_schema.py` as its Phase 3 says (ex
 print as `REVIEW`, not `FAIL`: each is a judgement, and a check that fails every boolean gets
 disabled.
 
-What the check does not look at, deliberately: **kind stutter** (`repositoryClass` is a good name and `repositoryName` is not, the difference is semantic, and a check firing on both pushes someone to break the good one); which fields are **identity fields** needing `self == oldSelf`; and whether a `pattern` matches what the backend actually enforces. Those stay review judgements.
+What the check deliberately ignores: **kind stutter** (`repositoryClass` is a good name and `repositoryName` is not, the difference is semantic, and a check firing on both pushes someone to break the good one); which fields are **identity fields** needing `self == oldSelf`; and whether a `pattern` matches what the backend actually enforces. Those stay review judgements.
 
 ---
 
 ## Prove the schema on a control plane
 
-A schema that parses is not a schema that works. CEL expressions are compiled by the API server, not by your YAML parser, so a rule with a typo is invisible until something applies against it. `--dry-run=server` exercises the whole admission path and writes nothing:
+A schema that parses is not a schema that works. The API server compiles CEL expressions, not your YAML parser, so a rule with a typo is invisible until something applies against it. `--dry-run=server` exercises the whole admission path and writes nothing:
 
 ```bash
 kubectl apply -f apis/<resource>/definition.yaml
@@ -222,6 +222,6 @@ kubectl patch <kind> <name> -n <ns> --type=merge --dry-run=server \
   -p '{"spec":{"<immutable-field>":"other"}}'          # must be REJECTED
 ```
 
-Write one rejection case per rule, plus a valid control that must pass. A suite where everything is rejected proves nothing: it is equally consistent with a schema that rejects everything.
+Write one rejection case per rule, plus a valid control that must pass. A suite where everything is rejected proves nothing: a schema that rejects everything passes it too.
 
 Then read `kubectl get` output once, with real objects in it. Duplicate printer columns, a defaulted field that did not default, and a status that never populates are all invisible in the source and obvious in the table.

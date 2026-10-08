@@ -37,7 +37,7 @@ references:
 # Development Charter
 
 **Every skill in this plugin follows this charter:** how to behave as an agent, how to
-develop, what Crossplane v2 actually requires, and how to report what you did.
+develop, what Crossplane v2 requires, and how to report what you did.
 
 **It does not replace the task skill.** Before you write, review or specify work, load what
 your row names:
@@ -74,8 +74,8 @@ How you were started decides whether you can ask anything; every skill's mode li
 relay one. Wherever a skill says to ask, read it with this rule.
 
 **Re-read a document before you write from it.** Long runs lose old file and command output.
-Before you write anything derived from a document — a work item, a test expectation, a quote,
-a field value — re-read the section you rely on in that same step. Never quote from memory. If
+Before writing anything derived from a document — a work item, a test expectation, a quote, a
+field value — re-read the section you rely on, in that same step. Never quote from memory. If
 the re-read contradicts what you wrote, fix that first.
 
 **Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) has what each
@@ -143,7 +143,7 @@ skill's script into the project.
    | passes immediately | **not** RED — the assertion is vacuous, or the behaviour already exists |
    | E2E: an implementation mutation (drop a composed resource others depend on, break a selector) that never readies within a short `timeoutSeconds` | valid RED, and optional (below). Editing `defaultConditions` or an expected value is not; an unparsable condition is a broken test (author-tests' `e2e.md` reference) |
 
-   Record the failure text. It goes in your report as the evidence that the test bites.
+   Record the failure text: your report cites it as evidence that the test bites.
 
    **RED is required for composition tests and function unit tests, and optional for a new
    `E2ETest`.** An e2e RED costs a real control-plane run: take it when it is cheap, as in the
@@ -171,7 +171,7 @@ An overstated report asserts what the change was *meant* to do instead of readin
 
 Before writing any summary:
 
-1. **Name what you actually ran**, and what its exit code was — the command's own. After
+1. **Name what you ran**, and its exit code — the command's own. After
    `up test run … | tail -20`, `$?` is `tail`'s, not `up`'s. Redirect, then read `$?`
    (`up test run "tests/test-*" > /tmp/t.log 2>&1; echo "exit=$?"`), or, after a pipe, read
    `${PIPESTATUS[0]}` in bash or `$pipestatus[1]` in zsh, straight after it.
@@ -186,11 +186,11 @@ Before writing any summary:
    "complete", or "N/N", answer: *what change to the code would make this go red?* If you
    cannot name one, you have not covered X — you have written something that passes.
 6. **Drop the checkmark register.** `✅ Complete`, `PASS`, and a tidy summary table read as
-   verification regardless of what is behind them, and they are what makes an overstated
-   report persuasive. Write what ran, what it printed, and what remains unknown. If the
-   honest summary is "tests pass; provider validity unchecked; not deployed", that is the
-   summary — it is more useful to the caller than a confident one that is wrong. A skill's
-   success criteria are checks for you, not a report format: do not tick them off in a report.
+   verification whatever is behind them, which is what makes an overstated report
+   persuasive. Write what ran, what it printed, and what remains unknown. If the honest
+   summary is "tests pass; provider validity unchecked; not deployed", that is the summary:
+   more useful to the caller than a confident one that is wrong. A skill's success criteria
+   are checks for you, not a report format: do not tick them off in a report.
 7. **Comments, docs and READMEs claim no more than a named test or run.** They are read as
    reports.
 
@@ -240,9 +240,9 @@ namespace. Set it explicitly, normally to the XR's namespace: without it a provi
 provided` (v1.3.3), and composition tests that assert the same omission stay green.
 
 **Detail:** [`charter/v2-resources.md`](references/charter/v2-resources.md) has the verified
-behaviour behind each row of the table, what these CRD defaults do to a render (it differs by language), when a `providerConfigRef` is genuinely
-warranted, what a missing or wrong ProviderConfig looks like on a control plane, and the two
-greps that catch a hardcoded one.
+behaviour behind each table row, what these CRD defaults do to a render (it differs by
+language), when a `providerConfigRef` is warranted, what a missing or wrong ProviderConfig
+looks like on a control plane, and the two greps that catch a hardcoded one.
 
 ### The XRD
 
@@ -316,9 +316,9 @@ with no observed resources *unless the test supplies `spec.observedResources`*. 
 on observed-and-ready is dead in a test that omits that field and live in one that sets it —
 write the second test rather than declaring the branch untestable. For a namespaced XR, give
 each mock the XR's namespace and the render's name: without the namespace it is silently ignored
-([`charter/evidence.md`](references/charter/evidence.md), Coverage). Then be precise about what
-it proves: your branch logic, given the status you wrote. It does not prove a provider ever
-reports that status. For that, `--e2e` or a live apply — or say it is unverified.
+([`charter/evidence.md`](references/charter/evidence.md), Coverage). Such a test proves your
+branch logic given the status you wrote, not that a provider ever reports that status. For
+that, `--e2e` or a live apply — or say it is unverified.
 
 The XRD defaulting in §2 has two limits:
 
@@ -350,8 +350,8 @@ to make it work is.
 
 **Abort on a failed precondition; do not proceed and report the symptom.** A check that
 comes back *blocked* — not merely *failed* — means the run you are about to start cannot
-produce a valid result. Starting it anyway spends real time and produces a failure whose
-cause you already knew.
+produce a valid result. Starting it anyway spends real time on a failure whose cause you
+already knew.
 
 **Detail:** [`charter/targets.md`](references/charter/targets.md) — read it before a run on a
 Space, or one without a target flag (a `--local` E2E run reads e2e-test-configuration's

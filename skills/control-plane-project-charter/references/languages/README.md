@@ -1,14 +1,13 @@
 # Language references
 
-One file per language, shared by every skill in this plugin; each covers both composition
-functions and tests. Language-neutral rules live in [`control-plane-project-charter`](../../SKILL.md)
-and are not repeated here.
+One file per language, shared by every skill in this plugin, covering composition functions and
+tests. Language-neutral rules are in [`control-plane-project-charter`](../../SKILL.md), not here.
 
 ## Detecting the language
 
 Detect each directory on its own: the composition language from `functions/<n>/`, the test
-language from `tests/<n>/`. They are separate axes, and a project may mix them. The markers are the
-ones `up` itself checks (up v0.55.0), in its order — **the first match wins**:
+language from `tests/<n>/`; a project may mix them. The markers are the ones `up` checks
+(up v0.55.0), in its order — **the first match wins**:
 
 | Directory contains | Language | Functions: read | Tests: read |
 |---|---|---|---|
@@ -31,7 +30,7 @@ no `CompositionTest` or `E2ETest` — a Go program printing `items: []` — cont
 
 ## Choosing the test language for new tests
 
-Which language to write *new* tests in is a choice, not a detection.
+The language of *new* tests is a choice, not a detection.
 [`control-plane-project-charter` §10](../../SKILL.md#10-language-dispatch) states the rule; the
 detail:
 
@@ -41,9 +40,9 @@ detail:
    not set the language.
 2. Otherwise use the **composition language**, whenever `up` supports it as a test language:
    `kcl`, `python`, `go`, `go-templating` — every language `up function generate` produces.
-   One toolchain and one set of idioms per project, the people who maintain the function can
-   maintain its tests, and typed languages check expectations against the same models the
-   function is built on. Pass the language to the generators:
+   Why: one toolchain and one set of idioms per project, whoever maintains the function can
+   maintain its tests, and typed languages check expectations against the function's own models.
+   Pass the language to the generators:
    `up function generate <n> <composition-path> --language go`, then
    `up test generate <n> --language go`. `up project init --scratch` creates neither and ignores
    `--language`; only a `--template` project takes `--language` and `--test-language` at init,

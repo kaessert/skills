@@ -11,11 +11,11 @@ to build and test one when the `up` CLI cannot.
 > ```
 >
 > `up test generate` (which adds `yaml`) and `up project init` reject it too. There is no
-> TypeScript function builder and no TypeScript model generator, so a function directory that
-> `up` has to build, one containing a `package.json`, fails `up project build` and every
-> `up test run` with `no suitable builder found`.
+> TypeScript function builder and no TypeScript model generator, so a function directory `up`
+> has to build (one with a `package.json`) fails `up project build` and every `up test run` with
+> `no suitable builder found`.
 >
-> What works instead, all of it by hand:
+> What works instead, all by hand:
 >
 > | | |
 > |---|---|
@@ -25,8 +25,8 @@ to build and test one when the `up` CLI cannot.
 > | Tests | YAML, the fallback test language ([charter §10](../../SKILL.md#10-language-dispatch)); KCL also works, since tests assert the render whatever produced it |
 >
 > A missing `up` path is a manual step, not a blocker. Test-first (charter §3), `forProvider`
-> only (§5) and reporting (§4) apply unchanged. Say in your report which steps you did by hand,
-> so the gap stays visible.
+> only (§5) and reporting (§4) apply unchanged. Report which steps you did by hand, so the gap
+> stays visible.
 
 | | |
 |---|---|
@@ -51,16 +51,16 @@ functions/<n>/
 
 The SDK is `@crossplane-org/function-sdk-typescript` (0.7.0 when this was written). Its
 `FunctionRunner` catches anything `RunFunction` throws and returns it as a fatal result, so the
-function needs no `try`/`catch` of its own.
+function needs no `try`/`catch`.
 
 ## Function template (`src/function.ts`)
 
 A Bucket, a BucketVersioning when `spec.versioning` is true, and `status.bucketArn` from the
 observed bucket: the same function the Go template in [`go/functions.md`](go/functions.md)
 implements, so the test cases in [`go/tests.md`](go/tests.md) and
-[`go-templating.md`](go-templating.md) fit it (copy generated names from your own render). Type-checked with SDK 0.7.0 and
-TypeScript 5.9 under the `tsconfig.json` below, and run against a hand-built request for each
-branch; not yet run under `up test run`.
+[`go-templating.md`](go-templating.md) fit it (copy generated names from your own render).
+Type-checked with SDK 0.7.0 and TypeScript 5.9 under the `tsconfig.json` below, and run against
+a hand-built request for each branch; not yet run under `up test run`.
 
 ```typescript
 import {

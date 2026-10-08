@@ -4,9 +4,9 @@ Everything Python-specific for a control-plane project: composition functions an
 language-agnostic rules are in [`control-plane-project-charter`](../../SKILL.md); this file and
 [`python/`](python/) say how Python expresses them.
 
-The helper scripts ship with the `author-composition` skill, not with the project. Write their
-full path, from that skill's directory, into every command: a shell variable set in one command
-is gone by the next.
+The helper scripts ship with the `author-composition` skill, not the project. Write their full
+path, from that skill's directory, into every command: a shell variable set in one command is
+gone by the next.
 
 ```bash
 # A wrong path makes every call below die with a bare "No such file".
@@ -41,8 +41,8 @@ Run `setup_venv.py` once, before you write any function or test code, right afte
 you add a function or test directory; not after `up project build` (see "Models last" below).
 
 **Why, when the function never runs on your host:** the fast tier needs it, and without it an
-editor underlines every correct import, inviting a "fix" of imports that were right. A project
-with no venv still builds and goes green, which is why skipping it is the common mistake.
+editor underlines every correct import, inviting a "fix". A project with no venv still builds
+and goes green, so skipping it is the common mistake.
 
 | What | Runs where | Needs the venv |
 |---|---|---|
@@ -60,7 +60,7 @@ a different serializer from the container is not a proxy for the real run.
 
 `setup_venv.py` creates `.venv` at the project root, installs every function and test directory
 from its own pins, installs the generated models editable and last, checks the imports resolve,
-and writes `.vscode/settings.json`. What it does by hand, and why each step matters:
+and writes `.vscode/settings.json`. By hand, and why each step matters:
 
 ```bash
 # Every generated pyproject.toml declares requires-python ">=3.11,<3.14"; python3 is often 3.14.
@@ -93,9 +93,8 @@ PYBIN=$(for v in 3.13 3.12 3.11; do command -v python$v && break; done)
   new module (`models.io.upbound.m.aws.kms.key.v1beta1`) resolves with no pip step.
 
 **In the editor**, the interpreter is all it needs; `setup_venv.py` writes the settings and
-silences the one scaffold diagnostic that is noise (`RunFunction` overrides
-`FunctionRunnerService`). If an import still shows unresolved, check it with `probe_project.py`
-rather than changing it.
+silences the one noisy scaffold diagnostic (`RunFunction` overrides `FunctionRunnerService`).
+If an import still shows unresolved, check it with `probe_project.py` rather than changing it.
 
 ## Layout: SDK or embedded
 

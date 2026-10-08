@@ -5,8 +5,8 @@ Composition tests for a project whose functions are written in Go. The object mo
 `extraResources` — is the same in every language; [`../yaml.md`](../yaml.md) shows it with no language in the
 way. What the suite must contain (one test per input shape, one per observed-state branch, every status field
 asserted on the composite, absence guarded through `resourceRefs`) is in
-[`charter/evidence.md` § Coverage](../../charter/evidence.md#coverage-what-the-suite-must-contain), and it
-applies here unchanged.
+[`charter/evidence.md` § Coverage](../../charter/evidence.md#coverage-what-the-suite-must-contain) and
+applies unchanged.
 
 Everything here was run against `up` v0.55.0: the template below passes, a flipped expectation and a function
 mutant both turn it red, and the failure modes in the last section are reproduced, not guessed.
@@ -40,8 +40,8 @@ Consequences:
 The import paths (test objects, `ObjectMeta`, the `.m.` managed resources, your XR) are in
 [`../go.md`](../go.md#imports-and-models).
 
-**Use typed models for composed-resource expectations** — a misspelt or mis-shaped `forProvider` field does not
-compile, which is the main thing Go buys you over YAML. Every model field is a pointer with `omitempty`, so only
+**Use typed models for composed-resource expectations**: a misspelt or mis-shaped `forProvider` field does not
+compile, the main thing Go buys you over YAML. Every model field is a pointer with `omitempty`, so only
 what you set is serialised and the assertion stays partial. **Use plain maps for the XR fixture,
 `observedResources` and expectations on the composite:** those are `map[string]interface{}` in the test model
 anyway, and a map lets you write exactly the partial shape you mean (e.g. only `status`, or only
@@ -229,9 +229,9 @@ up test run tests/test-<n> --function-logs     # prints the directory holding ea
 `up test generate <n> --e2e --language go` scaffolds the same program shape around an `E2ETest`, in
 `tests/e2etest-<n>/`. **Read author-tests' `e2e.md` reference before writing or changing one:** it has the Go
 E2ETest template, the field defaults (the Go scaffold writes `timeoutSeconds: 300` and no `crossplane` block),
-`defaultConditions` as condition types rather than expressions, and credentials per target. Running it is
-`e2e-test-configuration`'s job. Go-specific: credentials and run ids come from `os.Getenv` directly (the
-program runs locally and sees every variable); name them `UP_*` anyway.
+`defaultConditions` as condition types rather than expressions, and credentials per target.
+`e2e-test-configuration` runs it. Go-specific: credentials and run ids come from `os.Getenv` directly
+(the program runs locally and sees every variable); name them `UP_*` anyway.
 
 **A missing input exits non-zero, naming the variable**, so an E2E run stops at parse time instead of after a
 control plane and real resources exist. That is safe because the default composition gate is

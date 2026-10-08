@@ -211,5 +211,5 @@ _test2 = metav1alpha1.CompositionTest {
 items = [_test1, _test2]
 ```
 
-Omit `conditions` for the "observed but not ready" step: the two cases are what separate a
-readiness check from an existence check.
+Omit `conditions` for the "observed but not ready" step: the two cases separate a readiness
+check from an existence check.

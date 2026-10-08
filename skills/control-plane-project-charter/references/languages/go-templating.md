@@ -15,8 +15,8 @@ The language-agnostic rules are in [`control-plane-project-charter`](../../SKILL
 ## Functions
 
 This reference does not yet cover writing go-templating **functions** beyond the scaffold. The function's own
-template functions (`getCompositeResource`, `setResourceNameAnnotation`, `getComposedResource`, …) are
-documented in the [function-go-templating README](https://github.com/crossplane-contrib/function-go-templating#using-this-function).
+template functions (`getCompositeResource`, `setResourceNameAnnotation`, `getComposedResource`, …) are in
+the [function-go-templating README](https://github.com/crossplane-contrib/function-go-templating#using-this-function).
 Everything the charter says about v2 managed resources (§5) and test-first development (§3) applies.
 
 ## Tests
@@ -35,9 +35,9 @@ Verified against `up` v0.55.0:
 - The output must be `items:` with a list of `CompositionTest` objects — the same object model as YAML tests
   ([`yaml.md`](yaml.md)).
 
-What templating buys over plain YAML is a **test matrix**: one test body, ranged over a list of cases, with
-per-case conditional expectations. If a test has no matrix, plain YAML is clearer — but match the language the
-project's other tests use.
+Over plain YAML, templating buys a **test matrix**: one test body, ranged over a list of cases, with per-case
+conditional expectations. If a test has no matrix, plain YAML is clearer — but match the language the project's
+other tests use.
 
 ### Composition test template (`tests/test-<n>/test.yaml.gotmpl`)
 
@@ -116,7 +116,9 @@ items:
 ```
 
 What the suite must contain beyond this — a minimal XR, one test per observed-state branch, every status field
-asserted on the composite — is in [`charter/evidence.md` § Coverage](../charter/evidence.md#coverage-what-the-suite-must-contain). Observed-state tests add `observedResources` to a case exactly as in [`yaml.md`](yaml.md).
+asserted on the composite — is in
+[`charter/evidence.md` § Coverage](../charter/evidence.md#coverage-what-the-suite-must-contain).
+Observed-state tests add `observedResources` to a case exactly as in [`yaml.md`](yaml.md).
 
 ### Failure modes (reproduced)
 
@@ -130,8 +132,8 @@ asserted on the composite — is in [`charter/evidence.md` § Coverage](../chart
 
 **Indentation is the other trap.** A value that is itself a structure is safest as `{{ toJson $v }}` on one
 line (JSON is valid YAML), and `{{-` / `-}}` trimming decides whether a block lands where you think. When a
-change to a template makes a test pass or fail unexpectedly, render the template on its own and read the YAML
-before changing the expectation.
+template change makes a test pass or fail unexpectedly, render the template alone and read the YAML before
+changing the expectation.
 
 ### E2E tests
 

@@ -24,16 +24,16 @@ Use both tiers:
 | Assertion — `up test run "tests/<t>"` | tens of seconds warm, minutes cold | everything the suite asserts — this is the one that goes RED and GREEN |
 
 The fast tier never replaces the RED/GREEN cycle: Python's asserts nothing, and Go's unit tests
-run no pipeline. It just stops you paying a whole build to discover a typo.
+run no pipeline. It saves you a whole build to find a typo.
 
 ## Backfilling tests for code that already exists
 
 Migrations, coverage work and "add a test for this" all start from working code, so there is
-no natural RED. That is fine — but a test written against passing code has never been
-observed to fail, and is exactly where the false coverage claims come from.
+no natural RED. That is fine, but a test written against passing code has never been
+observed to fail, and is where false coverage claims come from.
 
-**Prove it can fail with a deliberate mutation.** Break the thing the test is supposed to
-catch, confirm *that test* goes red while the others stay green, then revert:
+**Prove it can fail with a deliberate mutation.** Break what the test should catch, confirm
+*that test* goes red while the others stay green, then revert:
 
 ```bash
 # 1. mutate the implementation (delete the field, move the block below an early return, ...)

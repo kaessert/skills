@@ -106,7 +106,7 @@ if is_resource_ready(req, "aks-cluster") or resource_exists(req, "helm-release")
 
 ## The early-return chain
 
-Template functions are written as guard clauses:
+Template functions are guard clauses:
 
 ```python
 if "bucket" not in req.observed.resources:
@@ -124,7 +124,8 @@ Anything appended at the end inherits every guard above it: a resource added aft
 ## Reading the render
 
 How to get and read `render.log` is in [`charter/evidence.md`](../../charter/evidence.md);
-`--debug` also streams it to stderr. The Python-specific part: next to each test's `render.log` in the directory the run prints is
-`<function>.log`, the function container's output, where a Python traceback or `self.log` output
-lands. The XR's `status.conditions` message in `render.log` (`Unready resources: bucket,
-lifecycle, pab, and 2 more`) is a quick list of what rendered.
+`--debug` also streams it to stderr. The Python-specific part: beside each test's `render.log`,
+in the directory the run prints, is `<function>.log`, the function container's output, where a
+Python traceback or `self.log` output lands. The XR's `status.conditions` message in
+`render.log` (`Unready resources: bucket, lifecycle, pab, and 2 more`) is a quick list of what
+rendered.

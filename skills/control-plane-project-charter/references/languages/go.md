@@ -50,11 +50,11 @@ Every function and every test directory is a separate Go module, so run `go` com
 
 **The non-`.m.` tree sits right beside the `.m.` one**, with the same file names:
 `.up/go/models/io/upbound/aws/ec2/v1beta1/vpc.go` next to `.up/go/models/io/upbound/m/aws/ec2/v1beta1/vpc.go`.
-A search for a Kind returns both. In a v2 project import the `m/` path; the other one is the same mistake as in
-any language (charter §5: `.m.` groups only).
+A search for a Kind returns both. In a v2 project import the `m/` path; importing the other breaks charter §5
+(`.m.` groups only), as in any language.
 
 **Inside a model file**, each Kind is a struct (`Bucket`, `BucketSpec`, `BucketSpecForProvider`), and every
-field is a pointer with `omitempty`. Read field names from the file rather than guessing them:
+field is a pointer with `omitempty`. Read field names from the file; don't guess them:
 
 ```bash
 grep -n 'type BucketSpecForProvider struct' -A 60 .up/go/models/io/upbound/m/aws/s3/v1beta1/bucket.go
@@ -80,7 +80,7 @@ replace dev.upbound.io/models => ../../.up/go/models
 ```
 
 - **`go mod tidy` drops the `require` while nothing imports a model**, and keeps the `replace`. That is
-  expected: the first model import, followed by `go mod tidy`, adds the `require` back (as
+  expected: `go mod tidy` after the first model import adds the `require` back (as
   `v0.0.0-00010101000000-000000000000`).
 - **Keep the `replace` even while it looks unused.** Without it the first model import fails with
   `unrecognized import path "dev.upbound.io/models"`. A module created by hand, with `mkdir` and a copied
@@ -91,10 +91,10 @@ replace dev.upbound.io/models => ../../.up/go/models
 ## Where Go runs
 
 - **A Go test program runs on your machine**, not in a container: `up test run` runs `go mod
-  tidy` and `go run .` locally, so it sees your full environment and files, and the `UP_` filter
-  does not apply to it; a variable that does not arrive was not exported in the shell that ran
-  `up`. Name its inputs `UP_*` anyway, and say in a comment that the prefix is a convention here:
-  the test then ports to KCL and Python, and one `grep UP_` lists what a run needs
+  tidy` and `go run .` locally. It sees your full environment and files, and the `UP_` filter
+  does not apply; a variable that does not arrive was not exported in the shell that ran `up`.
+  Name its inputs `UP_*` anyway, with a comment that the prefix is a convention here: the test
+  then ports to KCL and Python, and one `grep UP_` lists what a run needs
   ([`charter/container.md`](../charter/container.md)). A test that works locally may depend on
   something no CI runner has: name everything it reads.
 - **Every matched test program runs on every `up test run`**, e2e ones included, so the

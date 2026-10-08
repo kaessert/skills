@@ -5,9 +5,9 @@ index is [`../python.md`](../python.md).
 
 ## Resolve it, do not derive it
 
-One command prints the project's layout, its import prefix, the exact import line, and the
-model's class names. It flags non-namespaced (v1) provider modules and Kinds that more than one
-API group defines:
+One command prints the project's layout, its import prefix, the exact import line and the
+model's class names, and flags non-namespaced (v1) provider modules and Kinds defined in more
+than one API group:
 
 ```bash
 python3 <author-composition>/scripts/probe_project.py --project <project-root> Bucket StorageBucket
@@ -21,7 +21,7 @@ python3 <author-composition>/scripts/probe_project.py --project <project-root> B
 
 One rule for XRs and managed resources alike: reverse the API group, then append the lowercased
 Kind, **unless the group's leftmost segment already equals it**. After reversal that segment is
-the last one in the path, which is what up's generator compares against the Kind
+the last in the path, which is what up's generator compares against the Kind
 (`internal/schemas/generator/python.go`). The version is the module.
 
 | API group + Kind | Model module | |

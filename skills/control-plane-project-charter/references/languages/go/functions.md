@@ -1,9 +1,8 @@
 # Go: composition functions
 
-Composition functions written in Go. Imports and the `go.mod` wiring are in
-[`../go.md`](../go.md#imports-and-models). The models are on disk under
-`.up/go/models/io/upbound/m/<provider>/<service>/<version>/<kind>.go` (no `dev.upbound.io` level). What a v2
-managed resource needs is in
+Imports and the `go.mod` wiring are in [`../go.md`](../go.md#imports-and-models). The models are on
+disk under `.up/go/models/io/upbound/m/<provider>/<service>/<version>/<kind>.go` (no `dev.upbound.io`
+level). What a v2 managed resource needs is in
 [`control-plane-project-charter` §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs).
 
 The scaffold facts below were observed on `up` v0.55.0, which pins `function-sdk-go` v0.5.0; every SDK name
@@ -222,7 +221,7 @@ left by an earlier reconcile.
 ## Unit-test template: the fast tier (`functions/<n>/fn_test.go`)
 
 `go test ./...` in `functions/<n>/` calls `RunFunction` directly: about a second, no project build. It is
-also where absence goes. `assertResources` cannot say a field is absent, and a Go unit test on the desired
+also where absence goes: `assertResources` cannot say a field is absent; a Go unit test on the desired
 state can. Asserting the exact set of resource names catches a surplus resource too.
 
 The unit test supplements `up test run`; it never replaces it. It does not run the composition pipeline,
@@ -327,8 +326,8 @@ if rsp.GetDesired().GetResources()["bucket"].GetReady() != fnv1.Ready_READY_UNSP
 
 The template fails on any Fatal. For an input the function must reject, write a sibling test that
 expects one: a composition test can't (author-tests, "A Fatal result"). It asserts the message, that
-nothing was composed, and that no success condition was set. Nothing composed is measurable here
-because a request built with `Observed` only carries no desired state for `response.To` to copy.
+nothing was composed, and that no success condition was set. "Nothing composed" is measurable because
+a request built with `Observed` only carries no desired state for `response.To` to copy.
 
 ```go
 // fatalMessages returns the message of every Fatal result in rsp.

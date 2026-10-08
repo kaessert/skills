@@ -16,8 +16,8 @@ The context decides, not a flag (`internal/ctp`, `EnsureDevControlPlane`):
    or control plane → a control plane in that Space.
 3. Otherwise → local KIND, without saying so.
 
-`--control-plane-group` does not select a Space: from a context outside any Space, a run that passes
-it still goes local. The first progress line names the result:
+`--control-plane-group` does not select a Space: from a context outside any Space, a run passing it
+still goes local. The first progress line names the result:
 
 ```text
 Creating local development control plane...          <- local KIND
@@ -67,14 +67,14 @@ go there (source, not measured).
 ## The group (`--control-plane-group`)
 
 On a Space the group is, in order: `--control-plane-group`; the group in the current context; the
-kubeconfig namespace; the literal `default`. So a run from a Space-level context creates its control
-plane in group `default` — a real control plane in a real group, not a no-op. The `--help` text
-("defaults to the group specified in the current context") omits the last two steps.
+kubeconfig namespace; the literal `default`. So a run from a Space-level context creates a real
+control plane in a real group, `default`, not a no-op. The `--help` text ("defaults to the group
+specified in the current context") omits the last two steps.
 
 ## `--kubeconfig` is an input
 
-`--kubeconfig` (a global flag, "Override default kubeconfig path") names a file `up` **reads**; it
-never writes it. A missing file is rejected at parse time. A file that exists but does not parse
+`--kubeconfig` (a global flag, "Override default kubeconfig path") names a file `up` **reads** and
+never writes. A missing file is rejected at parse time. A file that exists but does not parse
 resolves no Space, so the run silently goes local (*observed*: a leftover file holding an error string
 turned a Space run into a local one). Write it fresh in this run and check it parses before passing
 it:
@@ -122,16 +122,16 @@ disclosure, chosen only by the user, never as a debugging step and never as a re
 ## A run stuck on `Waiting for package to be ready`
 
 On a Space, the push and the install are two halves of one run, minutes apart, and the control plane
-the run creates gets no pull credential for a private repository. The install then fails to unpack
-what the push just wrote, the run waits until its timeout (`up project run` default `--timeout 5m`),
-and all it prints is:
+the run creates gets no pull credential for a private repository. The install fails to unpack what
+the push just wrote, the run waits until its timeout (`up project run` default `--timeout 5m`), and
+all it prints is:
 
 ```text
 ✗ Waiting for package to be ready
 up: error: context deadline exceeded
 ```
 
-That names neither half. The real error is on the `Configuration`, read while the control plane
+That names neither half. The real error is on the `Configuration`; read it while the control plane
 exists:
 
 ```bash

@@ -43,8 +43,8 @@ model `up project build` generates from it — the same API, inferred versus wri
 `up project build` generates the models from whatever XRD is on disk, so a hand-written one
 needs no extra step.
 
-The skeleton for a **new** API. Every line matters for v2, and the project templates do not show
-it, because they are v1 ([`generators.md`](generators.md)):
+The skeleton for a **new** API. Every line matters for v2, and the project templates, being v1,
+do not show it ([`generators.md`](generators.md)):
 
 ```yaml
 apiVersion: apiextensions.crossplane.io/v2      # v2, and there is still no v2 Composition
@@ -88,9 +88,8 @@ function and the tests follow the XRD.
 An existing v1 API keeps its Kind when migrated, `X` prefix included: a new Kind is a new API
 ([`xrd-design.md`](xrd-design.md)).
 
-Keep writing the example XR first — it is the render input for tests and the fast tier, and
-drafting the API a user will actually write keeps the schema honest. Just do not derive the
-schema from it.
+Keep writing the example XR first: it is the render input for tests and the fast tier, and
+drafting the API a user will write keeps the schema honest. Do not derive the schema from it.
 
 The import or type path that reaches these APIs is language-specific: see
 [`languages/`](../languages/). Run `up project build` after a provider version change to
@@ -114,8 +113,8 @@ the language's serializer emits.
 So a Python render shows neither, and a KCL render shows `managementPolicies`. Both are
 correct, and neither tells you what the API server fills in on a real control plane. Never
 "fix" a function because a render shows or omits them, and never add them to an *expected*
-resource in a test — the test-side dump keeps what you set, so the assertion then fails against
-a render that correctly omits it.
+resource in a test: the test-side dump keeps what you set, so the assertion fails against a
+render that correctly omits it.
 
 Both fields come from the same place: the embedded `ManagedResourceSpec` struct in
 crossplane-apis v2 (`core/v2/resource_namespace.go`), which every namespaced provider MR inlines.
@@ -144,7 +143,7 @@ Do not set `kind: ProviderConfig` because you found it elsewhere:
   in every language. If a test needs one, you add it (author-tests' `e2e.md` reference).
 
 Some languages make `kind` a *required* field when you construct a `providerConfigRef`
-object. That is a constraint on constructing the object, not a reason to construct it.
+object. That constrains constructing the object; it is no reason to construct it.
 
 ---
 
@@ -174,7 +173,7 @@ grep -rnE 'providerConfigRef|managementPolicies' functions/
 grep -rnE '(metadata\.)?namespace\s*[:=]' functions/
 ```
 
-"No output" is not the pass condition. A well-commented function mentions these fields. Judge
+"No output" is not the pass condition: a well-commented function mentions these fields. Judge
 each hit: a hardcoded value on a managed resource is a defect; a parameterised, deliberate
 opt-in, or a value the project's spec requires, is not (§5). Legitimate namespace hits are a
 cluster-scoped XR choosing one, and objects embedded inside `forProvider`, such as a

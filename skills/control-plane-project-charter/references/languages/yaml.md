@@ -1,9 +1,9 @@
 # YAML
 
 Raw-YAML tests, with real examples. YAML is a test language only: there are no YAML composition
-functions. It shows the test object model with no language in the way, which is why the other
-language references point here for it. When to write tests in YAML rather than the composition
-language: [charter §10](../../SKILL.md#10-language-dispatch).
+functions. It shows the test object model with no language in the way, so the other language
+references point here for it. When to write tests in YAML rather than the composition language:
+[charter §10](../../SKILL.md#10-language-dispatch).
 
 | | |
 |---|---|
@@ -18,7 +18,8 @@ language: [charter §10](../../SKILL.md#10-language-dispatch).
 
 ## Composition test (real example)
 
-Two `CompositionTest` documents in one `test.yaml`, each rendering the composition against an inline XR.
+Two `CompositionTest` documents in one `test.yaml`, each rendering the composition against an
+inline XR.
 
 ```yaml
 # tests/test-controlplane/test.yaml
@@ -110,7 +111,7 @@ spec:
 
 ## Observed state (real example)
 
-Feed a mocked `status` for an earlier resource and assert what renders as a result. Keep
+Feed a mocked `status` for an earlier resource and assert what renders from it. Keep
 `validate: false`, as the scaffold does: the mocked status is not schema-valid.
 
 ```yaml
@@ -222,6 +223,7 @@ spec:
   skipDelete: false
 ```
 
-An `E2ETest` cannot assert a status field or a status condition beyond the `defaultConditions` types
-(`Ready`), and those are condition types, not expressions: author-tests' `e2e.md` reference. The Go and
-go-templating test references are [`go/tests.md`](go/tests.md) and [`go-templating.md`](go-templating.md).
+An `E2ETest` cannot assert a status field or a status condition beyond the `defaultConditions`
+types (`Ready`), and those are condition types, not expressions: author-tests' `e2e.md` reference.
+The Go and go-templating test references are [`go/tests.md`](go/tests.md) and
+[`go-templating.md`](go-templating.md).
