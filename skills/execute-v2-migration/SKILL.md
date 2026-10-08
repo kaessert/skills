@@ -20,8 +20,8 @@ interactive; unattended, take the default named at each point and state it in th
 
 - No plan, no migration: without `.agents/plans/CROSSPLANE_V2_MIGRATION.md`, stop and point
   to `plan-v2-migration`.
-- What each change means is in `plan-v2-migration` `breaking-changes.md`; the plan points at
-  its sections. Read the section before you edit. Upstream: the
+- What each change means is in `plan-v2-migration` `breaking-changes.md`, whose sections the
+  plan points at. Read the section before you edit. Upstream: the
   [Crossplane v2 upgrade guide](https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/).
 - You edit YAML directly (stages 1–4, 6, 8). Tests and functions go to `author-tests` and
   `author-composition`, verification to `verify-configuration` and `e2e-test-configuration`,
@@ -64,9 +64,9 @@ Edit each file with the plan's items. **Checkpoint:** `yq '.' <file>` parses, pe
 
 ## Stage 5: Tests, then functions
 
-Tests lead. A migration starts from working code, so there is no natural RED: for each function,
-first update its tests to v2 and watch them fail against the unmigrated function — for the v2
-reason, not a compile error — then migrate the function until they pass. That is the loop in
+Tests lead. A migration starts from working code, so there is no natural RED. For each
+function, update its tests to v2 and watch them fail against the unmigrated function — for the
+v2 reason, not a compile error — then migrate the function until they pass: the loop in
 `control-plane-project-charter` §3. A plan item no updated test turned red is proven by mutation
 (`control-plane-project-charter/references/charter/tdd.md`) or reported as uncovered. Procedure and
 briefs: [phases.md](references/phases.md#stage-5-tests-then-functions).

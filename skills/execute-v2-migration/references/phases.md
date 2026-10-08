@@ -40,7 +40,7 @@ Then confirm the models carry the `.m.` groups the functions will import:
 ## Stages 2–4: XRDs, compositions, examples
 
 Edit each file with the items the plan lists for it, then `yq '.' <file> > /dev/null`. Edit the
-YAML structure, not by string replacement of whole blocks: whitespace differs between projects.
+YAML structure; don't string-replace whole blocks: whitespace differs between projects.
 If an item is already in its v2 form, tick it and move on.
 
 ## Stage 5: Tests, then functions
@@ -51,7 +51,7 @@ For each function, in the plan's order:
    cover the function and runs each with `up test run "tests/<test>"`. Expect red, and read
    why: the failure must name a v2 difference, for example an expected `ec2.aws.m.upbound.io`
    resource the unmigrated function does not emit. A compile error or a missing name is a test
-   mistake, not RED — the sub-agent fixes the test and runs it again.
+   mistake, not RED: the sub-agent fixes the test and reruns it.
 2. **Then the function.** Hand the [function brief](#function-brief) to a sub-agent. It
    migrates the function and runs the language's compile check, then
    `up test run "tests/test-*"`, until every test passes.
