@@ -12,8 +12,12 @@ project's spec, the spec wins; say so.
   exit code: after a `| tail`, `$?` is `tail`'s (§4).
 - `No test files found`, or a test program printing `items: []`, is zero tests, though it exits
   0. A vacuous green is not a pass (§8).
-- A run that stops at `✗ Parsing tests` is a broken test, not a failing one; with a `tests/*`
-  glob it is usually an e2e program missing an input (§7).
+- A run that stops at `✗ Parsing tests` is a broken test, not a failing one, and never RED:
+  an e2e program missing an input under a `tests/*` glob (§7), or a test program turned linter
+  (below).
+- To re-run an `E2ETest`, load e2e-test-configuration and follow its Phase 2: on kind, the
+  default umask (`022`); `UP_<CLOUD>_CREDENTIALS` holds the credentials text, never a path to a
+  file. Check or diff an e2e program's output only with a dummy value (author-tests' `e2e.md`).
 
 ## Each new test bites
 
@@ -28,6 +32,12 @@ project's spec, the spec wins; say so.
   its default nor shared with a sibling field. Otherwise a hard-coded constant stays green (§3).
 - An entry naming only `kind` passes against any resource of that kind: the fields the change
   adds are asserted, and every `status` field the function writes is asserted on the composite.
+- No test program for a declarative file (the XRD surface, `examples/`, an MRAP,
+  `upbound.yaml`; §3). A program under `tests/` that checks repo files and exits non-zero is a
+  linter, not a test: flag it, and don't ask for one. What no render reaches is covered by the
+  build or reported uncovered (author-tests, "Checking what is not a render").
+- An `E2ETest` that differs from another only in its name covers nothing new and doubles the
+  cloud run (author-tests' `e2e.md`).
 
 ## Read the render
 

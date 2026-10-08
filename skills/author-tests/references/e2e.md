@@ -78,8 +78,8 @@ in `control-plane-project-charter/references/charter/v2-resources.md`. The langu
 | Local control plane (`--local`, kind) | static Secret: `source: Secret` plus `secretRef: {namespace, name, key}`. `secret:` is rejected as `field not declared in schema` |
 
 Other providers use the same structure with their own credential format as the Secret's value. For AWS the
-value is a credentials file, exported whole under a `UP_` name such as `UP_AWS_CREDENTIALS` (KCL and Python
-programs see only `UP_*` variables; charter §7):
+value is a credentials file's text, never its path, exported whole under a `UP_` name such as
+`UP_AWS_CREDENTIALS` (KCL and Python programs see only `UP_*` variables; charter §7):
 
 ```ini
 [default]
@@ -222,8 +222,9 @@ minutes. Check the failure is the Ready assertion (observed: the expected `Ready
 An `E2ETest` checks one thing: each condition type in `defaultConditions` (normally `Ready`) is `True` on
 each object in `spec.manifests`. It cannot assert a status field such as `status.vpcId`, a condition's reason
 or message, or anything on a composed resource; `assertResources` exists only on `CompositionTest`, which is
-render-only. So a requirement for an e2e check of a status field or condition is **not covered by e2e**: say
-so, and name the evidence that stands in for it:
+render-only. A second `E2ETest` that differs from another only in its name asserts the same `Ready` and adds a
+full control-plane run to every gate. So a requirement for an e2e check of a status field or condition is **not
+covered by e2e**: say so, and name the evidence that stands in for it:
 
 1. a `CompositionTest` whose `observedResources` mock the provider's status, asserting the composite's `status`,
    which proves status derivation;
