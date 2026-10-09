@@ -173,8 +173,9 @@ repeat. Before you call anything covered (charter §8):
    it.
 3. **Read the render, not the assertions:** `up test run "tests/test-*" --function-logs`, then
    read it as `control-plane-project-charter/references/charter/evidence.md` says (the directory
-   the run prints as `Test artifacts written to <dir>`). Add each emitted resource to `assertResources`; until you do, it is
-   untested even though the suite is green.
+   the run prints as `Test artifacts written to <dir>`). A run without the flag writes nothing,
+   and any existing directory is stale. Add each emitted resource to `assertResources`; until you
+   do, it is untested even though the suite is green.
 4. **The suite satisfies `control-plane-project-charter/references/charter/evidence.md`
    "Coverage"**: each input shape including a minimal XR, each observed-state branch, every
    `status` field on the composite.

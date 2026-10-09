@@ -77,8 +77,9 @@ observedResources=[{
 **Status on the composite.** In Python the write that loses fields is more than one
 `resource.update(rsp.desired.composite, {"status": …})` ([`patterns.md`](patterns.md)).
 
-**Absence through `resourceRefs`** on the composite. Copy the list out of `render.log`; it is
-matched exactly in length and order:
+**Absence through `resourceRefs`** on the composite. Copy the list out of `render.log` (written
+only by `--function-logs`: [`charter/evidence.md`](../../charter/evidence.md#reading-the-render));
+it is matched exactly in length and order:
 
 ```python
 "spec": {"crossplane": {"resourceRefs": [
