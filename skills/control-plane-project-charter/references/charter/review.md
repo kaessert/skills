@@ -53,8 +53,9 @@ printed; one already under `_output/composition_test/` is another run's
 
 Every resource the change produces is in the render and asserted. A resource in the render that
 no test names is untested, though the suite is green; only an exact
-`spec.crossplane.resourceRefs` assertion fails on a surplus one
-([`evidence.md`](evidence.md#reading-the-render)).
+`spec.crossplane.resourceRefs` assertion fails on a surplus one ([`evidence.md`](evidence.md),
+"How `assertResources` matches" and "Coverage": named annotations only, stray fields never
+flagged, what a mock needs).
 
 ## Function code
 
@@ -70,8 +71,8 @@ no test names is untested, though the suite is green; only an exact
 
 ## The v2 fields
 
-Run the two greps in [`v2-resources.md`](v2-resources.md#grep-your-own-function-before-you-report)
-and judge each hit; "no output" is not the pass condition.
+Run the two greps under "Grep your own function before you report" in
+[`v2-resources.md`](v2-resources.md) and judge each hit; "no output" is not the pass condition.
 
 - Flag `providerConfigRef`, `managementPolicies` or an MR's `metadata.namespace` as removable
   **unless the project's spec or API sets them**. Flag `deletionPolicy` on a namespaced MR: the
@@ -89,7 +90,8 @@ and judge each hit; "no output" is not the pass condition.
 ## Provider constraints and dependencies
 
 - The report says which Kinds were checked against the provider schema and the cloud API's own
-  rules, and what could not be confirmed. Silently skipping is a finding (§6).
+  rules, and what could not be confirmed. Silently skipping is a finding (§6; the CRD's
+  `x-kubernetes-validations`: [`provider-schema.md`](provider-schema.md)).
 - Flag an unbounded dependency: a `dependsOn` `version` with no cap on the major, such as the
   `'>=v0.0.0'` a bare `up dep add <ref>` or `up composition generate` writes
   (author-configuration-package).

@@ -5,6 +5,9 @@ why, is in [`charter/evidence.md`](../../charter/evidence.md#coverage-what-the-s
 this file is the Python syntax for it. Templates are in [`test-templates.md`](test-templates.md);
 the Python index is [`../python.md`](../python.md).
 
+Field names, import paths and class names come from `probe_project.py --fields <Kind>`
+([`../python.md`](../python.md)), not from `ls` or `grep` under `.up/python`.
+
 ## The coverage shapes in Python
 
 **A minimal XR, inline** (only the XRD-required fields):
