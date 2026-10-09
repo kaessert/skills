@@ -72,7 +72,8 @@ at the first failure:
 
    ```bash
    grep -rhoE 'UP_[A-Z0-9_]+' tests/e2etest-*/ | sort -u
-   # then, for each:
+   # then, for each - test presence with -n only, inside [ ]: an echo of $VAR, ${VAR:-x} or
+   # ${VAR:+set}${VAR:-unset} prints the value whenever it is set
    [ -n "${UP_AWS_CREDENTIALS:-}" ] || echo "MISSING: UP_AWS_CREDENTIALS"
    ```
 
