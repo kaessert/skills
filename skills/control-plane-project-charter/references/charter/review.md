@@ -58,7 +58,9 @@ no test names is untested, though the suite is green; only an exact
 
 ## Function code
 
-- The language's required bootstrap is present (the language file says which).
+- The language's required bootstrap is present where the language file names one (Python:
+  `python/patterns.md`, "Function bootstrap"; TypeScript: `src/main.ts`; go-templating: the
+  scaffold's `00-prelude.yaml.gotmpl`).
 - Imports resolve against the generated models, never a hand-derived path, and use the `.m.`
   groups in a v2 project. A v1 project stays v1 (§5).
 - Flexible maps (tags, labels) are converted to the language's plain map type.
