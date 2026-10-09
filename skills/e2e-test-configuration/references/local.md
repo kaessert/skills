@@ -98,9 +98,11 @@ If the run never got past the package install, check that before tracing any man
 `docker logs <cluster>-registry` (the umask precondition), then `kubectl get pkgrev -o wide` and `kubectl
 describe configuration`. Then use the brief in [troubleshooting.md](troubleshooting.md).
 
-**A status field or condition.** An `E2ETest` can't assert one (author-tests' `e2e.md` reference). To read one,
-take it inside the one run you need anyway, and **watch rather than poll**: the delete starts about a second
-after the assert sees `Ready` (observed with up v0.55.0), so a read every few seconds misses the one moment the
+### Reading a status during the run (an `E2ETest` can't assert one)
+
+An `E2ETest` can't assert a status field or condition (author-tests' `e2e.md` reference). To read one, take
+it inside the one run you need anyway, and **watch rather than poll**: the delete starts about a second after
+the assert sees `Ready` (observed with up v0.55.0), so a read every few seconds misses the one moment the
 status is complete. Wait, bounded, until the XR exists, then watch that one object (`get managed -w` fails:
 `managed` is a category), bounded too:
 
@@ -133,7 +135,9 @@ The resource tables the log prints during the assert are progress output, not a 
 with up v0.55.0, none showed the XR `Ready` although the assert passed. Quote the assert's `PASS` line, never a
 table as a resource's state.
 
-**A provider read** (the cloud's own API, by the resources' external ids) works from the moment those ids
+### A provider read
+
+A provider read (the cloud's own API, by the resources' external ids) works from the moment those ids
 appear, in the XR's status or on the managed resources, until the assert sees `Ready`: nothing deletes the
 resources before then. Take it as soon as the ids appear, not at `Ready`: a read taken at `Ready` raced the
 delete and got NotFound (observed once with up v0.55.0).

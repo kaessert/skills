@@ -209,11 +209,12 @@ Then:
   estimate: an unrelated file's timestamp once turned a 6-minute run into "~95 min".
 - **Readiness is what you read.** The assert step passing in the log is the evidence. A resource read must be
   taken while the control plane exists: both targets tear it down after every test. Quote a status value read
-  during the run as "read-back, not asserted" (how, on kind: [local.md](references/local.md)).
+  during the run as "read-back, not asserted" (how, on kind: [local.md](references/local.md), "Reading a
+  status during the run").
 - **A claim about the provider comes from the provider:** its own read (CLI or SDK, whichever is installed),
-  taken before teardown (when: [local.md](references/local.md#reaching-the-cluster-while-it-runs)), and
-  quoted. Reading back the XR or your manifest proves only that your input round-tripped. Without that
-  read, say "not verified at the provider".
+  taken before teardown (when: [local.md](references/local.md), "A provider read"), and quoted. Reading
+  back the XR or your manifest proves only that your input round-tripped. Without that read, say "not
+  verified at the provider".
 - **Cleanup:** the target's reference says what proves it.
 - **Re-read your evidence before the verdict.** Grep what you are about to paste for `False`, `Creating`,
   `Failed`, `FAIL`. If any appears, explain it or correct the verdict.

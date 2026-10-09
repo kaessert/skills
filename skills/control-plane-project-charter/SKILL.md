@@ -44,10 +44,10 @@ names:
 
 | Work | Load | And read |
 |---|---|---|
-| reviewing | no task skill | open [`references/charter/review.md`](references/charter/review.md) now: the review checks are there, not in this file. Then the language file's failure modes for what changed |
+| reviewing | no task skill | open [`references/charter/review.md`](references/charter/review.md) now: the review checks are there, not in this file. Then the language file's failure modes for what changed (Python: `references/languages/python/pitfalls.md`; go-templating: `references/languages/go-templating.md`, "Failure modes") |
 | XRD, `upbound.yaml`, dependencies, examples, ProviderConfig, MRAP | author-configuration-package | `author-configuration-package/references/mrap.md` for an MRAP |
 | function code | author-composition | the language file (§10), e.g. `references/languages/go.md` (models, imports) and `references/languages/go/functions.md` |
-| anything under `tests/` | author-tests | the test language's file, e.g. `references/languages/go/tests.md`; an `E2ETest`: `author-tests/references/e2e.md` |
+| anything under `tests/` | author-tests | the test language's file, e.g. `references/languages/go/tests.md`, and its index beside it (`go.md`, `python.md`); an `E2ETest`: `author-tests/references/e2e.md` |
 | running E2E tests, re-runs included | e2e-test-configuration | `e2e-test-configuration/references/local.md` or `space.md` beside it |
 
 A path starting `references/` is in this skill's directory; one starting with a skill's name is
@@ -113,9 +113,9 @@ detail.
 
 **Test-first is for behaviour:** the function, the composition, how status is derived.
 Scaffolding, `upbound.yaml` metadata, dependencies, the XRD, an MRAP and the examples are
-declarative: `up project build`, author-configuration-package's `check_xrd_schema.py` and the
-composition tests that use them check those. Write no test program for them, and don't copy a
-skill's script into the project.
+declarative: `up project build`, `author-configuration-package/scripts/check_xrd_schema.py` (in
+that skill's directory, not a project path) and the composition tests that use them check
+those. Write no test program for them, and don't copy a skill's script into the project.
 
 **Why:** watching a test fail first makes a coverage claim checkable.
 
