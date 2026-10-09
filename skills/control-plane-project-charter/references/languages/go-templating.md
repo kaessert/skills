@@ -75,6 +75,9 @@ Verified against `up` v0.55.0:
 - **There is no input**: `.` is nil. The function-side helpers (`getCompositeResource` and friends) do not exist
   here, and neither do Helm's (`required`, `toYaml`, `include`): calling one fails with `function "…" not
   defined`. Sprig's `fail`, `hasKey`, `dict`, `list`, `toJson` are what you have.
+- **No file access** either (no `readFile`): an `E2ETest`'s `manifests` can't read `examples/`, so inline the
+  example XR. A `CompositionTest` doesn't need it: `xrPath` is a field of the emitted object, and `up` resolves
+  it from the project root after the template has rendered (up v0.55.0 source), as for every test language.
 - The output must be `items:` with a list of `CompositionTest` objects — the same object model as YAML tests
   ([`yaml.md`](yaml.md)).
 

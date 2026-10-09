@@ -20,7 +20,7 @@ gone by the next.
 | Set up the venv, first | `python3 <author-composition>/scripts/setup_venv.py --project <root>`, right after the first `up project build` ([below](#set-up-the-venv-first)) |
 | Probe the project | `python3 <author-composition>/scripts/probe_project.py --project <root> [<Kind>…]`: layout, import prefix, import lines, class names. Standard library only |
 | A Kind's fields | `python3 <author-composition>/scripts/probe_project.py --project <root> --fields <Kind>`: every `forProvider` field, list fields with misleadingly singular Upjet names (`attribute`, `globalSecondaryIndex`) flagged, and the cross-resource `*Ref`/`*Selector` fields. Its first line reports the project's generation |
-| Fast inner loop | `python3 <author-composition>/scripts/run_function.py --project <root> --minimal examples/<kind>/<xr-name>.yaml`: needs the venv |
+| Fast inner loop | `python3 <author-composition>/scripts/run_function.py --project <root> --minimal examples/<kind>/<xr-name>.yaml`: needs the venv. XRD defaults are not applied (unlike `up test run` with `xrdPath`), so give every required field, defaulted ones included |
 | Function unit tests | `.venv/bin/python -m unittest discover -s functions/<n>/tests -t functions/<n>`; layout and template in [`python/tests.md`](python/tests.md#function-unit-tests) |
 
 ## Where everything is

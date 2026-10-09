@@ -15,8 +15,15 @@ the workflow; how to reach the control plane while it exists is in [local.md](lo
 4. **Validation-rejection wording is terminal**, whatever status code it arrived in; providers wrap
    request-validation errors in 500s.
 
-Known transient: `failed to get restmapping: no matches for kind` early in a run (provider CRDs not installed
-yet). Target-specific ones are in the target's reference.
+Known transient:
+
+- `failed to get restmapping: no matches for kind` early in a run (provider CRDs not installed yet).
+- `unexpected status code 429` (or 502/503) from `xpkg.upbound.io` at `Checking dependencies` or during
+  control-plane creation: a registry rate limit. Retry with backoff rather than diagnosing it; a failure
+  during control-plane creation can leave the control plane behind, so check for leftovers before the retry
+  (the target's reference).
+
+Target-specific ones are in the target's reference.
 
 ## Resources under test
 
