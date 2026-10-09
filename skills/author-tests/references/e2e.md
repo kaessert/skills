@@ -242,11 +242,10 @@ full control-plane run to every gate. To check a status field or condition, use:
    which proves status derivation;
 2. a function unit test;
 3. a read-back during the run, if you took one, quoted as "read-back, not asserted" (e2e-test-configuration's
-   `local.md` reference).
+   `local.md`, "Reading a status during the run").
 
 **A read-back is report evidence, not an assertion:** no `E2ETest` field can gate on it, and re-running a green
-e2e only to read it costs a full control-plane run. When a provider read works: `local.md`, "A status field or
-condition".
+e2e only to read it costs a full control-plane run. When a provider read works: `local.md`, "A provider read".
 
 uptest's `uptest.upbound.io/pre-assert-hook` and `post-assert-hook` annotations exist in the uptest `up` bundles,
 but they are not a supported way to assert status (upbound/up#1720): `up` writes each manifest to a temporary

@@ -191,7 +191,8 @@ CEL budget, or that redefining `READY` prints the column twice. XRD versions mus
 all of that is permanent from the first version that ships.
 `control-plane-project-charter/references/charter/xrd-design.md` has the rules. Run the
 mechanical ones before the first build with the script in this skill's directory
-(`<author-configuration-package>`, the directory containing this SKILL.md). Invoke it by its
+(`<author-configuration-package>` below is a placeholder for the absolute path of the directory
+containing this SKILL.md; it is not a project path). Invoke it by its
 path in the skill directory, with the project root as the working directory: don't copy it into
 the project, and don't write a test for the XRD (charter §3).
 
@@ -312,7 +313,9 @@ directory containing that skill's SKILL.md, beside this skill's directory (why i
 config (charter §5). Without it, every managed resource sits unauthenticated while the build
 and the tests pass. Read [providerconfig.md](references/providerconfig.md) before you write
 it: the manifest, its family-group apiVersion, and the credential secret the README must
-list.
+list. A README that documents the tests carries the command pair in
+`control-plane-project-charter/references/charter/container.md` (the README note), and claims
+for the e2e test only what author-tests' `e2e.md` says an `E2ETest` asserts.
 
 ## Phase 9: Final build, and report
 
