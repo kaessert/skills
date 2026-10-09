@@ -31,10 +31,12 @@ not land in your output.
 # KCL (tests/<n>/*.k)
 kcl tests/<n>/ | yq -o json '.items[].spec.manifests'
 
-# Python (tests/<n>/test/__main__.py): generated in a container, so no local command renders it. A previous
-# run leaves tests/<n>/test.yaml behind; if it is absent or stale, read kinds and names from the source.
-yq -o json '.items[].spec.manifests' tests/<n>/test.yaml 2>/dev/null \
-  || grep -nE 'kind=|name=' tests/<n>/test/__main__.py
+# Python SDK layout (tests/<n>/test/__main__.py): up runs it in a container (hatch run test), but it also
+# runs on the host once setup_venv.py has installed the test directory; there it sees your full environment
+(cd tests/<n> && UP_AWS_CREDENTIALS=x ../../.venv/bin/python -m test) | yq -o json '.items[].spec.manifests'
+
+# go-templating (tests/<n>/*.gotmpl): rendered in-process by up; `up test run --help` (v0.55.0) offers no
+# flag that prints the generated test. Read kinds and names from the template.
 
 # YAML (tests/<n>/*.yaml)
 yq -o json '.items[].spec.manifests' tests/<n>/*.yaml
