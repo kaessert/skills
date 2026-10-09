@@ -82,9 +82,10 @@ renaming a composition resource orphans resources on a live platform (author-com
 
 A failure to match reads as `no actual resource found: <group>/<version>/<Kind>/<name>`; a
 trailing slash means the expectation named no name. Observed with up v0.55.0, an expectation
-whose name matches but whose annotations differ (one missing, or another value) fails the same
-way, with no field diff: the annotations take part in the match. Labels and every other field are
-compared only after the match, and a mismatch there prints `* <path>: Invalid value`.
+that names an annotation the resource lacks, or gives it another value, fails the same way, with
+no field diff. Annotations the expectation doesn't name are ignored: an extra annotation never
+breaks a match (Out of scope, below). Labels and every other field are compared only after the
+match, and a mismatch there prints `* <path>: Invalid value`.
 
 `assertResources` ignores what it does not list, so a *surplus* resource is invisible: a
 function that composes a resource it should have skipped leaves the suite green. To close that,
