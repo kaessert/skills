@@ -78,7 +78,9 @@ every run).
 
 Renaming the XR or a composition resource changes every generated name. That is correct:
 renaming a composition resource orphans resources on a live platform (§5), and you want a test
-that says so.
+that says so. The converse holds too: the same XR (apiVersion, kind, namespace, name) and
+composition resource name render the same generated name in every suite, since the name is
+derived from nothing else (Crossplane v2.3.1 source).
 
 A failure to match reads as `no actual resource found: <group>/<version>/<Kind>/<name>`; a
 trailing slash means the expectation named no name. Observed with up v0.55.0, an expectation

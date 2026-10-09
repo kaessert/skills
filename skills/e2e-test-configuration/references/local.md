@@ -121,12 +121,13 @@ ends after that many seconds. Give every other `kubectl` call one: one without i
 cluster was gone. A composed resource is read the same way, one watch per object.
 
 Quote it as **"read-back, not asserted"**, with its `Ready` condition: a read while `Ready` is `False` can be
-partial. It is not a provider read. Never re-run a green e2e only to read status: if the window was missed,
-report "not read back". It is report evidence, never a pass condition (author-tests' `e2e.md` reference).
+partial. It is not a provider read. If the window was missed, report "not read back" rather than re-running a
+green e2e just for the read ([SKILL.md](../SKILL.md), Never). It is report evidence, never a pass condition
+(author-tests' `e2e.md` reference).
 
-The resource tables the log prints during the assert are progress output, not a read-back: in the runs
-observed with up v0.55.0, none showed the XR `Ready` although the assert passed. Quote the assert's `PASS` line, never a table
-as a resource's state.
+The resource tables the log prints during the assert are progress output, not a read-back: in the runs observed
+with up v0.55.0, none showed the XR `Ready` although the assert passed. Quote the assert's `PASS` line, never a
+table as a resource's state.
 
 **A provider read** (the cloud's own API, by the resources' external ids) works from the moment those ids
 appear, in the XR's status or on the managed resources, until the assert sees `Ready`: nothing deletes the

@@ -318,9 +318,10 @@ list.
 
 `up project build` again; it produces the package under `_output/` (`.uppkg`).
 
-A `.uppkg` is a tar of gzipped layers (`manifest.json` lists them). The configuration's
-`package.yaml` (meta, XRDs, compositions, an MRAP) is in one layer, and the examples are in
-another as `.up/examples.yaml` (up v0.55.0). To check that a file ships:
+A `.uppkg` is a tar of gzipped layers, `<sha256>.tar.gz` files that `manifest.json` lists. The
+configuration's `package.yaml` (meta, XRDs, compositions, an MRAP) is in one layer, and the
+examples are in another as one multi-document `.up/examples.yaml`; an empty twin of that file in
+another layer is normal (up v0.55.0). To check that a file ships:
 `mkdir -p /tmp/pkg && tar -xf _output/<name>.uppkg -C /tmp/pkg`, then `tar -xzOf` each layer and
 grep. That proves it ships, not that a control plane accepts it.
 
