@@ -110,9 +110,10 @@ grep -rniE 'timeoutseconds|skipdelete' tests/e2etest-<n>/
   (default 600). Scaffolds write `timeoutSeconds` 300 (Go) or 4500 (YAML, KCL, Python, go-templating).
   Typical durations differ by target: see its reference.
 - **`skipDelete: true`** leaves the control plane and the cloud resources running. Say so before you run.
-- **Stuck threshold: `min(15 min, timeoutSeconds / 3)` with no new log output.** A fixed 15 minutes never
-  fires on a 300 s test, which fails at 5 minutes. Crossing it starts an investigation (Phase 5); it is not a
-  verdict.
+- **Stuck threshold: `min(15 min, timeoutSeconds / 3)` with no new log output, counted from the line that
+  ends control-plane creation** (on kind, `✓ Creating local development control plane`). Before it, setup is
+  bounded by `setupTimeoutSeconds` and prints nothing. A fixed 15 minutes never fires on a 300 s test, which
+  fails at 5 minutes. Crossing it starts an investigation (Phase 5); it is not a verdict.
 
 ## Phase 4: Run it
 
@@ -231,7 +232,9 @@ Shape (templates in [report-templates.md](references/report-templates.md)):
 - Write a verdict from a poll, or report an outcome for a run that was terminated or cut off.
 - Derive a duration from file timestamps, or estimate one.
 - Report readiness or provider state you did not read.
-- Re-run a green e2e only to read a status value: read it during the run, or report "not read back".
+- Re-run a green e2e for the sole purpose of reading a status value: read it during the run, or report
+  "not read back". Re-running one for any other reason, to reproduce or verify it, is fine: each run gets
+  a fresh control plane.
 - Run an e2e test program by hand with real credentials, or print or save its output: it carries the
   credential Secret. Check or diff it with a dummy `UP_*` value (author-tests' `e2e.md` reference).
 - Local: connect to, apply to or delete a kind cluster or container this run did not create. Names
