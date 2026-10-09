@@ -135,16 +135,20 @@ instead of `*Path`), `extraResources`, `context`, and `functionCredentialsPath`.
 **never executes** when `observedResources` is empty — it is unexercised, not merely
 unasserted. Supply the observed state explicitly:
 
-- Every observed resource needs the `crossplane.io/composition-resource-name` annotation: the
-  renderer rejects the whole test without it (`encountered composed resource without required
-  "crossplane.io/composition-resource-name" annotation`). Required, but **not** what matches a
-  mock to the XR's composed resource.
-- **For a namespaced XR, every `observedResources` entry also needs `metadata.namespace` set to
-  the XR's namespace, and `metadata.name` set to the name the render gave that resource.** Copy
-  the names from `render.log` (run with `--function-logs`, above); they are stable in a render.
-  A mock without the XR's namespace is silently not observed: no error, the function sees no
-  observed resources, and the test fails only on its own assertions, as if the function were
-  wrong (observed with up v0.55.0).
+- **Every observed resource needs the `crossplane.io/composition-resource-name` annotation.** It
+  is the key that matches a mock to the composed resource the function stores under that name;
+  without it the renderer rejects the whole test (`encountered composed resource without required
+  "crossplane.io/composition-resource-name" annotation`).
+- **For a namespaced XR, every mock also needs `metadata.namespace` set to the XR's namespace.**
+  The renderer looks mocks up in the XR's namespace, so one without it is silently not observed:
+  no error, the function sees no observed resources, and the test fails only on its own
+  assertions, as if the function were wrong (observed with up v0.55.0).
+- **The mock's `metadata.name` becomes the composed resource's name.** Any valid name is
+  observed, and the render keeps it instead of generating one, in the resource and in the
+  composite's `resourceRefs`; an invalid name fails the render. So in a mocked case, assert the
+  mock's names. To keep them equal to an unmocked case's generated names, copy those from that
+  case's `render.log` (above). Checking that the mock names appear in the render proves nothing:
+  they always do (Crossplane v2.3.1 source, the renderer up v0.55.0 runs; observed).
 - **Prove the mocks are used** with a case that fails when they are ignored: assert a value only
   an observed resource can supply, such as a status field copied from a mock. A case that
   expects empty or default status passes whether the mocks are observed or not.

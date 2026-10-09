@@ -324,8 +324,9 @@ fields.
 **Observed-state branches are reachable, and you are expected to reach them.** A render starts
 with no observed resources *unless the test supplies `spec.observedResources`*. So code gated
 on observed-and-ready is dead in a test that omits that field and live in one that sets it —
-write the second test rather than declaring the branch untestable. For a namespaced XR, give
-each mock the XR's namespace and the render's name: without the namespace it is silently ignored
+write the second test rather than declaring the branch untestable. A mock is matched by its
+composition-resource-name annotation, and for a namespaced XR needs the XR's namespace: without
+it the mock is silently ignored. Its own name replaces the generated one
 ([`charter/evidence.md`](references/charter/evidence.md), Coverage). Such a test proves your
 branch logic given the status you wrote, not that a provider ever reports that status. For
 that, `--e2e` or a live apply — or say it is unverified.
