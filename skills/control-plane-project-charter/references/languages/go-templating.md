@@ -120,7 +120,7 @@ items:
         versioning: {{ $case.versioning }}
     assertResources:
     # The composite's resourceRefs is a list, and lists match exactly: a surplus composed resource fails here.
-    # Names copied from render.log (renders are deterministic).
+    # Names copied from render.log (up test run … --function-logs; renders are deterministic).
     - apiVersion: demo.example.org/v1alpha1
       kind: Bucket
       metadata:
