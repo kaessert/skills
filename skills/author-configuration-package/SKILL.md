@@ -282,7 +282,8 @@ package name.
 
 Writing a ManagedResourceActivationPolicy, or running `up dep add --api crossplane:<tag>`:
 read [mrap.md](references/mrap.md) first. The manifest must sit under `apis/` or it is
-silently left out of the package, and `up project build` barely validates it.
+silently left out of the package, `up project build` barely validates it, and `--api` writes
+`spec.apiDependencies`: a `dependsOn` entry for the Crossplane API fails the build.
 
 ## Phase 5: Generate the composition
 
