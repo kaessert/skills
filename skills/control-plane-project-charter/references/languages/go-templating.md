@@ -45,7 +45,8 @@ something is observed, `.observed.resources` is nil.
 `getCompositeResource`, `getComposedResource`, `getResourceCondition "Ready" (index .observed.resources
 "<name>")` (the entry, not the manifest), `setResourceNameAnnotation`, `toYaml`, `fromYaml`,
 `include`, `randomChoice`. No `required`. `getExtraResources` (v0.11.0) and
-`getComposedConnectionDetails` (v0.13.0) are newer than the base.
+`getComposedConnectionDetails` (v0.13.0) are newer than the base. Sprig's `replace "old" "new" $s`
+replaces every occurrence; there is no `replaceAll` (`function "replaceAll" not defined`).
 
 **Go template traps:** `range $k := $map` binds the values; keys need `range $k, $v := $map`. A map
 ranges in sorted key order, so iterate the XR's own list when its order matters.
