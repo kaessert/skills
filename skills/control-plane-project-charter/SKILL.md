@@ -357,7 +357,9 @@ to make it work is.
 - **Never pass a `--kubeconfig` you did not write and check in this run.**
 - **Delete what this run created, and nothing else.** Your own leftovers — a control plane, a
   kind cluster and its registry container, a scratch directory — must be removed before
-  you report; for anything else, report what you would delete and let the user choose.
+  you report; for anything else, report what you would delete and let the user choose. A cloud
+  resource Crossplane no longer manages is "anything else", even one your own test orphaned
+  ([`charter/targets.md`](references/charter/targets.md), Teardown and leftovers).
 - **Delete a control plane only once no managed resource is left on it.** Deleting it first
   leaves their cloud resources running, tracked by nothing: delete the XRs, wait until
   `kubectl get managed -A` is empty, and if that hangs, keep the control plane and report what

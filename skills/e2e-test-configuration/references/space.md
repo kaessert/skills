@@ -104,4 +104,5 @@ echo "kubeconfig: $CPCFG"   # reuse the path as a value: the variable is gone by
   control plane is deleted afterwards.
 - **No test control plane left behind:** `up controlplane list` shows no `<project>-uptest-<test>` once the run
   has exited, unless the test skips deletion.
-- **Leftovers in the cloud**, checked in the provider's API by the names or tags the test used.
+- **Leftovers in the cloud**, checked in the provider's API by the names or tags the test used. A match is a
+  candidate, not proof it is this run's (`control-plane-project-charter/references/charter/targets.md`).

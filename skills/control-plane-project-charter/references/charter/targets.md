@@ -232,7 +232,15 @@ with the control plane, and every managed resource among them left its cloud res
 the `Resource cleanup details` table after it gives each one's `NAME` and `EXTERNAL-NAME`. Report
 them as leftovers to remove in the cloud. `N` counts only what was left when `up`'s cleanup
 started, after the test's own delete step (source), so `0 remaining` doesn't show that every
-cloud resource is gone: only a check in the provider's API does.
+cloud resource is gone: only a check in the provider's API does. A test whose managed resources'
+`managementPolicies` lack `Delete` (set through the XR, say) orphans by design: it passes with
+`0 deleted, 0 remaining` and every cloud resource stays (observed with up v0.55.0), on every run.
+Test that policy's pass-through in a composition test rather than an E2ETest.
+
+**Names and tags don't identify a run.** They come from the XR, so every run of the same test,
+and every user of the same example, carries the same ones. Use them to find candidates; call a
+leftover this run's only by an external id the run printed (`Resource cleanup details`, a
+provider read during the run), and report it rather than select deletes by a name or tag.
 
 To stop an E2E run early and still get that teardown, send `up` one interrupt
 (`kill -INT <pid>`) and wait for it to exit: it prints `Interrupted. Cleaning up; interrupt again

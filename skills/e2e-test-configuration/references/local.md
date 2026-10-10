@@ -150,7 +150,8 @@ After the run the cluster is gone, so `kubectl get managed` no longer works. The
   provider".
 - **Leftovers, checked in the provider's API** by the names or tags the test used, not in Kubernetes. Don't
   assume a provider CLI exists: `command -v <cli>` first, then use whatever is installed (observed: no `aws`
-  CLI, but an SDK such as boto3). If neither is available, say the leftovers were not checked.
+  CLI, but an SDK such as boto3). If neither is available, say the leftovers were not checked. A name or tag
+  match is a candidate, not proof it is this run's (`control-plane-project-charter/references/charter/targets.md`).
 - **`kind get clusters`** lists no `<project>-uptest-*` cluster beyond those in your list from before the run.
 
 ## Leaks
