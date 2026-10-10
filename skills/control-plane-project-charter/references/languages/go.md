@@ -60,6 +60,10 @@ field is a pointer with `omitempty`. Read field names from the file; don't guess
 grep -n 'type BucketSpecForProvider struct' -A 60 .up/go/models/io/upbound/m/aws/s3/v1beta1/bucket.go
 ```
 
+A multi-word Kind's file is its lower-cased name (`routetableassociation.go`). Go field names upper-case
+initialisms (`MapPublicIPOnLaunch` for `mapPublicIpOnLaunch`, `EnableDNSHostnames`), so search by the JSON
+tag, not a guessed field name: `grep -n 'json:"mapPublicIpOnLaunch' <file>`.
+
 The `apiVersion` and `kind` constants are generated, and their spelling varies **per kind within one tree**:
 v0.55.0 writes `VPCApiVersionec2AwsMUpboundIoV1Beta1` next to `InternetGatewayAPIVersionec2AwsMUpboundIoV1Beta1`.
 Copy each from the `const (` block at the top of its own file; a grep for one spelling misses the other. They
