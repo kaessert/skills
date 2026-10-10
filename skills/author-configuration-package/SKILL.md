@@ -187,8 +187,9 @@ the required fields only, and a complete one
 
 **A field list is not the schema.** It cannot tell you that a field is `vpcId` while the Kind is
 `VPC`, that a repeated group prefix may or may not be stutter, that an unbounded array leaves no
-CEL budget, or that redefining `READY` prints the column twice. XRD versions must round-trip, so
-all of that is permanent from the first version that ships.
+CEL budget, or that redefining `READY` prints the column twice. XRD versions must round-trip
+(even a rename needs a conversion webhook), so all of that is permanent from the first version
+that ships.
 `control-plane-project-charter/references/charter/xrd-design.md` has the rules. Run the
 mechanical ones before the first build with the script in this skill's directory
 (`<author-configuration-package>`, the directory containing this SKILL.md). Invoke it by its
