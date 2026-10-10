@@ -17,7 +17,7 @@ are a different language: [`go-templating.md`](go-templating.md).
 | Models | `.up/go/models`, written by `up project build`. `.up/` is gitignored, so on a fresh clone run `up project build` |
 | Fast tier | `go test ./...` in `functions/<n>/` — calls `RunFunction` directly, about a second, no project build |
 | Run a test | `up test run tests/test-<n>` runs `go run .` with the test dir as CWD; the program must print `items: [<CompositionTest>…]`. `items: []` is zero tests, and a run with zero tests prints `No test files found` and exits 0 — nothing ran |
-| Compile | `go vet ./...` or `go build -o /dev/null ./...` — plain `go build ./...` in a single-package module (every generated function) writes the executable into the function directory, and it ends up committed |
+| Compile | `go vet ./...` or `go build -o /dev/null ./...` — plain `go build ./...` in a single-package module (every generated function and test) writes the executable into that directory (`tests/<t>/<t>` too), and it ends up committed |
 | Before committing | `gofmt -l .` (prints nothing), `go vet ./...`, `go mod tidy` in every function and test module |
 
 ## Where everything is
