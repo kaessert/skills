@@ -57,7 +57,8 @@ The function the [`tests.md`](tests.md) template tests: a Bucket, a BucketVersio
 is true, and `status.bucketArn` from the observed bucket. Keep the shape; replace the resources.
 
 Leave `DesiredComposed.Ready` unset unless the project says otherwise; a function-auto-ready step later in the
-pipeline marks readiness.
+pipeline marks readiness. Where you set it, it takes `resource.ReadyTrue` (type `resource.Ready`);
+`fnv1.Ready_READY_TRUE` is the response's proto value, which a unit test reads back, and does not compile there.
 
 ```go
 package main
