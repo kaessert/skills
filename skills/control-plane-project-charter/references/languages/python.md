@@ -17,7 +17,7 @@ gone by the next.
 |---|---|
 | Scaffold a function | `up function generate <n> [<composition-path>] --language python` |
 | Scaffold a test | `up test generate <n> --language python`: writes `tests/test-<n>/` (with `--e2e`: `tests/e2etest-<n>/`); the CLI prepends the prefix itself, so do not pass it |
-| Set up the venv, first | `python3 <author-composition>/scripts/setup_venv.py --project <root>`, right after the first `up project build` ([below](#set-up-the-venv-first)) |
+| Set up the venv, first | `python3 <author-composition>/scripts/setup_venv.py --project <root>`, right after `up function generate` ([below](#set-up-the-venv-first)) |
 | Probe the project | `python3 <author-composition>/scripts/probe_project.py --project <root> [<Kind>…]`: layout, import prefix, import lines, class names. Standard library only |
 | A Kind's fields | `python3 <author-composition>/scripts/probe_project.py --project <root> --fields <Kind>`: every `forProvider` field, list fields with misleadingly singular Upjet names (`attribute`, `globalSecondaryIndex`) flagged, and the cross-resource `*Ref`/`*Selector` fields. Its first line reports the project's generation |
 | Fast inner loop | `python3 <author-composition>/scripts/run_function.py --project <root> --minimal examples/<kind>/<xr-name>.yaml`: needs the venv. XRD defaults are not applied (unlike `up test run` with `xrdPath`), so give every required field, defaulted ones included |
@@ -37,8 +37,10 @@ gone by the next.
 
 ## Set up the venv first
 
-Run `setup_venv.py` once, before you write any function or test code, right after the first
-`up project build` (which generates the models it installs). It takes about 11 s. Re-run it when
+Run `setup_venv.py` once, before you write any function or test code, right after
+`up function generate` (the first `up project build`, before it, generates the models it
+installs). Run before any function exists, it installs no SDK and exits 1: "`models` or
+`crossplane.function` still does not import". It takes about 11 s. Re-run it when
 you add a function or test directory; not after `up project build` (see "Models last" below).
 
 **Why, when the function never runs on your host:** the fast tier needs it, and without it an
