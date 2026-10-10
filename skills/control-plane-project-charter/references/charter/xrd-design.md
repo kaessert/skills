@@ -67,7 +67,7 @@ Comparing names case-insensitively catches `projectID` beside `ProjectId`, but n
 
 ## Constrain every string, and say what it is
 
-A field with only `type: string` and no `description` accepts anything and documents nothing (§5). Descriptions are what `kubectl explain` and the console render; without them, consuming the schema means reading the composition.
+A field with only `type: string` and no `description` accepts anything and documents nothing. Descriptions are what `kubectl explain` and the console render; without them, consuming the schema means reading the composition.
 
 | Add | When |
 |---|---|
