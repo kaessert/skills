@@ -57,7 +57,9 @@ typed `BucketVersioning` model the list does not compile.
 Three tests for the function template in [`functions.md`](functions.md): one per input branch (with an
 absence guard on the composite) and one observed-state test that drives a status field. Adapt the helpers; keep
 the shape. The status test asserts the bucket too: a test that asserts only the composite stays green if that
-branch stops composing anything.
+branch stops composing anything. The shipped-example test (charter `evidence.md`, Coverage) sets
+`spec.XrPath = ptr.To("examples/<…>.yaml")` and leaves `Xr` nil: with both set, `up` silently renders the
+inline `Xr`. The path resolves from the project root, like `compositionPath`.
 
 ```go
 // Package main generates the composition tests for Bucket.
