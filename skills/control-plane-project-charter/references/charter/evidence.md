@@ -64,11 +64,14 @@ annotation the expectation names** (up v0.55.0 source). For the name:
   function stores the resource under, so that expectation can be written before the first render.
 
 **A generated name can't be written before its resource renders.** The renderer's uid is
-internal, so don't derive the hash, and don't predict the `resourceRefs` order either: observed
-with up v0.55.0, it is sorted by `apiVersion`+`kind`+`name`, not by composition order. For a new
-resource, RED is an expectation without `metadata.name` (`no actual resource found: …/<Kind>/`),
-or a `resourceRefs` list one entry short. After GREEN, copy any names you assert, and the whole
-`resourceRefs` list in its rendered order, from `render.log`.
+internal, so don't derive the hash, and don't predict the `resourceRefs` order either: it is
+sorted by the joined string `apiVersion`+`kind`+`name` (Crossplane v2.3.1 `UpdateResourceRefs`),
+not by composition order, so `RouteTableAssociation` and `RouteTable` come before `Route`, and
+two resources of one kind follow their generated names, which change with the XR's name but not
+between runs of one test. For a new resource, RED is an expectation without `metadata.name`
+(`no actual resource found: …/<Kind>/`), or a `resourceRefs` list one entry short. After GREEN,
+copy any names you assert, and the whole `resourceRefs` list in its rendered order, from
+`render.log`.
 
 **A generated name copied from a render is stable in a render.** §5's warning that generated
 names change across re-creations is about a live control plane, where the XR's uid is real. A
