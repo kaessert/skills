@@ -324,9 +324,20 @@ for the e2e test only what author-tests' `e2e.md` says an `E2ETest` asserts.
 A `.uppkg` is a tar of gzipped layers, `<sha256>.tar.gz` files that `manifest.json` lists. The
 configuration's `package.yaml` (meta, XRDs, compositions, an MRAP) is in one layer, and the
 examples are in another as one multi-document `.up/examples.yaml`; an empty twin of that file in
-another layer is normal (up v0.55.0). To check that a file ships:
-`mkdir -p /tmp/pkg && tar -xf _output/<name>.uppkg -C /tmp/pkg`, then `tar -xzOf` each layer and
-grep. That proves it ships, not that a control plane accepts it.
+another layer is normal (up v0.55.0). Each embedded function adds layers of its own: a second,
+small `package.yaml` (`kind: Function`) and its image files. A Python function's `site-packages`
+hold model files for its dependencies' Kinds, so a whole-layer grep matches Kinds the
+configuration does not ship (an MRAP model there is not a shipped MRAP). To check that an XRD,
+composition or MRAP ships, read only the configuration's `package.yaml`:
+
+```bash
+mkdir -p /tmp/pkg && tar -xf _output/<name>.uppkg -C /tmp/pkg
+for l in /tmp/pkg/*.tar.gz; do
+  if tar -xzOf "$l" package.yaml 2>/dev/null | grep -qx 'kind: Configuration'; then tar -xzOf "$l" package.yaml; fi
+done > /tmp/pkg/configuration.yaml   # then grep this file
+```
+
+That proves it ships, not that a control plane accepts it.
 
 Then report what ran and what it printed, not a checklist (`control-plane-project-charter` §4):
 the commands and exit codes, the layer reached (package build), and what you assumed. Template:

@@ -98,6 +98,9 @@ Run the two greps under "Grep your own function before you report" in
 - An external pipeline function missing from `dependsOn` fails every render with
   `unknown function`; so does an embedded function's `functionRef.name` that departs from
   [`generators.md`](generators.md)'s formula.
+- To check what the package ships, read the configuration's `package.yaml` out of the `.uppkg`
+  as author-configuration-package's Phase 9 shows: each embedded function adds a second
+  `package.yaml` and layers that a whole-layer grep matches.
 
 ## What the report claims
 
