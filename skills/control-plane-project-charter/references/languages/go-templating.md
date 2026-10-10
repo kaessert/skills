@@ -11,7 +11,7 @@ The language-agnostic rules are in [`control-plane-project-charter`](../../SKILL
 | Scaffold a function | `up function generate <n> --language go-templating` → `functions/<n>/00-prelude.yaml.gotmpl`, `01-compose.yaml.gotmpl` |
 | Scaffold a test | `up test generate <n> --language go-templating` → `tests/test-<n>/test.yaml.gotmpl` (with `--e2e`: `tests/e2etest-<n>/`) |
 | Run tests | `up test run tests/test-<n>` |
-| Provider fields | `.up/json/models/<reversed-group>-<version>-<Kind>.schema.json`, e.g. `io-upbound-m-aws-ec2-v1beta1-VPC.schema.json` (also `.up/go/models/io/upbound/m/aws/ec2/v1beta1/vpc.go`); CRD rules: [`../charter/provider-schema.md`](../charter/provider-schema.md) |
+| Provider fields | `.up/json/models/<reversed-group>-<version>-<Kind>.schema.json`, e.g. `io-upbound-m-aws-ec2-v1beta1-VPC.schema.json` (also `.up/go/models/io/upbound/m/aws/ec2/v1beta1/vpc.go`). Each Kind's cluster-scoped twin `io-upbound-aws-…` sits beside it: read the `-m-` file. Each file is a JSON Schema of the object, not a CRD: fields under `properties.spec.properties.forProvider.properties`. CRD rules: [`../charter/provider-schema.md`](../charter/provider-schema.md) |
 
 ## Functions
 
