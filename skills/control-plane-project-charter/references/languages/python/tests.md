@@ -207,3 +207,10 @@ which this request does not have. Numbers come back from a `Struct` as floats (`
 `assertEqual` treats as equal to `5432`. Checked: with the Fatal branch disabled,
 `test_missing_region_is_fatal` fails. `self.log` lines (`[info] Running function`) in the output are
 the scaffold's logger, not failures.
+
+Keep the template's two checks when you adapt it: the whole-`forProvider` `assertEqual` and
+`ready == fnv1.READY_UNSPECIFIED`. A composition test cannot see a surplus key
+([`evidence.md`](../../charter/evidence.md#how-assertresources-matches-and-how-to-make-a-suite-exhaustive)),
+so compare whole maps (`forProvider`, `tags`, `labels`) once per variant the function
+distinguishes; a key-by-key `assertEqual` or `assertNotIn` lets one through. Readiness is each
+desired resource's `ready` field, not a condition in its body.
