@@ -116,10 +116,12 @@ the function's own language, or confirm it once in `render.log` and report it as
 
 ## Coverage: what the suite must contain
 
-The scaffold generates **one** test, against **one** example XR, asserting **only** composed
-resources. That suite is green over a function that crashes on a minimal XR, silently drops
-status fields, and never runs its readiness branch. "The tests pass" is not a verification
-claim until the suite covers these three shapes. Each language file shows them in its own
+The usual first suite is **one** test against the shipped example XR (`xrPath` plus `xrdPath`),
+asserting **only** composed resources. Write that test yourself: `up test generate`'s stub leaves
+`xrPath` empty ([`generators.md`](generators.md)), and the inline-`xr` tests below add to it,
+they don't replace it. Alone, that suite is green over a function that crashes on a minimal XR,
+silently drops status fields, and never runs its readiness branch. "The tests pass" is not a
+verification claim until the suite covers these three shapes. Each language file shows them in its own
 syntax (Python: `languages/python/tests.md`; Go: `languages/go/tests.md`; YAML:
 `languages/yaml.md`).
 
