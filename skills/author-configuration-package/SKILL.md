@@ -105,7 +105,8 @@ anything else (`control-plane-project-charter/references/charter/generators.md`)
   included (up v0.55.0).
 - `up project init` rewrites `metadata.name` and `spec.repository` but never `spec.source`, so
   every template leaves its own (`github.com/upbound/project-template-scratch`, `…-aws-s3`),
-  along with a placeholder `maintainer`. Generated Go module paths, for tests and for functions,
+  along with a placeholder `maintainer` and `readme` (`This is where you can add a readme…`).
+  Generated Go module paths, for tests and for functions,
   come from `spec.source` (`<source>/tests/<dir>`, `<source>/functions/<name>`).
   `up project build` publishes it as the package's `meta.crossplane.io/source` annotation.
   **Set `repository`, `source` and `maintainer` before any generator runs**: `spec.repository`
