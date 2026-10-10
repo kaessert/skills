@@ -213,20 +213,30 @@ project root, under its rule class, with a mandatory `reason`:
 
 ```yaml
 enumCasing:
-  - field: spec.engine   # the path the FAIL prints, minus file and [version]
+  - field: apis/db/definition.yaml[*].spec.engine   # the location the FAIL prints
     reason: AWS RDS engine names, passed through verbatim
 maxItems:
-  - field: status.subnetIds
+  - field: apis/network/definition.yaml[v1alpha1].status.subnetIds
     reason: frozen API, shipped without a bound
 ```
 
-Classes keyed by field path: `enumCasing`, `description`, `listType`, `maxItems`,
-`lowerCamel`, `fieldCasing`; by name: `kindAcronym` (the Kind), `printerColumn` (`READY`),
-`collision` (the spellings as printed). `uniqueItems` has none: the API server rejects the CRD.
-The script reads the file from the working directory, prints those findings as `EXCEPTED`,
-reports an entry that matches nothing for REVIEW, and can then serve as a gate. To read a
-frozen API's state without gating, pass `--report-only` (exit 0 despite findings). A skeleton
-XRD has too few fields to count as an extraction, so pass `--min-corpus` until the API has grown.
+Write `field` as the FAIL prints it, `<file>[<version>].<path>`, so the exception covers that XRD
+and version and nothing else. Either part can be `*`: `[*]` is every version of one XRD, `*[v1]`
+is v1 of every XRD, and `*[*].<path>` is a deliberate project-wide waiver. Classes keyed by field
+path: `enumCasing`, `description`, `listType`, `maxItems`, `lowerCamel`, `fieldCasing`. By name:
+`printerColumn` takes `<file>[<version>].READY`, `kindAcronym` takes `<file>[*].<Kind>` (a Kind
+spans every version), and `collision` takes the spellings as printed with no file, since a
+collision spans the corpus. `uniqueItems` has none: the API server rejects the CRD. A bare path
+with no `<file>[<version>].` still works and applies everywhere, but when it excepts findings in
+more than one XRD or version the script lists those places for REVIEW: an exception for a frozen
+v1alpha1 would otherwise hide the same defect in the v1beta1 you can still fix.
+
+The script reads the file from the working directory and prints those findings as `EXCEPTED`.
+When several entries match one finding, the most specific gives the reason. An entry that
+matches nothing, or only findings a more specific entry already covers, is reported for REVIEW,
+and the script can then serve as a gate. To read a frozen API's state without gating, pass
+`--report-only` (exit 0 despite findings). A skeleton XRD has too few fields to count as an
+extraction, so pass `--min-corpus` until the API has grown.
 
 ## Phase 4: Add dependencies
 
