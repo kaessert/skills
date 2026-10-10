@@ -137,7 +137,7 @@ those. Write no test program for them, and don't copy a skill's script into the 
    | `no actual resource found` for the resource you are about to compose, or for one whose annotation you are adding | valid RED |
    | a field mismatch naming the exact field you are adding | valid RED |
    | a syntax error, an unresolved import, a missing `compositionPath`, a run that stops at `✗ Parsing tests`, a bug in the test's own logic | **not** RED, even though it exits 1 — the test is broken, not the code. Fix it before writing any implementation |
-   | a compiled language (Go): `undefined: <symbol you are adding>` | **not** RED — a compile error. Add a stub that only returns the zero value, then watch the assertion fail; a stub that already does the work never shows RED |
+   | the symbol you are adding is missing: Go `undefined: <symbol>` (a compile error), Python `ImportError: cannot import name …` or `AttributeError: module … has no attribute …` (unittest counts these as errors, not failures) | **not** RED. Add a stub that only returns the zero value (`""`, `None`, `{}`), then watch the assertion fail; a stub that already does the work never shows RED |
    | passes immediately | **not** RED — the assertion is vacuous, or the behaviour already exists |
    | E2E: an implementation mutation (drop a composed resource others depend on, break a selector) that never readies within a short `timeoutSeconds` | valid RED, and optional (below). Editing `defaultConditions` or an expected value is not; an unparsable condition is a broken test (author-tests' `e2e.md` reference) |
 
