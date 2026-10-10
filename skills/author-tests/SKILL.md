@@ -124,7 +124,7 @@ Four things make an assertion bite:
 | **Assert the field, not the existence.** | `assertResources` is partial and positive. An entry naming only `kind` passes against any resource of that kind, whatever it contains. Name the field you are adding. |
 | **Assert on the composite too.** | Every `status` field the function writes needs an assertion on the XR itself. It is the only programmatic check on composition outputs. |
 | **Cover the minimal XR.** | Use the inline `xr` field with every optional property omitted. That is the shape a real user writes first, and the one the scaffold never generates. |
-| **Use distinguishing inputs.** | Every parameter the function passes through (region, config names, CIDRs, the XR's own name, …) gets a non-default value, unique across fields, in at least one test; a required field with no default needs two tests with different values. An input equal to the default or to a sibling field can't tell pass-through from a hard-coded constant. Backfill check: `control-plane-project-charter/references/charter/tdd.md`. |
+| **Use distinguishing inputs.** | Every parameter the function passes through (region, config names, CIDRs, the XR's own name, …) gets a non-default value, unique across fields, in at least one test; a required field with no default needs two tests with different values, and so does a field every test sets to the same value. An input equal to the default or to a sibling field can't tell pass-through from a hard-coded constant. Backfill check: `control-plane-project-charter/references/charter/tdd.md`. |
 
 - **Define the XR inline** where the format supports it, with `namespace: default` (v2).
 - **Assert list membership on the parsed list**, not by substring matching on a joined string:
