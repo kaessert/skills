@@ -6,7 +6,10 @@ this file is the Python syntax for it. Templates are in [`test-templates.md`](te
 the Python index is [`../python.md`](../python.md).
 
 Field names, import paths and class names come from `probe_project.py --fields <Kind>`
-([`../python.md`](../python.md)), not from `ls` or `grep` under `.up/python`.
+([`../python.md`](../python.md)), not from `ls` or `grep` under `.up/python`. It takes Kinds
+and shows an XR's spec one level deep: read a nested class of your own XR in its model file,
+`.up/python/models/<reversed-group>/<kind, lowercased>/<version>.py`. Passed a class name, the probe answers
+`NOT FOUND … up dep add`, which means "not a Kind", not a missing dependency.
 
 ## The coverage shapes in Python
 
