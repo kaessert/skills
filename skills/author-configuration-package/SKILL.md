@@ -278,7 +278,8 @@ silently left out of the package, `up project build` barely validates it, and `-
 `up composition generate apis/<plural>/definition.yaml` writes a `mode: Pipeline` composition
 with an auto-ready step, and adds `crossplane-contrib/function-auto-ready` at `'>=v0.0.0'` to
 `dependsOn` — even when the project already declares another auto-ready function, which then
-gets a step too (up v0.55.0). When the project declares its own function set, delete the
+gets a step too (up v0.55.0); only an existing `xpkg.upbound.io/crossplane-contrib/function-auto-ready`
+entry keeps it from adding one. When the project declares its own function set, delete the
 duplicate step and its dependency, and say so; otherwise give the dependency a constraint.
 
 `mode: Resources` was removed in Crossplane v2: only `Pipeline` is valid. `up test run`'s
