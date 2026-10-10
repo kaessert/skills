@@ -330,7 +330,9 @@ if rsp.GetDesired().GetResources()["bucket"].GetReady() != fnv1.Ready_READY_UNSP
 The template fails on any Fatal. For an input the function must reject, write a sibling test that
 expects one: a composition test can't (author-tests, "A Fatal result"). It asserts the message, that
 nothing was composed, and that no success condition was set. "Nothing composed" is measurable because
-a request built with `Observed` only carries no desired state for `response.To` to copy.
+a request built with `Observed` only carries no desired state for `response.To` to copy. Compare the
+message whole, as below; a message listing names checked per name with `strings.Contains` is the
+substring trap in author-tests, Phase 3: a short name matches inside a longer listed one.
 
 ```go
 // fatalMessages returns the message of every Fatal result in rsp.
