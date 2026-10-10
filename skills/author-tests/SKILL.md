@@ -94,7 +94,8 @@ writing a test: it carries the templates and the silent failure modes.
      is a broken test, not RED.
    - **What no check here reaches** — XRD `required` lists, enums and scope; the dependency set —
      stays uncovered unless the project's gate checks it (charter §4: say what you did not
-     verify).
+     verify). Through `xrdPath` the render defaults the XR; it does not reject one that breaks
+     `required`, an enum or the status schema, so an XRD mutation there stays green (up v0.55.0).
 
 3. **Organise:**
 
