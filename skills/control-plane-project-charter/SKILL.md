@@ -46,7 +46,7 @@ names:
 |---|---|---|
 | reviewing | no task skill | open [`references/charter/review.md`](references/charter/review.md) now: the review checks are there, not in this file. Then the language file's failure modes for what changed (Python: `references/languages/python/pitfalls.md`; go-templating: `references/languages/go-templating.md`, "Failure modes") |
 | XRD, `upbound.yaml`, dependencies, examples, ProviderConfig, MRAP | author-configuration-package | `author-configuration-package/references/mrap.md` for an MRAP |
-| function code | author-composition | the language file (§10), e.g. `references/languages/go.md` (models, imports) and `references/languages/go/functions.md` |
+| function code | author-composition | the language's index (§10) in `references/languages/` (`go.md`, `python.md`, `go-templating.md` …): models, imports, and the files beside it, e.g. `go/functions.md`. Language files live only there, never in a task skill |
 | anything under `tests/` | author-tests | the test language's file, e.g. `references/languages/go/tests.md`, and its index beside it (`go.md`, `python.md`); an `E2ETest`: `author-tests/references/e2e.md` |
 | running E2E tests, re-runs included | e2e-test-configuration | `e2e-test-configuration/references/local.md` or `space.md` beside it |
 
