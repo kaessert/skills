@@ -221,8 +221,9 @@ left by an earlier reconcile.
 ## Unit-test template: the fast tier (`functions/<n>/fn_test.go`)
 
 `go test ./...` in `functions/<n>/` calls `RunFunction` directly: about a second, no project build. It is
-also where absence goes: `assertResources` cannot say a field is absent; a Go unit test on the desired
-state can. Asserting the exact set of resource names catches a surplus resource too.
+also the easiest home for absence: a typed model can't carry `assertResources`' expression key
+(`charter/evidence.md`), and a Go unit test on the desired state compares a whole map. Asserting the
+exact set of resource names catches a surplus resource too.
 
 The unit test supplements `up test run`; it never replaces it. It does not run the composition pipeline,
 the XRD defaults, or the other functions.
@@ -276,7 +277,7 @@ func TestRunFunction(t *testing.T) {
 			if !slices.Equal(got, tc.wantNames) {
 				t.Errorf("desired resources: want %v, got %v", tc.wantNames, got)
 			}
-			// Absence, which assertResources cannot express: forProvider holds region and nothing else.
+			// Absence: forProvider holds region and nothing else.
 			bucket := rsp.GetDesired().GetResources()["bucket"].GetResource().AsMap()
 			fp, _ := bucket["spec"].(map[string]any)["forProvider"].(map[string]any)
 			if len(fp) != 1 || fp["region"] != "eu-central-1" {

@@ -109,10 +109,16 @@ changes when a resource is added, so a guard in every case turns each new resour
 of every suite. A function unit test that asserts the exact set of names (Go:
 `languages/go/functions.md`, unit-test template) guards surplus resources too.
 
-**That covers surplus resources, not absent fields.** `assertResources` has no absence
-operator, so a composition test cannot assert "this field is not set", and searching the CLI
-for one wastes time. Assert it in a unit test on the function's desired state, in
-the function's own language, or confirm it once in `render.log` and report it as not asserted.
+**Absent fields and surplus map keys take an expression key.** `up test run` checks each
+expectation with chainsaw's assertion trees (up v0.55.0 source): a key in parentheses is a
+JMESPath expression on the object at that level. Under `spec.forProvider`,
+`(mapPublicIpOnLaunch == null): true` passes only while the field is absent, and
+`(length(keys(tags))): 3` beside the tags you assert fails on a fourth key; objects otherwise
+match as subsets, so a surplus key passes. A plain `field: null` fails on an absent field
+(`Required value: field not found in the input object`) and `tags: {}` matches any map: neither
+asserts absence (probed against the matcher up v0.55.0 pins). A typed model (Go struct, KCL schema,
+Pydantic model) can't carry the key: write that level as a plain map, or use a unit test on the
+desired state (Go, Python).
 
 ## Coverage: what the suite must contain
 

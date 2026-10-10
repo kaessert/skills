@@ -209,7 +209,7 @@ which this request does not have. Numbers come back from a `Struct` as floats (`
 the scaffold's logger, not failures.
 
 Keep the template's two checks when you adapt it: the whole-`forProvider` `assertEqual` and
-`ready == fnv1.READY_UNSPECIFIED`. A composition test cannot see a surplus key
+`ready == fnv1.READY_UNSPECIFIED`. A composition test sees a surplus key only through an expression key
 ([`evidence.md`](../../charter/evidence.md#how-assertresources-matches-and-how-to-make-a-suite-exhaustive)),
 so compare whole maps (`forProvider`, `tags`, `labels`) once per variant the function
 distinguishes; a key-by-key `assertEqual` or `assertNotIn` lets one through. Readiness is each

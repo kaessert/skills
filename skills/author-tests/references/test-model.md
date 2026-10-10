@@ -137,8 +137,8 @@ programmatic check on composition outputs.
 
 Charter §8: an asserted object is partial at every depth (the surplus is never reported); an
 asserted list must match exactly, in length and order (`lengths of slices don't match`).
-**Right:** assert a whole list, in order. An exact key set on a mapping is not expressible in
-`assertResources`: read it from the render, and say which of the two claims you made.
+**Right:** assert a whole list, in order. An exact key set on a mapping takes an expression key,
+`(length(keys(<map>))): <n>` (`control-plane-project-charter/references/charter/evidence.md`).
 
 ### 5. Designing coverage without reading the XRD's defaults
 

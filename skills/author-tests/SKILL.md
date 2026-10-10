@@ -139,13 +139,12 @@ Four things make an assertion bite:
 
 ### Asserting absence
 
-`assertResources` cannot assert absence: it has no absence operator, so do not search the CLI
-for one.
+`assertResources` matches positively and partially; absence needs one of these:
 
 | Must be absent | How |
 |---|---|
 | A composed **resource** | Assert the composite's `spec.crossplane.resourceRefs` as the exact list from the render (`up test run "tests/<t>" --function-logs`; a plain run writes no `render.log`, so a directory already under `_output/composition_test/` is another run's), once per input shape, not in every case. Lists match exactly, so a surplus resource fails it. The "Composition test template" sections of `control-plane-project-charter/references/languages/go/tests.md` and `control-plane-project-charter/references/languages/go-templating.md` show this guard; detail in `control-plane-project-charter/references/charter/evidence.md`, "How `assertResources` matches" |
-| A **field** | Not expressible in a composition test. Use a unit test on the function's desired state, in the function's own language (Go: `go test ./...` in `functions/<n>/`; Python: `control-plane-project-charter/references/languages/python/tests.md`, "Function unit tests"), or confirm it once in the render and report it as not asserted |
+| A **field**, or a surplus **key in a map** (tag, label) | An expression key at that level: `(<field> == null): true`, and `(length(keys(<map>))): <n>` beside the keys you assert (how and why: `control-plane-project-charter/references/charter/evidence.md`, "How `assertResources` matches"). Go and Python can also assert it in a unit test on the desired state (Go: `go test ./...` in `functions/<n>/`; Python: `control-plane-project-charter/references/languages/python/tests.md`, "Function unit tests") |
 
 ### A Fatal result
 
