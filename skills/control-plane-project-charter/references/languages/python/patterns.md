@@ -116,7 +116,8 @@ s.update({"status": {"b": 2}})
 # -> {'status': {'b': 2.0}}      'a' is gone
 ```
 
-So several status writes keep only the last, and also wipe `status.conditions`:
+So several status writes keep only the last. Crossplane's own conditions are not at risk: it
+re-adds the XR's conditions to the desired status before applying it (v2.3.1 source).
 
 ```python
 # Wrong: three of these four writes are discarded
