@@ -11,6 +11,7 @@ Python index is [`../python.md`](../python.md).
 | Non-namespaced model imported in a v2 project | renders the cluster-scoped `apiVersion` | the `.m.` path: `models.io.upbound.m.aws…`, not `models.io.upbound.aws…`. The probe script flags v1 modules |
 | `.m.` in the wrong place | API not found | `azure.m.upbound.io`, not `azurem.upbound.io` (that is KCL's import segment) |
 | Prefixed nested classes | `ResourceGroupSpec` / `VirtualNetworkForProvider` do not exist | classes are unprefixed and module-qualified: `rgv1beta1.Spec`, `rgv1beta1.ForProvider` |
+| A keyword a provider model does not declare: a typo, or a field the Kind lacks (`tags` on a `Route`) | none: the models set no `extra`, so Pydantic drops it silently; the render lacks it, and a mutation through it proves nothing | names from `probe_project.py --fields <Kind>` |
 | No `struct_to_dict` | `AttributeError: get` at model construction | `resource.struct_to_dict(req.observed.composite.resource)` ([`patterns.md`](patterns.md#function-bootstrap)) |
 | Several `resource.update(..., {"status": {...}})` calls | only the last field arrives; tests green | one call with all keys ([`patterns.md`](patterns.md#resourceupdate-replaces-nested-keys-it-does-not-merge-them)) |
 | `xr.spec.<obj>.get(...)` or `.attr` on an optional XRD object | `'Kms' object has no attribute 'get'`, or `'dict' object has no attribute 'enableKeyRotation'` on half the inputs | drop `default: {}` from the XRD, or normalise ([`patterns.md`](patterns.md#an-optional-xrd-object-is-a-dict-when-absent-and-a-model-when-present)) |
