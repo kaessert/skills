@@ -223,7 +223,8 @@ An e2e RED is optional (charter §3): it costs a real control-plane run, so take
 report the E2ETest as unproven. Composition and unit tests still require RED.
 
 A valid e2e RED is an **implementation mutation** the control plane rejects or never readies: drop a composed
-resource the others depend on, or break a selector. Run it with a short `timeoutSeconds` (300) so the RED costs
+resource the others depend on, or break a selector. Not the only composed resource: an XR that composes
+nothing is Ready at once (Crossplane v2.3.1). Run it with a short `timeoutSeconds` (300) so the RED costs
 minutes. Check the failure is the Ready assertion: the error line names `((conditions[?type == 'Ready'])[0])`.
 The diff's `status: {}` is not the real status. Make sure the failure isn't a credential error, then revert with
 git, after keeping any uncommitted work in the mutated file
