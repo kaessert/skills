@@ -15,8 +15,9 @@ code, tests, the package — beyond reading the diff. The rules behind them are 
   an e2e program missing an input under a `tests/*` glob (§7), or a test program turned linter
   (below).
 - To re-run an `E2ETest`, load e2e-test-configuration and follow its Phase 2: on kind, the
-  default umask (`022`); `UP_<CLOUD>_CREDENTIALS` holds the credentials text, never a path to a
-  file. Check or diff an e2e program's output only with a dummy value (author-tests' `e2e.md`).
+  default umask (`022`); `UP_<CLOUD>_CREDENTIALS` holds the credentials file's text in the
+  provider's own format (AWS: the INI profile author-tests' `e2e.md` builds, not JSON), never a
+  path to a file. Check or diff an e2e program's output only with a dummy value (`e2e.md`).
 
 ## Each new test bites
 
