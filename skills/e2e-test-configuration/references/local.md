@@ -87,8 +87,10 @@ kubectl --kubeconfig "$KCFG" get managed -A
 echo "kubeconfig: $KCFG"   # reuse the path as a value: the variable is gone by your next command
 ```
 
-Once the run has exited, `rm -f <kubeconfig>`: the cluster it points at is gone, and the file is this run's
-leftover (charter §9).
+Once the run has exited **and the [Leaks](#leaks) check is clean**, `rm -f <kubeconfig>`: the cluster it
+points at is gone, and the file is this run's leftover (charter §9). Until then keep it: a run that leaked (a
+setup failure, a panic, a killed run, `--skip-control-plane-cleanup`) left the cluster running, and cleaning it
+up needs this kubeconfig.
 
 Use `kind get kubeconfig`, not a kubeconfig `up` leaves in `/tmp`: observed with up v0.55.0,
 `/tmp/up-*.kubeconfig` was empty (0 bytes), and the test's own `/tmp/<test><random>/kubeconfig.yaml` was gone by
