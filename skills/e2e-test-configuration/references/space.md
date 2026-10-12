@@ -96,8 +96,10 @@ up ctx ./<control-plane-name> -f - > "$CPCFG"   # from the group context
 echo "kubeconfig: $CPCFG"   # reuse the path as a value: the variable is gone by your next command
 ```
 
-Once you are done with it, `rm -f <kubeconfig>`, and the run's own `--kubeconfig` file once the run has
-exited (charter §9: delete what this run created).
+Once the run has exited **and `up controlplane list` shows no test control plane left behind**
+([Evidence and cleanup](#evidence-and-cleanup)), `rm -f <kubeconfig>`, and the run's own `--kubeconfig` file
+too (charter §9: delete what this run created). A control plane that is still there needs this kubeconfig to
+delete its XRs first.
 
 ## Evidence and cleanup
 

@@ -110,8 +110,12 @@ Hand the sub-agent the table below with the brief. Its report decides what happe
   control plane with live cloud resources on it: clean up as
   `control-plane-project-charter/references/charter/targets.md` ("Delete the XRs, and wait, before the control
   plane") says, before you report.
-- **Anything else**, including no cause found: keep waiting. The test's own `timeoutSeconds` ends the run, and
-  up tears it down; report that outcome with the analysis.
+- **Anything else**, including no cause found: keep waiting. The test's own `timeoutSeconds` ends a test that
+  is running; a run still in setup (such as `Waiting for package to be ready`, below) is ended by
+  `setupTimeoutSeconds` instead, and a setup failure skips up's teardown without a message. So once the run
+  has exited, check its log for the `Tearing down test control plane` line before you report. Without it, find
+  what the run left behind ([local.md](local.md) Leaks; on a Space, `up controlplane list`) and clean it up as
+  `targets.md` says, then report the outcome with the analysis.
 
 ## Failure patterns
 

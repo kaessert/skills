@@ -58,12 +58,18 @@ then stops: no credentials, no ProviderConfig, no XR. Once it has exited 0, appl
 the control plane it created (the run made it the current context):
 
 ```bash
-kubectl get configuration.pkg.crossplane.io           # INSTALLED and HEALTHY both True first
+kubectl wait configuration.pkg.crossplane.io --all --for=condition=Healthy --timeout=600s
+kubectl wait providers.pkg.crossplane.io --all --for=condition=Healthy --timeout=600s
 kubectl -n <secret-namespace> create secret generic <secret-name> \
   --from-file=<key>=<credentials-file>                # namespace, name and key: the ProviderConfig's secretRef
 kubectl apply -f examples/providerconfig.yaml         # or whatever the project ships instead
 kubectl apply -f examples/<kind-lowercase>/<xr-name>.yaml
 ```
+
+Wait for the providers, not only the Configuration: the `ProviderConfig` kind is served by its
+provider, so applying it while the provider is still installing fails with `no matches for kind`.
+That is the install still running, not a broken ProviderConfig. If a wait times out, the package
+never got healthy: go to step 8's checks rather than applying anything.
 
 The credentials come from the user or the environment (a file outside the repository, an
 exported variable); never write them into a tracked file or a manifest. The ProviderConfig and
