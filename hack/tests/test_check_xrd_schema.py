@@ -636,8 +636,8 @@ class CheckXrdSchemaTest(unittest.TestCase):
         assert self.places(output, "EXCEPTED: ") == self.ALL
         assert "REVIEW:" not in output
 
-    def test_bare_exception_still_applies_everywhere_but_names_the_places(self):
-        """Existing files keep working; the reach of a bare entry is surfaced."""
+    def test_bare_exception_applies_everywhere_but_names_the_places(self):
+        """A bare entry excepts every match; its reach is surfaced for review."""
         paths = self.project()
         code, output = run(paths, exceptions=self.scoped(self.TLS))
         assert code == c.EXIT_CLEAN, output
@@ -731,6 +731,39 @@ class CheckXrdSchemaTest(unittest.TestCase):
         code, output = run([FIXTURES / "kind.yaml"], exceptions=exc)
         assert code == c.EXIT_NO_CORPUS
         assert "a Kind spans every version" in output
+
+    def test_suggested_project_wide_entry_is_valid_yaml(self):
+        """The REVIEW hint is pasted as written: unquoted, `*[*].` is a YAML alias."""
+        paths = self.project()
+        _code, output = run(paths, exceptions=self.scoped(self.TLS))
+        hint = next(ln for ln in output.splitlines() if "has no file or version" in ln)
+        wide = hint.split("or write field: ", 1)[1].split(" if it is meant", 1)[0]
+        assert wide == f"'*[*].{self.TLS}'", hint
+        exc = self.exceptions_file(f"enumCasing:\n  - field: {wide}\n    reason: frozen\n")
+        code, output = run(paths, exceptions=exc)
+        assert code == c.EXIT_CLEAN, output
+        assert self.places(output, "EXCEPTED: ") == self.ALL
+
+    def test_file_with_brackets_in_its_path_is_matched(self):
+        """The place is carried, not parsed back out of the printed location."""
+        self.project()
+        os.rename("apis/a", "apis/[legacy]")
+        paths = ["apis/*/definition.yaml"]
+        code, output = run(paths, exceptions=self.scoped(self.TLS))
+        assert code == c.EXIT_CLEAN, output
+        assert "apis/[legacy]/definition.yaml[v1alpha1]" in self.places(output, "EXCEPTED: ")
+        exc = self.scoped(f"apis/[legacy]/definition.yaml[v1alpha1].{self.TLS}")
+        _code, output = run(paths, exceptions=exc)
+        assert self.places(output, "EXCEPTED: ") == {"apis/[legacy]/definition.yaml[v1alpha1]"}
+        assert "matches no finding" not in output
+
+    def test_file_part_is_a_path_not_a_glob(self):
+        paths = self.project()
+        exc = self.scoped(f"apis/*/definition.yaml[v1alpha1].{self.TLS}")
+        code, output = run(paths, exceptions=exc)
+        assert code == c.EXIT_FINDINGS
+        assert self.places(output, "FAIL:   ") == self.ALL
+        assert "matches no finding" in output
 
     def test_collision_rejects_a_file_scope(self):
         exc = self.exceptions_file(
