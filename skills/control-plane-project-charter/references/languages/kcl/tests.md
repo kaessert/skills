@@ -191,10 +191,10 @@ _xr = {
     spec: { region: "us-west-2" }
 }
 
-# A mock is observed only with metadata.name and the XR's namespace; without them it is silently
-# ignored (charter/evidence.md). Any valid name works, and the render gives it to the composed
-# resource, so this case's assertions name it too.
-_resource1Name = "test-<resource>-resource1"
+# A mock is observed only with the XR's namespace and the name the render gave the resource,
+# copied from render.log; without them it is silently ignored (charter/evidence.md). The
+# assertions name it too.
+_resource1Name = "<resource1's name from render.log>"
 
 _test1 = metav1alpha1.CompositionTest {
     metadata.name: "sequence-0-initial"
