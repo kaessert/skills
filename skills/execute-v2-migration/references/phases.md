@@ -6,24 +6,34 @@ summary. What changes in each file is in the plan, which points at sections of
 
 ## Stage 0: Pre-flight
 
+Find the branch first: the plan, with its ticks, may exist only on `migrate-to-v2`, so the plan
+and v1 checks have to run on that branch, not on whatever happens to be checked out.
+
 ```bash
-test -f .agents/plans/CROSSPLANE_V2_MIGRATION.md || echo "no plan: run plan-v2-migration first"
-grep -n '^apiVersion:' upbound.yaml
-grep -rl 'kind: CompositeResourceDefinition' apis/ | xargs grep -l 'apiextensions.crossplane.io/v1$'
 git status --porcelain
 git branch --list migrate-to-v2                 # local
 git ls-remote --heads origin migrate-to-v2      # remote; another remote name: `git remote`
 ```
 
-After the go-ahead, and before any stage runs, whichever stages were asked for:
+If it exists, and continuing on it is agreed (SKILL.md, the table), switch to it now:
 
 ```bash
 git checkout migrate-to-v2                      # it is local
 git fetch origin migrate-to-v2 && git checkout --track origin/migrate-to-v2   # only on the remote
-git checkout -b migrate-to-v2                   # neither
 ```
 
-Run the one line that matches, then tick the plan's stage 1 branch item.
+If git refuses because untracked files would be overwritten (typically a plan written on the
+current branch that the branch also has), stop and report the files; don't delete them. Then, on
+the branch if there is one:
+
+```bash
+test -f .agents/plans/CROSSPLANE_V2_MIGRATION.md || echo "no plan: run plan-v2-migration first"
+grep -n '^apiVersion:' upbound.yaml
+grep -rl 'kind: CompositeResourceDefinition' apis/ | xargs grep -l 'apiextensions.crossplane.io/v1$'
+```
+
+If there was no branch, create it after the go-ahead, before any stage runs, whichever stages
+were asked for: `git checkout -b migrate-to-v2`. Either way, tick the plan's stage 1 branch item.
 
 From the plan, take: the project name, the counts, each function's language and the test
 language, the decisions and assumptions, the dependency targets, and which tests cover which
