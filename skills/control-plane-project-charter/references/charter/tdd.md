@@ -33,32 +33,28 @@ no natural RED. That is fine, but a test written against passing code has never 
 observed to fail, and is where false coverage claims come from.
 
 **Prove it can fail with a deliberate mutation.** Break what the test should catch, confirm
-*that test* goes red while the others stay green, then revert:
+*that test* goes red while the others stay green, then restore the file. Copy it out first, and
+restore from that copy:
 
 ```bash
-if git ls-files --error-unmatch -- <file> >/dev/null 2>&1 && git diff --quiet -- <file>; then
-  # 1. mutate the implementation (delete the field, move the block below an early return, ...)
-  up test run "tests/test-*"   # expect: exactly the new test fails, and it names the right field
-  git checkout -- <file>       # restores the last commit, not the state before step 1
-  up test run "tests/test-*"   # expect: green again
-else
-  echo "<file> is untracked or has uncommitted changes: commit or copy it first (below)"
-fi
+keep=$(mktemp -d) && cp <file> "$keep"/ && echo "copy: $keep"   # the variable is gone by the next command
 ```
 
-The guard is an `if`, not `|| exit`, so pasting the block whole into an interactive shell neither
-closes it nor reaches `git checkout` on a file holding uncommitted work; `git diff --quiet`
-alone passes a file git doesn't track.
+1. Mutate `<file>` with your editor or file-edit tool (delete the field, move the block below
+   an early return, ...). This is an edit, not a command, so the steps are not one script.
+2. `up test run "tests/test-*"`: expect exactly the new test to fail, naming the right field.
+3. Restore and check the restore, using the printed path:
+   `cp <copy-dir>/<name> <file> && cmp <copy-dir>/<name> <file> && rm -rf <copy-dir>`.
+4. `up test run "tests/test-*"`: expect green again.
 
-**Keep uncommitted work out of the revert's reach.** `git checkout -- <file>` puts back the
-committed version and discards every uncommitted change in the file, not only the mutation:
-mutate a file holding the function you just wrote, uncommitted, and the revert deletes it.
-Before mutating such a file, commit it, or, where committing isn't yours to decide, copy it out
-of the project (`cp <file> /tmp/<name>.keep`) and revert from that copy instead of from git; a
-file git doesn't track yet has only the copy. `git stash` doesn't help here: it takes the
-uncommitted code out of the tree you are testing.
+**Restore from the copy, not from git.** `git checkout -- <file>` puts back the last commit and
+discards every uncommitted change in the file, not only the mutation: mutate a file holding the
+function you just wrote, uncommitted, and that revert deletes it, and a file git doesn't track
+has nothing to revert to. The copy is the file exactly as it was before the mutation, whether it
+is committed, modified or untracked. `git stash` doesn't help either: it takes the uncommitted
+code out of the tree you are testing.
 
-Revert with git or that copy, not by editing back: `up test run`, like `up project build`,
+Don't revert by editing back: `up test run`, like `up project build`,
 `up test generate` and `up dep add`, rewrites `upbound.yaml` whenever it has a dependency and
 drops its comments (author-configuration-package, Phase 4), so a mutation commented out there
 cannot be found again.

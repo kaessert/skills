@@ -70,7 +70,7 @@ For each function, in the plan's order:
 
    | Language | Compile check, in `functions/<name>/` |
    |---|---|
-   | KCL | `kcl lint main.k` — not `kcl main.k`, which runs the module and fails on `option("params")` |
+   | KCL | `kcl lint .` — the directory, so every `.k` file is checked, not only what `main.k` imports; not `kcl main.k`, which runs the module and fails on `option("params")`. It exits 1 on a warning alone too, so read the output: only an `error[…]` fails the check; fix a `warning[…]` (an unused import) without counting it as a failed attempt |
    | Python | `python3 -c "import ast, sys; [ast.parse(open(f).read(), f) for f in sys.argv[1:]]" $(find . -name '*.py')` |
    | Go | `go vet ./...` — not plain `go build ./...`, which writes a binary into the function directory |
    | other | the compile or fast-tier row of its `languages/` file |
