@@ -41,8 +41,10 @@ interactive; unattended, take the default named at each point and state it in th
 
 ## Stage 0: Pre-flight
 
-Check that the plan exists, the project is still v1 where the plan says so, the worktree state, and
-whether `migrate-to-v2` exists locally or on the remote (commands:
+Check the worktree state and whether `migrate-to-v2` exists locally or on the remote first. If it
+does, switch to it (check it out if it is local, track it if it is only on the remote) before
+anything else: the plan and its ticks may exist only there. Then check that the plan exists and
+the project is still v1 where the plan says so (commands:
 [phases.md](references/phases.md#stage-0-pre-flight)). Take the languages from the plan, or detect
 them with `control-plane-project-charter/references/languages/README.md`, and read the language file.
 
@@ -52,10 +54,9 @@ them with `control-plane-project-charter/references/languages/README.md`, and re
 | Uncommitted changes | ask: commit first, or continue | continue only if no file the plan touches is dirty; else stop and report |
 | `migrate-to-v2` exists, locally or on the remote | ask: continue on it | continue on it with `continue` semantics, and say so |
 
-Then, whichever stages were asked for, switch to `migrate-to-v2` before the first one runs: check it
-out if it is local, track it if it is only on the remote, create it if it is neither. Tick the
-plan's branch item. It happens here, not in stage 1, because a run of `2 3 4` skips stage 1 and
-would otherwise edit `main`.
+If the branch did not exist, create it after the go-ahead, whichever stages were asked for, and
+before the first one runs. Tick the plan's branch item. It happens here, not in stage 1, because a
+run of `2 3 4` skips stage 1 and would otherwise edit `main`.
 
 ## Stage 1: Prepare
 
