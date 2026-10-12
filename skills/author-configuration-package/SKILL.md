@@ -273,7 +273,8 @@ package name.
   legacy `function:`/`provider:` entries become `apiVersion/kind/package` (up v0.55.0). Put the
   reason for a constraint in the README, not in a comment. Expect `upbound.yaml` in `git diff`
   after a build or a test run, but before attributing that diff to the CLI, confirm it is
-  formatting only: no `dependsOn` or `apiDependencies` entry and no version constraint changed.
+  formatting only: no dependency or version constraint changed, other than the legacy-entry
+  rewrite above (the same package and constraint, in the new shape).
 - **External pipeline functions must be declared dependencies.** Embedded functions (built from
   `functions/`) are wired automatically. An external `functionRef`
   (`crossplane-contrib-function-auto-ready`, `function-patch-and-transform`) missing from
@@ -338,8 +339,9 @@ A `.uppkg` is a tar of gzipped layers (`manifest.json` lists them). The configur
 `package.yaml` (meta, XRDs, compositions, an MRAP) is in one layer, and the examples are in
 another as `.up/examples.yaml` (up v0.55.0). To check that a file ships, extract into a fresh
 directory, so an older extraction cannot make the grep pass:
-`pkg=$(mktemp -d) && tar -xf _output/<name>.uppkg -C "$pkg"`, then `tar -xzOf` each layer in
-`"$pkg"` and grep, and `rm -rf "$pkg"` after. That proves it ships, not that a control plane
+`pkg=$(mktemp -d) && tar -xf _output/<name>.uppkg -C "$pkg" && echo "extracted: $pkg"`. The
+variable is gone by your next command, so reuse the printed path: `tar -xzOf <dir>/<layer>` for
+each layer and grep, then `rm -rf <dir>`. That proves it ships, not that a control plane
 accepts it.
 
 Then report what ran and what it printed, not a checklist (`control-plane-project-charter` §4):

@@ -40,7 +40,8 @@ _metadata = lambda name: str -> any {
 
 # Kubernetes label values: at most 63 characters of alphanumerics and - _ ., beginning and
 # ending with an alphanumeric. Replace every other character, cut, then trim what the cut left
-# at either end ("-leading" becomes "leading", "a/b:c" becomes "a-b-c").
+# at either end ("-leading" becomes "leading", "a/b:c" becomes "a-b-c"). Values only: the keys
+# pass through, so copy only tag keys that are valid label keys (pitfalls.md).
 _labelValue = lambda v: str -> str {
     _cut = regex.replace(v, "[^A-Za-z0-9_.-]", "-")[:63]
     regex.replace(_cut, "^[^A-Za-z0-9]+|[^A-Za-z0-9]+$", "")
