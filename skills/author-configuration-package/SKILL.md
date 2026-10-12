@@ -219,16 +219,20 @@ enumCasing:
 maxItems:
   - field: apis/network/definition.yaml[v1alpha1].status.subnetIds
     reason: frozen API, shipped without a bound
+description:
+  - field: '*[v1alpha1].spec.region'   # quoted: unquoted, YAML reads a leading * as an alias
+    reason: v1alpha1 is frozen in every XRD; v1beta1 carries the descriptions
 ```
 
 Write `field` as the FAIL prints it, `<file>[<version>].<path>`, so the exception covers that XRD
-and version and nothing else. Either part can be `*`: `[*]` is every version of one XRD, `*[v1]`
-is v1 of every XRD, and `*[*].<path>` is a deliberate project-wide waiver. Classes keyed by field
+and version and nothing else. The file is a path, not a glob. Either part can instead be a bare
+`*`: `[*]` is every version of one XRD, `*[v1]` is v1 of every XRD, and `*[*].<path>` is a
+deliberate project-wide waiver; quote any entry that starts with `*`. Classes keyed by field
 path: `enumCasing`, `description`, `listType`, `maxItems`, `lowerCamel`, `fieldCasing`. By name:
 `printerColumn` takes `<file>[<version>].READY`, `kindAcronym` takes `<file>[*].<Kind>` (a Kind
 spans every version), and `collision` takes the spellings as printed with no file, since a
 collision spans the corpus. `uniqueItems` has none: the API server rejects the CRD. A bare path
-with no `<file>[<version>].` still works and applies everywhere, but when it excepts findings in
+with no `<file>[<version>].` applies everywhere, and when it excepts findings in
 more than one XRD or version the script lists those places for REVIEW: an exception for a frozen
 v1alpha1 would otherwise hide the same defect in the v1beta1 you can still fix.
 
