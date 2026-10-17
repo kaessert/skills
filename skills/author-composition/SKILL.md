@@ -188,9 +188,8 @@ they talk to no provider and install nothing, so never "production-ready", "depl
 "verified".
 
 **Out of reach locally:** external-name semantics — whether a resource's external name is
-provider-assigned or the identifier you set — are undiscoverable from CRDs or models, and
-`assertResources` is partial-positive, so a stray annotation is never flagged. Check it on
-a live control plane, or say it is unchecked.
+provider-assigned or the identifier you set — are undiscoverable from CRDs or models. Check it
+on a live control plane, or say it is unchecked.
 
 ## Success criteria
 

@@ -55,8 +55,7 @@ printed; one already under `_output/composition_test/` is another run's
 Every resource the change produces is in the render and asserted. A resource in the render that
 no test names is untested, though the suite is green; only an exact
 `spec.crossplane.resourceRefs` assertion fails on a surplus one ([`evidence.md`](evidence.md),
-"How `assertResources` matches" and "Coverage": named annotations only, stray fields never
-flagged, what a mock needs).
+"How `assertResources` matches" and "Coverage": named annotations only, what a mock needs).
 
 ## Function code
 

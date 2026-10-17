@@ -90,8 +90,8 @@ A failure to match reads as `no actual resource found: <group>/<version>/<Kind>/
 trailing slash means the expectation named no name. Observed with up v0.55.0, an expectation
 that names an annotation the resource lacks, or gives it another value, fails the same way, with
 no field diff. Annotations the expectation doesn't name are ignored: an extra annotation never
-breaks a match (Out of scope, below). Labels and every other field are compared only after the
-match, and a mismatch there prints `* <path>: Invalid value`.
+breaks a match (to assert absence: below). Labels and every other field are compared only
+after the match, and a mismatch there prints `* <path>: Invalid value`.
 
 `assertResources` ignores what it does not list, so a *surplus* resource is invisible: a
 function that composes a resource it should have skipped leaves the suite green. To close that,
@@ -116,13 +116,18 @@ of every suite. A function unit test that asserts the exact set of names (Go:
 **Absent fields and surplus map keys take an expression key.** `up test run` checks each
 expectation with chainsaw's assertion trees (up v0.55.0 source): a key in parentheses is a
 JMESPath expression on the object at that level. Under `spec.forProvider`,
-`(mapPublicIpOnLaunch == null): true` passes only while the field is absent, and
-`(length(keys(tags))): 3` beside the tags you assert fails on a fourth key; objects otherwise
-match as subsets, so a surplus key passes. A plain `field: null` fails on an absent field
+`(mapPublicIpOnLaunch == null): true` passes while the field is absent or `null`. Beside `tags`,
+not inside it, `(length(keys(tags))): 3` fails on a fourth key; on an absent `tags` it fails with
+`invalid type for: <nil>`. A `metadata.labels` count includes the `crossplane.io/composite` label
+on every composed resource, in a render too. Objects otherwise match as subsets, so a surplus
+key passes. A plain `field: null` fails on an absent field
 (`Required value: field not found in the input object`) and `tags: {}` matches any map: neither
-asserts absence (probed against the matcher up v0.55.0 pins). A typed model (Go struct, KCL schema,
-Pydantic model) can't carry the key: write that level as a plain map, or use a unit test on the
-desired state (Go, Python).
+asserts absence (probed with up v0.55.0). An expression key inside `metadata.annotations` turns
+annotation matching off for that expectation, so it is compared with an arbitrary resource of its
+kind; put it under `metadata`, quoting a dotted key:
+`(annotations."crossplane.io/external-name" == null): true`. A typed model (Go struct, KCL
+schema, Pydantic model) can't carry the key: write that level as a plain map, or use a unit test
+on the desired state (Go, Python).
 
 ## Coverage: what the suite must contain
 
@@ -195,7 +200,3 @@ omitted-lifecycleRules branch; the composite's resourceRefs assertion fails if a
 resource appears."* Without one: *"absence was confirmed once by reading render.log and is not
 asserted by the suite."* Never *"validates that no lifecycle resource is created"* unless
 something actually fails when one is.
-
-**Out of scope for any composition test.** Assertions are partial-positive, so a *stray*
-field — an external-name annotation on a resource whose external name the provider assigns —
-is never flagged. That class fails only on a live control plane.

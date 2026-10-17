@@ -34,7 +34,7 @@ something is observed, `.observed.resources` is nil.
 | To | Write | What happens |
 |---|---|---|
 | read an observed composed resource | `{{ $vpc := getComposedResource . "vpc" }}` | the manifest, or nil; keyed by composition resource name, and never an error. `index .observed.resources "vpc"` fails with `index of untyped nil` while nothing is observed |
-| read a field that may be missing | `{{ if $vpc.status.atProvider.id }}` | a missing key chains to no value without an error: falsy in `if`, `<no value>` when printed. `index` on an absent map errors: test the map first |
+| read a field that may be missing | `{{ if $vpc.status.atProvider.id }}` | a missing key chains to no value without an error: falsy in `if`, `<no value>` when printed, nothing through `quote` (a YAML `null`). `index` on an absent map errors: test the map first |
 | compose a resource | `{{ setResourceNameAnnotation "vpc" }}` as a line under `metadata.annotations` | prints `gotemplating.fn.crossplane.io/composition-resource-name: vpc`; the function strips it and uses the value as the composition resource name. Any other document without it (not the XR, not a `meta.gotemplating…` kind) is a Fatal: `"<Kind>" template is missing required … annotation` |
 | write XR status | a document with the XR's `apiVersion` and `kind`, a `status:`, and no resource-name annotation | merged into the desired XR's status; several such documents merge rather than replace. With the annotation it is composed as a resource instead |
 | return a Fatal result | `{{ fail "message" }}` | any execution error returns Fatal `cannot execute template: …` before one document is decoded, so nothing the template printed is composed, wherever the `fail` sits |
