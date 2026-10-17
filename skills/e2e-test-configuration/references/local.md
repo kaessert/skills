@@ -83,7 +83,7 @@ in your list from before the run. The registry container is `<cluster>-registry`
 kind get clusters                                   # the new entry starting <project>-uptest-
 KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
 kind get kubeconfig --name <cluster> > "$KCFG"
-kubectl --kubeconfig "$KCFG" get managed -A
+kubectl --kubeconfig "$KCFG" get managed -A        # not a read-back (below)
 echo "kubeconfig: $KCFG"   # reuse the path as a value: the variable is gone by your next command
 ```
 
@@ -129,8 +129,8 @@ gone. A composed resource is read the same way, one watch per object.
 
 Quote it as **"read-back, not asserted"**, with its `Ready` condition: a read while `Ready` is `False` can be
 partial. It is not a provider read. If the window was missed, report "not read back" rather than re-running a
-green e2e just for the read ([SKILL.md](../SKILL.md), Never). It is report evidence, never a pass condition
-(author-tests' `e2e.md` reference).
+green e2e for it or a provider read ([SKILL.md](../SKILL.md), Never). It is report evidence, never a
+pass condition (author-tests' `e2e.md` reference).
 
 The resource tables the log prints during the assert are progress output, not a read-back: in the runs observed
 with up v0.55.0, none showed the XR `Ready` although the assert passed. Quote the assert's `PASS` line, never a
@@ -138,10 +138,19 @@ table as a resource's state.
 
 ### A provider read
 
-A provider read (the cloud's own API, by the resources' external ids) works from the moment those ids
-appear, in the XR's status or on the managed resources, until the assert sees `Ready`: nothing deletes the
-resources before then. Take it as soon as the ids appear, not at `Ready`: a read taken at `Ready` raced the
-delete and got NotFound (observed once with up v0.55.0).
+A provider read races the teardown: the last id can land about a second before the XR's `Ready`, the delete
+within 1–2 s after (observed with up v0.55.0). Never wait for all ids or for `Ready`: per managed resource kind,
+run the loop above with `get <kind>.<group> -n <namespace>` as the run starts, then this watch, reading each
+resource when its own external name appears:
+
+```bash
+kubectl --kubeconfig <kubeconfig> --request-timeout=600s get <kind>.<group> -n <namespace> -w \
+  -o jsonpath='{.metadata.name} {.metadata.annotations.crossplane\.io/external-name}{"\n"}' |
+while read -r name id; do                           # failed reads retry on the next change
+  [ -n "$id" ] && ! grep -qs "^$name " /tmp/e2e-<n>-provider.txt &&
+    out=$(<provider read of "$id">) && echo "$name $id $out" >> /tmp/e2e-<n>-provider.txt
+done
+```
 
 ## Evidence and cleanup
 
@@ -151,8 +160,8 @@ After the run the cluster is gone, so `kubectl get managed` no longer works. The
   cluster was deleted with managed resources on it: their cloud resources are orphaned (what `N` counts
   and what to report: `control-plane-project-charter/references/charter/targets.md`, Teardown and
   leftovers).
-- **A provider read taken during the run**, quoted. Without one, the report says "not verified at the
-  provider".
+- **A provider read taken during the run**, quoted. A resource it missed is "not verified at the provider":
+  never re-run a green e2e for it.
 - **Leftovers, checked in the provider's API** by the names or tags the test used, not in Kubernetes. Don't
   assume a provider CLI exists: `command -v <cli>` first, then use whatever is installed (observed: no `aws`
   CLI, but an SDK such as boto3). If neither is available, say the leftovers were not checked. A name or tag

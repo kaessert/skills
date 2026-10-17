@@ -212,7 +212,7 @@ Then:
   during the run as "read-back, not asserted" (how, on kind: [local.md](references/local.md), "Reading a
   status during the run").
 - **A claim about the provider comes from the provider:** its own read (CLI or SDK, whichever is installed),
-  taken before teardown (when: [local.md](references/local.md), "A provider read"), and quoted. Reading
+  taken before teardown (how: [local.md](references/local.md), "A provider read"), and quoted. Reading
   back the XR or your manifest proves only that your input round-tripped. Without that read, say "not
   verified at the provider".
 - **Cleanup:** the target's reference says what proves it.
@@ -233,9 +233,8 @@ Shape (templates in [report-templates.md](references/report-templates.md)):
 - Write a verdict from a poll, or report an outcome for a run that was terminated or cut off.
 - Derive a duration from file timestamps, or estimate one.
 - Report readiness or provider state you did not read.
-- Re-run a green e2e for the sole purpose of reading a status value: read it during the run, or report
-  "not read back". Re-running one for any other reason, to reproduce or verify it, is fine: each run gets
-  a fresh control plane.
+- Re-run a green e2e to take a missed status or provider read: report "not read back" or "not verified at
+  the provider". Re-running to reproduce a failure is fine: each run gets a fresh control plane.
 - Run an e2e test program by hand with real credentials, or print or save its output: it carries the
   credential Secret. Check or diff it with a dummy `UP_*` value (author-tests' `e2e.md` reference).
 - Local: connect to, apply to or delete a kind cluster or container this run did not create. Names
