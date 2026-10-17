@@ -89,8 +89,8 @@ function and the tests follow the XRD.
 An existing v1 API keeps its Kind when migrated, `X` prefix included: a new Kind is a new API
 ([`xrd-design.md`](xrd-design.md)).
 
-Keep writing the example XR first: it is the render input for tests and the fast tier, and
-drafting the API a user will write keeps the schema honest. Do not derive the schema from it.
+Keep writing the example XR first: it is the render input for tests, and drafting the API a
+user will write keeps the schema honest. Do not derive the schema from it.
 
 The import or type path that reaches these APIs is language-specific: see
 [`languages/`](../languages/). Run `up project build` after a provider version change to
@@ -107,15 +107,15 @@ the language's serializer emits.
 
 | Models | `managementPolicies` | `providerConfigRef` | Reaches the render? |
 |---|---|---|---|
-| Python | materialized (`= ['*']`) | materialized (`default_factory`) | **No** — `resource.update()` drops model defaults you never assigned (`exclude_defaults` on SDK 0.5.0/0.11.0, `exclude_unset` on 0.14.0) |
+| Python | materialized (`= ['*']`) | materialized (`default_factory`) | **No**, under the pinned SDK not even when assigned ([`patterns.md`](../languages/python/patterns.md#building-a-managed-resource)) |
 | KCL | materialized (`= ["*"]`) | not materialized | `managementPolicies` yes |
 | Go | not materialized | not materialized | no |
 
 So a Python render shows neither, and a KCL render shows `managementPolicies`. Both are
 correct, and neither tells you what the API server fills in on a real control plane. Never
-"fix" a function because a render shows or omits them, and never add them to an *expected*
-resource in a test: the test-side dump keeps what you set, so the assertion fails against a
-render that correctly omits it.
+"fix" a function because a render shows or omits them, and add them to an *expected* resource
+only where the function sets them: the test-side dump keeps what you set, so the assertion
+fails against a render that omits it.
 
 Both fields come from the same place: the embedded `ManagedResourceSpec` struct in
 crossplane-apis v2 (`core/v2/resource_namespace.go`), which every namespaced provider MR inlines.

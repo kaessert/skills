@@ -20,11 +20,11 @@ Use both tiers:
 
 | Tier | ~time | Catches |
 |---|---|---|
-| Fast — run the function body directly, if the language offers a way (see [`languages/`](../languages/); Python: `run_function.py`, Go: `go test ./...` against `RunFunction`) | ~1s | exceptions, wrong resource count, missing fields, the minimal-XR branch |
+| Fast — run the function body directly, if the language offers a way (see [`languages/`](../languages/); Python: the [`unittest` harness](../languages/python/tests.md#function-unit-tests), Go: `go test ./...` against `RunFunction`) | ~1s | exceptions, wrong resource count, missing fields, the minimal-XR branch |
 | Assertion — `up test run "tests/<t>"` | tens of seconds warm, minutes cold | everything the suite asserts — this is the one that goes RED and GREEN |
 
-The fast tier never replaces the RED/GREEN cycle: Python's asserts nothing, and Go's unit tests
-run no pipeline. It saves you a whole build to find a typo.
+The fast tier never replaces the RED/GREEN cycle: unit tests run no pipeline. It saves you a
+whole build to find a typo.
 
 ## Backfilling tests for code that already exists
 

@@ -4,16 +4,16 @@
 
 Nothing about the normal loop needs this: `up test run` and `up project build` run your
 function in a container with the project's own pins. This venv exists for two things —
-`run_function.py` (the fast tier) and your editor, which otherwise reports every
+the function unit tests (the fast tier) and your editor, which otherwise reports every
 `from models.io...` and `from crossplane.function import ...` as unresolved on completely
 correct code.
 
 Two rules decide the whole design, both verified rather than assumed:
 
 1. **Install from the project's own pins, never by package name.** `resource.update()`
-   serializes differently across SDK releases (0.5.0 `exclude_defaults` with no apiVersion/
-   kind re-add, 0.11.0 re-adds them, 0.14.0 switched to `exclude_unset`). A venv holding a
-   different SDK than the container is not a proxy for the real run.
+   serializes differently across SDK releases (control-plane-project-charter's
+   `languages/python.md`). A venv holding a different SDK than the container is not a proxy
+   for the real run.
 
 2. **Install the generated models LAST, and editable.** Every function and test
    `pyproject.toml` declares `crossplane-models @ file:./../../.up/python` as an ordinary
@@ -248,10 +248,6 @@ def main() -> int:
                 continue
             (installed if rc == 0 else failures).append((rel, lay, out))
             print(f"  {'ok  ' if rc == 0 else 'FAIL'}     {rel}  ({lay})")
-
-    # pyyaml is what run_function.py reads examples with. A test package pins it; a project
-    # with no tests yet does not.
-    run([*pip, "pyyaml"])
 
     # 2. Models LAST and editable, so regenerating them needs no reinstall. This has to
     #    come after the packages above, each of which would otherwise copy the models in.

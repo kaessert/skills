@@ -20,8 +20,7 @@ gone by the next.
 | Set up the venv, first | `python3 <author-composition>/scripts/setup_venv.py --project <root>`, right after `up function generate` ([below](#set-up-the-venv-first)) |
 | Probe the project | `python3 <author-composition>/scripts/probe_project.py --project <root> [<Kind>…]`: layout, import prefix, import lines, class names. Standard library only |
 | A Kind's fields | `python3 <author-composition>/scripts/probe_project.py --project <root> --fields <Kind>`: every `forProvider` field, list fields with misleadingly singular Upjet names (`attribute`, `globalSecondaryIndex`) flagged, and the cross-resource `*Ref`/`*Selector` fields. Its first line reports the project's generation |
-| Fast inner loop | `python3 <author-composition>/scripts/run_function.py --project <root> --minimal examples/<kind>/<xr-name>.yaml`: needs the venv. XRD defaults are not applied (unlike `up test run` with `xrdPath`), so give every required field, defaulted ones included |
-| Function unit tests | `.venv/bin/python -m unittest discover -s functions/<n>/tests -t functions/<n>`; layout and template in [`python/tests.md`](python/tests.md#function-unit-tests) |
+| Function unit tests (the fast tier) | `.venv/bin/python -m unittest discover -s functions/<n>/tests -t functions/<n>`; layout and template in [`python/tests.md`](python/tests.md#function-unit-tests) |
 
 ## Where everything is
 
@@ -43,7 +42,7 @@ installs). Run before any function exists, it installs no SDK and exits 1: "`mod
 `crossplane.function` still does not import". It takes about 11 s. Re-run it when
 you add a function or test directory; not after `up project build` (see "Models last" below).
 
-**Why, when the function never runs on your host:** the fast tier needs it, and without it an
+**Why, when the function never runs on your host:** the unit tests need it, and without it an
 editor underlines every correct import, inviting a "fix". A project with no venv still builds
 and goes green, so skipping it is the common mistake.
 
@@ -51,15 +50,13 @@ and goes green, so skipping it is the common mistake.
 |---|---|---|
 | The function, under `up test run` / `up project build` | container | no |
 | `probe_project.py` | host | no |
-| `run_function.py` (fast tier) | host | yes |
-| Your editor's language server | host | yes |
+| Function unit tests, your editor's language server | host | yes |
 
 **Build it from the project's own pins, not by package name.** `pip install
-crossplane-function-sdk-python` gets the newest release, and `resource.update()` has changed
-across versions: up to 0.12.0 it serializes with `exclude_defaults`, from 0.13.0 with
-`exclude_unset` (and `by_alias`); 0.5.0 and 0.6.0 also drop an unset `apiVersion`/`kind`,
-0.7.0 onwards add them back. `up function generate` (v0.55.0) pins 0.11.0. A fast tier running
-a different serializer from the container is not a proxy for the real run.
+crossplane-function-sdk-python` gets the newest release, and `resource.update()` serializes
+differently across versions ([`python/patterns.md`](python/patterns.md#building-a-managed-resource);
+0.5.0 and 0.6.0 also drop an unset `apiVersion`/`kind`). `up function generate` (v0.55.0) pins
+0.11.0. A unit test on another SDK than the container's is not a proxy for the real run.
 
 `setup_venv.py` creates `.venv` at the project root, installs every function and test directory
 from its own pins, installs the generated models editable and last, checks the imports resolve,
@@ -74,7 +71,6 @@ PYBIN=$(for v in 3.13 3.12 3.11; do command -v python$v && break; done)
 .venv/bin/pip install -r functions/<fn>/requirements.txt # embedded layout
 (cd tests/<t> && ../../.venv/bin/pip install -e .)       # every test dir, likewise
 .venv/bin/pip install -e .up/python                      # the models: last, editable
-.venv/bin/pip install pyyaml                             # run_function.py reads examples
 ```
 
 - **The `cd` is load-bearing.** pip resolves `crossplane-models @ file:./../../.up/python`

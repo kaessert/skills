@@ -73,10 +73,18 @@ Two things are Python-specific:
 
 - **`ProviderConfigRef` requires `kind`** in the Pydantic model. That constrains constructing
   one when the project asks for it; it is not a reason to construct one.
-- **What reaches the render depends on the SDK's serializer** ([`../python.md`](../python.md#set-up-the-venv-first)).
-  From 0.13.0 (`exclude_unset`) every field you set explicitly is emitted, including one set to
-  its default, such as `managementPolicies=["*"]`. Up to 0.12.0 (`exclude_defaults`) a value
-  equal to the model default is dropped. Either way: do not set what the CRD defaults.
+- **A value equal to the model default does not reach the render under the pinned SDK.** Up to
+  0.12.0 (`up function generate` pins 0.11.0; [`../python.md`](../python.md#set-up-the-venv-first))
+  `resource.update()` dumps a model with `exclude_defaults`, so even an assigned
+  `managementPolicies=["*"]` or `ClusterProviderConfig/default` ref is dropped; from 0.13.0
+  (`exclude_unset`) it is emitted. Don't set what the CRD defaults unless the project's API
+  passes it through (charter §5). Then pass a dump that keeps what you assigned, and assign it
+  only when the XR has a value (an assigned `None` renders as `null`):
+  ```python
+  data = desired_rg.model_dump(by_alias=True, exclude_unset=True)
+  data["apiVersion"], data["kind"] = desired_rg.apiVersion, desired_rg.kind  # unset, so dropped
+  resource.update(rsp.desired.resources["rg"], data)
+  ```
 
 ## Tags and other flexible maps
 
@@ -192,10 +200,10 @@ Fix it in one of two places:
    ```
 
 It bites only where nothing applies the XRD: `up test run` without `xrdPath`, bare
-`crossplane render`, and `run_function.py`. With `xrdPath` set, and on a real API server, the
+`crossplane render`, and a function unit test. With `xrdPath` set, and on a real API server, the
 `{}` becomes a model before the function runs, so a minimal-XR test does not catch it. Only a
-test with `xrdPath` deliberately unset proves the guard; if every test sets `xrdPath`, the guard
-is dead code.
+unit test or a test with `xrdPath` deliberately unset proves the guard; if every test sets
+`xrdPath`, the guard is dead code.
 
 None of this applies to a typed field, and defending against it anyway is dead code:
 `hasattr` on a Pydantic field is always `True`, and `isinstance(x, dict)` on a typed list element

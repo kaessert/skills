@@ -93,8 +93,8 @@ function body empty or unchanged.
 
 **Python:** before Phase 3, run what
 `control-plane-project-charter/references/languages/python.md` says with this skill's
-[`scripts/`](scripts/): `scripts/setup_venv.py`, `scripts/probe_project.py` (layout, imports,
-fields, generation) and `scripts/run_function.py` (the fast tier).
+[`scripts/`](scripts/): `scripts/setup_venv.py` and `scripts/probe_project.py` (layout,
+imports, fields, generation).
 
 **Never hand-derive an import path and never guess a provider field name.** Both are one
 command away.
@@ -153,9 +153,9 @@ The language file has the bootstrap and the syntax. Language-independent, in ord
    return (patterns.md: the guard-clause chain).
 
 For iterating on a crash rather than an assertion, use the fast tier where the language
-offers one (Python: `run_function.py`; Go: `go test ./...` in `functions/<n>/` — the scaffold's
-`fn_test.go` is an empty table that passes with zero cases, so add one before you count it).
-It supplements the loop and never replaces it.
+offers one (Python: `unittest` in `functions/<n>/tests/`; Go: `go test ./...` in
+`functions/<n>/` — the scaffold's `fn_test.go` is an empty table that passes with zero cases,
+so add one before you count it). It supplements the loop and never replaces it.
 
 ## Phase 6: REFACTOR and verify — coverage, not a green exit code
 

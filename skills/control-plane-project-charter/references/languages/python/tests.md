@@ -119,9 +119,10 @@ convention; projects vary (one embedded project uses `exclude_unset=True` withou
 1. Asserted resources carry `apiVersion` and `kind`, unlike resources a function builds.
 2. `metadata.namespace` is optional on an expectation: the render carries the XR's namespace,
    and assertions are partial.
-3. Do not set `managementPolicies=["*"]` on an expected resource: `exclude_unset` keeps what you
-   set, and the assertion then fails against a render that correctly omits it. No
-   `exclude={"spec": {"deletionPolicy"}}` either: the `.m.` Spec has no such field.
+3. Set `managementPolicies` or `providerConfigRef` on an expected resource only where the
+   function sets them (charter §5): `exclude_unset` keeps what you set, and whether the render
+   has a default-valued one depends on the function's dump ([`patterns.md`](patterns.md#building-a-managed-resource)).
+   No `exclude={"spec": {"deletionPolicy"}}` either: the `.m.` Spec has no such field.
 4. Never exclude `writeConnectionSecretToRef`: it is an API contract.
 
 ## Python-specific mistakes
@@ -130,7 +131,6 @@ convention; projects vary (one embedded project uses `exclude_unset=True` withou
 |---|---|
 | `exclude_none=True` on asserted resources (compares too much), or `exclude_unset=True` on the top-level test | asserted resources `exclude_unset=True`; top-level test `exclude_none=True` |
 | `up test generate` before `.up/python` exists: imports do not resolve | `up project build` first, so `crossplane-models` is wired into `pyproject.toml` |
-| A function sets, and a test asserts, `providerConfigRef` equal to the model default `{kind: ClusterProviderConfig, name: default}` | up to function-sdk-python 0.12.0 (`up function generate` pins 0.11.0) `resource.update()` dumps with `exclude_defaults`, so that value is missing from the render and the assertion fails; from 0.13.0 `exclude_unset` keeps it. Do not set or assert the default (charter §5); a non-default `providerConfigRef` the project asks for serializes under every version |
 
 ## Function unit tests
 
@@ -192,7 +192,7 @@ class TestRunFunction(unittest.TestCase):
             "apiVersion": "s3.aws.m.upbound.io/v1beta1", "kind": "Bucket",
             "status": {"atProvider": {"arn": "arn:aws:s3:::example"}},
         }})
-        status = resource.struct_to_dict(rsp.desired.composite.resource)["status"]
+        status = resource.struct_to_dict(rsp.desired.composite.resource).get("status")
         self.assertEqual(status, {"bucketArn": "arn:aws:s3:::example"})
         self.assertEqual(rsp.desired.resources["bucket"].ready, fnv1.READY_UNSPECIFIED)
 
