@@ -106,5 +106,5 @@ Run the two greps under "Grep your own function before you report" in
 ## What the report claims
 
 - The report names the layer reached — render, composition test, local control plane, cloud —
-  and claims nothing beyond it. A local kind run is not a Space result (§4, §8).
+  and claims nothing beyond it. A local kind run is not a Space result (§4, §8, §9).
 - Comments, docs and READMEs claim no more than a named test or run (§4).

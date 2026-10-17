@@ -87,6 +87,11 @@ kubectl --kubeconfig "$KCFG" get managed -A
 echo "kubeconfig: $KCFG"   # reuse the path as a value: the variable is gone by your next command
 ```
 
+Once the run has exited **and the [Leaks](#leaks) check is clean**, `rm -f <kubeconfig>`: the cluster it
+points at is gone, and the file is this run's leftover (charter §9). Until then keep it: a run that leaked (a
+setup failure, a panic, a killed run, `--skip-control-plane-cleanup`) left the cluster running, and cleaning it
+up needs this kubeconfig.
+
 Use `kind get kubeconfig`, not a kubeconfig `up` leaves in `/tmp`: observed with up v0.55.0,
 `/tmp/up-*.kubeconfig` was empty (0 bytes), and the test's own `/tmp/<test><random>/kubeconfig.yaml` was gone by
 the next read.
@@ -111,16 +116,16 @@ for _ in $(seq 1 60); do                            # until the XR exists, or th
     break
   sleep 5
 done
-timeout 600 kubectl --kubeconfig <kubeconfig> get <xr-kind> <xr-name> -n <namespace> -w \
+kubectl --kubeconfig <kubeconfig> --request-timeout=600s get <xr-kind> <xr-name> -n <namespace> -w \
   -o jsonpath='{.status.conditions[?(@.type=="Ready")].status} {.status}{"\n"}' >> /tmp/e2e-<n>-status.txt 2>&1
 grep '^True ' /tmp/e2e-<n>-status.txt | tail -1      # the last read taken while Ready
 ```
 
-The watch prints one line per change and ends with the cluster or at its timeout; size that to one command's
-timeout, and if it ends before `EXIT=` is in the log, start it again (it prints the current state first).
-**Never put `--request-timeout` on the `-w` watch:** kubectl applies it to the whole response, so the watch
-ends after that many seconds. Give every other `kubectl` call one: one without it hung for 150 s once the
-cluster was gone. A composed resource is read the same way, one watch per object.
+The watch prints one line per change and ends with the cluster or after 600 s: on a watch, kubectl applies
+`--request-timeout` to the whole response, so it is the time limit (stock macOS has no `timeout`). Size it to
+one command's timeout, and if it ends before `EXIT=` is in the log, start it again (it prints the current state
+first). Give every other `kubectl` call `--request-timeout`: one without it hung for 150 s once the cluster was
+gone. A composed resource is read the same way, one watch per object.
 
 Quote it as **"read-back, not asserted"**, with its `Ready` condition: a read while `Ready` is `False` can be
 partial. It is not a provider read. If the window was missed, report "not read back" rather than re-running a
