@@ -180,6 +180,13 @@ Two cases, *observed but not ready* and *observed and ready*, are what separate 
 check from an existence check in your assertions; with only the ready case, a function that
 never checks readiness passes.
 
+**The composite's `Ready` is the render's readiness check.** It is `False` (`Unready resources:
+<first three names, sorted>, and N more`) while any desired resource is not marked ready, unless
+the pipeline sets the composite's readiness itself (Crossplane v2.3.1 source). Assert the key
+`(conditions[?type == 'Ready'] | [0].status)` under the composite's `status`: `"True"` where every
+composed resource is observed ready, else `"False"`. That proves the function, or
+function-auto-ready, marks readiness.
+
 **3. Assert every `status` field the function writes, on the composite.** `assertResources`
 matches the composite ([§8](../../SKILL.md#8-a-green-run-is-not-evidence)). Without this, a
 status write that clobbers nested keys — writing the status more than once can drop all but the

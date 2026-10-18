@@ -151,6 +151,4 @@ Anything appended at the end inherits every guard above it: a resource added aft
 How to get and read `render.log`, and what `--debug` prints, is in
 [`charter/evidence.md`](../../charter/evidence.md). The Python-specific part: beside each test's `render.log`,
 in the directory the run prints, is `<function>.log`, the function container's output, where a
-Python traceback or `self.log` output lands. The XR's `status.conditions` message in
-`render.log` (`Unready resources: bucket, lifecycle, pab, and 2 more`) is a quick list of what
-rendered.
+Python traceback or `self.log` output lands.

@@ -3,7 +3,6 @@ name: control-plane-project-charter
 description: Shared rules and per-language references for the Upbound control-plane-project skills - agent behaviour, the test-first loop, what a v2 composed resource needs, the container boundary, what a green run proves, how to report, and the KCL, Python, TypeScript, Go, go-templating and YAML references. To review a change to a control-plane project ("review this change", "review the PR", "check this work"), load it on its own and open its references/charter/review.md, where the review checks are. To do the work, load it alongside the task skill (a task skill does not load it) - author-composition for composition function code, author-tests for composition or E2E tests, author-configuration-package for scaffolding, XRDs and dependencies, verify-configuration to build, verify or run the project, e2e-test-configuration to run E2E tests, and plan-v2-migration or execute-v2-migration for a Crossplane v2 migration.
 license: Apache-2.0
 references:
-  - references/charter/agent-context.md
   - references/charter/container.md
   - references/charter/evidence.md
   - references/charter/generators.md
@@ -76,10 +75,14 @@ How you were started decides whether you can ask anything; every skill's mode li
 **When nobody can answer, never block on a question** — that includes a caller that cannot
 relay one. Wherever a skill says to ask, read it with this rule.
 
-**Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) has what each
-context may and may not do, why a fork's only output channel is prose, and how to hand work to a
-sub-agent or run a long command when your harness cannot: in band and in the foreground, never
-detached by you.
+**A brief for a sub-agent, with no sub-agents:** follow it yourself, in this conversation; you
+are then inline.
+
+**Long commands** (an e2e run, a cold first build, a loop of `up test run`s): give the call a
+timeout no shorter than the command's worst case, since a killed `up` run can leave its kind
+cluster or containers behind. Put it in the background only with your harness's own facility,
+never detach it yourself (`&`, `nohup`), and make each wait on it as long as one call may run:
+every wait re-sends your context.
 
 ## 2. Discover, do not interview
 
@@ -273,7 +276,11 @@ whether the provider accepts the resource, and a composition test passes either 
 
 **Check every Kind you compose against its provider.** Read the conditional rules the
 generated models record in docstrings and field descriptions (`Required if …`, `Conflicts
-with …`): optional in the type means only that the CRD does not require it. Then check the
+with …`), and the CRD's CEL rules, which can require a field the model leaves optional. `up`
+caches each provider's CRDs at
+`~/.up/cache/xpkg.upbound.io/<org>/<package>@<version>/<plural>.<group>.yaml`, one directory per
+version pulled (take the one the build resolved); `grep -E '^ *(- )?(rule|message): ' <crd>`
+prints every `x-kubernetes-validations` rule (its first line) with its message. Then check the
 cloud API's own rules (name formats, reserved prefixes, create-only fields), and treat *one
 list element → one object* as a decision you justify, not the default.
 

@@ -132,21 +132,19 @@ One idiom on both targets; only the target flags differ:
   evidence. Without it you have nothing, and nothing is not a pass.
 - **Foreground** when the worst case fits the longest timeout your harness allows for one command: the call
   returns the complete log in one result.
-- **Otherwise in the background**, with your harness's own facility (charter §1; never detach it yourself with
-  `nohup` or `&`). **Whatever runs it in the background must not have a shorter timeout than the run:** give
-  it the worst case from Phase 3; a run cut off mid-install can leak its control plane (charter §1). Wait for
-  the process to exit with bounded waits only:
+- **Otherwise in the background**, with your harness's own facility and **the worst case from Phase 3 as its
+  timeout**: a run cut off mid-install can leak its control plane (charter §1). Wait for the process to exit
+  with bounded waits only:
 
   ```bash
   for _ in $(seq 1 30); do grep -q '^EXIT=' /tmp/e2e-<n>.log && break; sleep 20; done
   tail -5 /tmp/e2e-<n>.log
   ```
 
-  Size each wait to fit one command's timeout, and repeat until `EXIT=` is in the log. Never an unbounded
-  `until grep …`: if the marker never arrives, it waits until the harness kills it. If the process is gone
-  (`pgrep -f '[u]p test run'` prints nothing) and there is no `EXIT=` line, the run was cut off: report what it
-  reached, not an outcome. With no background facility, run in the foreground with the longest timeout you
-  have, and treat a timeout the same way.
+  Repeat it until `EXIT=` is in the log. Never an unbounded `until grep …`: if the marker never arrives, it
+  waits until the harness kills it. If the process is gone (`pgrep -f '[u]p test run'` prints nothing) and
+  there is no `EXIT=` line, the run was cut off: report what it reached, not an outcome. With no background
+  facility, run in the foreground with the longest timeout you have, and treat a timeout the same way.
 - **Never write a verdict from a poll.** A partial log is a progress view: resources routinely reach `Ready`
   after your last look. The run is over only when `EXIT=` is in the log.
 - If you stop a run early (wrong target, stuck with a terminal cause), say it was **terminated** and why. A

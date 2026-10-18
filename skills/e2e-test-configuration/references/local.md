@@ -122,8 +122,8 @@ grep '^True ' /tmp/e2e-<n>-status.txt | tail -1      # the last read taken while
 ```
 
 The watch prints one line per change and ends with the cluster or after 600 s: on a watch, kubectl applies
-`--request-timeout` to the whole response, so it is the time limit (stock macOS has no `timeout`). Size it to
-one command's timeout, and if it ends before `EXIT=` is in the log, start it again (it prints the current state
+`--request-timeout` to the whole response, so it is the time limit (stock macOS has no `timeout`). Size it as a
+wait (charter §1), and if it ends before `EXIT=` is in the log, start it again (it prints the current state
 first). Give every other `kubectl` call `--request-timeout`: one without it hung for 150 s once the cluster was
 gone. A composed resource is read the same way, one watch per object.
 
