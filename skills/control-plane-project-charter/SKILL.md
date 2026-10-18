@@ -23,7 +23,6 @@ references:
   - references/languages/kcl/pitfalls.md
   - references/languages/kcl/tests.md
   - references/languages/python.md
-  - references/languages/python/examples.md
   - references/languages/python/imports.md
   - references/languages/python/patterns.md
   - references/languages/python/pitfalls.md

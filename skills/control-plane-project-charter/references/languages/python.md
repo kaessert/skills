@@ -31,7 +31,6 @@ gone by the next.
 | [`python/readiness.md`](python/readiness.md) | observed resources by composition key, connection Secrets, ProviderConfig readiness, safe conditional creation, the early-return chain |
 | [`python/tests.md`](python/tests.md) | the coverage shapes in Python syntax, the dump modes, assertion rules, function unit tests |
 | [`python/test-templates.md`](python/test-templates.md) | composition-test and E2E-test templates, SDK and embedded |
-| [`python/examples.md`](python/examples.md) | two complete functions and an `upbound.yaml` |
 | [`python/pitfalls.md`](python/pitfalls.md) | mistakes that give a green run and a broken platform, and the errors they print |
 
 ## Set up the venv first

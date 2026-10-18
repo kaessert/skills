@@ -68,7 +68,17 @@ elif "mysql" in req.observed.resources:
 ```
 
 `connection_details` values are bytes: `.decode()` them for `stringData`, or base64-encode them
-for `data`. The `k8s` core models need the `k8s` API dependency in `upbound.yaml` ([`examples.md`](examples.md#upboundyaml)).
+for `data`. The `k8s` core models (`models.io.k8s.api.core`) exist only with the `k8s` API
+dependency in `upbound.yaml`, then `up project build`:
+
+```yaml
+spec:
+  apiDependencies:
+  - type: k8s
+    k8s:
+      version: v1.33.0
+```
+
 A test reaches this branch only with `observedResources`, and never with a password: no render
 passes connection details. Assert `writeConnectionSecretToRef` on the composed `mysql` instead
 ([`charter/v2-resources.md`](../../charter/v2-resources.md)).
