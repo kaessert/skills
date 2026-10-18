@@ -129,7 +129,7 @@ gone. A composed resource is read the same way, one watch per object.
 
 Quote it as **"read-back, not asserted"**, with its `Ready` condition: a read while `Ready` is `False` can be
 partial. It is not a provider read. If the window was missed, report "not read back" rather than re-running a
-green e2e for it or a provider read ([SKILL.md](../SKILL.md), Never). It is report evidence, never a
+green e2e for it or for a provider read ([SKILL.md](../SKILL.md), Never). It is report evidence, never a
 pass condition (author-tests' `e2e.md` reference).
 
 The resource tables the log prints during the assert are progress output, not a read-back: in the runs observed
@@ -146,9 +146,9 @@ resource when its own external name appears:
 ```bash
 kubectl --kubeconfig <kubeconfig> --request-timeout=600s get <kind>.<group> -n <namespace> -w \
   -o jsonpath='{.metadata.name} {.metadata.annotations.crossplane\.io/external-name}{"\n"}' |
-while read -r name id; do                           # failed reads retry on the next change
+while read -r name id; do              # reads run in parallel; failed reads retry on the next change
   [ -n "$id" ] && ! grep -qs "^$name " /tmp/e2e-<n>-provider.txt &&
-    out=$(<provider read of "$id">) && echo "$name $id $out" >> /tmp/e2e-<n>-provider.txt
+    out=$(<provider read of "$id">) && echo "$name $id $out" >> /tmp/e2e-<n>-provider.txt &
 done
 ```
 

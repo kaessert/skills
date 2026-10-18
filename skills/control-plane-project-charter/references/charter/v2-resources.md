@@ -107,15 +107,15 @@ the language's serializer emits.
 
 | Models | `managementPolicies` | `providerConfigRef` | Reaches the render? |
 |---|---|---|---|
-| Python | materialized (`= ['*']`) | materialized (`default_factory`) | **No**, under the pinned SDK not even when assigned ([`patterns.md`](../languages/python/patterns.md#building-a-managed-resource)) |
+| Python | materialized (`= ['*']`) | materialized (`default_factory`) | **No** from a model, under the pinned SDK even when assigned ([`patterns.md`](../languages/python/patterns.md#building-a-managed-resource)) |
 | KCL | materialized (`= ["*"]`) | not materialized | `managementPolicies` yes |
 | Go | not materialized | not materialized | no |
 
-So a Python render shows neither, and a KCL render shows `managementPolicies`. Both are
+So a rendered Python model shows neither, and a KCL render shows `managementPolicies`. Both are
 correct, and neither tells you what the API server fills in on a real control plane. Never
 "fix" a function because a render shows or omits them, and add them to an *expected* resource
-only where the function sets them: the test-side dump keeps what you set, so the assertion
-fails against a render that omits it.
+only where the function sets them and its render carries them: an expected field the render
+omits fails the assertion.
 
 Both fields come from the same place: the embedded `ManagedResourceSpec` struct in
 crossplane-apis v2 (`core/v2/resource_namespace.go`), which every namespaced provider MR inlines.

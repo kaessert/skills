@@ -90,7 +90,7 @@ A failure to match reads as `no actual resource found: <group>/<version>/<Kind>/
 trailing slash means the expectation named no name. Observed with up v0.55.0, an expectation
 that names an annotation the resource lacks, or gives it another value, fails the same way, with
 no field diff. Annotations the expectation doesn't name are ignored: an extra annotation never
-breaks a match (to assert absence: below). Labels and every other field are compared only
+breaks a match (how to assert absence: below). Labels and every other field are compared only
 after the match, and a mismatch there prints `* <path>: Invalid value`.
 
 `assertResources` ignores what it does not list, so a *surplus* resource is invisible: a
@@ -124,7 +124,7 @@ key passes. A plain `field: null` fails on an absent field
 (`Required value: field not found in the input object`) and `tags: {}` matches any map: neither
 asserts absence (probed with up v0.55.0). An expression key inside `metadata.annotations` turns
 annotation matching off for that expectation, so it is compared with an arbitrary resource of its
-kind; put it under `metadata`, quoting a dotted key:
+kind (and name, if given); put it under `metadata`, quoting a dotted key:
 `(annotations."crossplane.io/external-name" == null): true`. A typed model (Go struct, KCL
 schema, Pydantic model) can't carry the key: write that level as a plain map, or use a unit test
 on the desired state (Go, Python).
