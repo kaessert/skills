@@ -110,7 +110,6 @@ reference. This template is the Python syntax for the static-Secret (local contr
 import os
 import sys
 import yaml
-from models.io.k8s.api.core import v1 as corev1
 from models.io.k8s.apimachinery.pkg.apis.meta import v1 as k8s
 from models.io.upbound.dev.meta.e2etest import v1alpha1 as e2etest
 from models.io.upbound.m.azure.clusterproviderconfig import v1beta1 as pcv1beta1
@@ -122,12 +121,11 @@ from models.io.example.platform.network import v1alpha1 as networkv1alpha1
 azure_creds = os.environ.get("UP_AZURE_CREDENTIALS") or sys.exit(
     "UP_AZURE_CREDENTIALS is not set: set it for up test run --e2e; to read this output by hand, set it to x")
 
-azure_secret = corev1.Secret(
-    apiVersion="v1",
-    kind="Secret",
-    metadata=k8s.ObjectMeta(name="azure-creds", namespace="crossplane-system"),
-    stringData={"credentials": azure_creds},          # plain text; Kubernetes base64-encodes it
-)
+azure_secret = {
+    "apiVersion": "v1", "kind": "Secret",
+    "metadata": {"name": "azure-creds", "namespace": "crossplane-system"},
+    "stringData": {"credentials": azure_creds},      # plain text; Kubernetes base64-encodes it
+}
 
 # ClusterProviderConfig/default: cluster-scoped (no namespace), the default every composed MR
 # falls back to when it sets no providerConfigRef.
@@ -161,7 +159,7 @@ test_e2e = e2etest.E2ETest(
         crossplane=e2etest.Crossplane(autoUpgrade=e2etest.AutoUpgrade(channel="Stable")),
         defaultConditions=["Ready"],
         extraResources=[                    # applied before the manifests, never asserted
-            azure_secret.model_dump(by_alias=True, exclude_none=True),
+            azure_secret,
             provider_config.model_dump(by_alias=True, exclude_none=True),
         ],
         manifests=[                         # resources under test, at least one
@@ -173,14 +171,4 @@ test_e2e = e2etest.E2ETest(
 )
 
 print(yaml.dump({"items": [test_e2e.model_dump(by_alias=True, exclude_none=True)]}))
-```
-
-The `k8s` core models (`Secret` and the rest) need the `k8s` API dependency in `upbound.yaml`:
-
-```yaml
-spec:
-  apiDependencies:
-  - type: k8s
-    k8s:
-      version: v1.33.0
 ```

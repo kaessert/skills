@@ -6,10 +6,11 @@ this file is the Python syntax for it. Templates are in [`test-templates.md`](te
 the Python index is [`../python.md`](../python.md).
 
 Field names, import paths and class names come from `probe_project.py --fields <Kind>`
-([`../python.md`](../python.md)), not from `ls` or `grep` under `.up/python`. It takes Kinds
-and shows an XR's spec one level deep: read a nested class of your own XR in its model file,
-`.up/python/models/<reversed-group>/<kind, lowercased>/<version>.py`. Passed a class name, the probe answers
-`NOT FOUND … up dep add`, which means "not a Kind", not a missing dependency.
+([`../python.md`](../python.md)). It takes Kinds and prints `forProvider` (an XR's `spec`) one
+level deep and the `*Ref`/`*Selector` names. For the rest (a nested class, a selector's fields,
+`atProvider`), read the module its import line names:
+`.up/python/models/<reversed-group>/<kind, lowercased>/<version>.py`. Passed a class name, the
+probe answers `NOT FOUND`, which means "not a Kind", not a missing dependency.
 
 ## The coverage shapes in Python
 
@@ -131,6 +132,7 @@ convention; projects vary (one embedded project uses `exclude_unset=True` withou
 |---|---|
 | `exclude_none=True` on asserted resources (compares too much), or `exclude_unset=True` on the top-level test | asserted resources `exclude_unset=True`; top-level test `exclude_none=True` |
 | `up test generate` before `.up/python` exists: imports do not resolve | `up project build` first, so `crossplane-models` is wired into `pyproject.toml` |
+| A mutant through the model (it drops a keyword the Kind lacks: render unchanged) or a nested `resource.update` (it replaces the sibling keys: red for the wrong reason) | `d = resource.struct_to_dict(r.resource)`, change one key in `d`, `resource.update(r, d)` |
 
 ## Function unit tests
 

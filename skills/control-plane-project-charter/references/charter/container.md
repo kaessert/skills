@@ -12,7 +12,7 @@ runs, and which environment it sees, depends on the test language (up v0.55.0 so
 |---|---|---|
 | KCL | container (`kcl run -o test.yaml`) | only `UP_*` variables, no `~/.aws` |
 | Python, embedded (`main.py`) | container (`uptestpyrunner`) | only `UP_*` variables, no `~/.aws` |
-| Python, SDK (`pyproject.toml`) | container (`hatch run test`) | only `UP_*` variables, no `~/.aws` |
+| Python, SDK (`pyproject.toml`) | container (`hatch run test`) | only `UP_*` variables, no `~/.aws`; the project at `/project`, CWD `/project/tests/<dir>` |
 | Go | **locally** — `go mod tidy` then `go run .`, in the test dir | your full environment and your real files |
 | go-templating | **locally** — in-process, inside `up` | `up`'s own environment, through Sprig's `env` |
 | YAML | **locally** — in-process, no container | nothing; static YAML reads no input |

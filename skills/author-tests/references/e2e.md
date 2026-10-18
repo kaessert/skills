@@ -150,7 +150,7 @@ import (
 )
 
 const (
-	exampleXR = "../../examples/<kind>/<xr-name>.yaml" // CWD is tests/e2etest-<n>/; find the file
+	exampleXR = "../../examples/<kind>/<xr-name>.yaml" // find the file
 	namespace = "default"                              // the example XR's metadata.namespace
 	credsVar  = "UP_AWS_CREDENTIALS"                   // INI file contents; UP_ by convention
 )
