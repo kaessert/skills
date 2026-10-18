@@ -1,8 +1,8 @@
 # E2E troubleshooting
 
 Read when a run is stuck or has failed, or before you call an error terminal. [SKILL.md](../SKILL.md) has
-the workflow; how to reach the control plane while it exists is in [local.md](local.md) or
-[space.md](space.md); the report shapes are in [report-templates.md](report-templates.md).
+the workflow and the report shapes; how to reach the control plane while it exists is in
+[local.md](local.md) or [space.md](space.md).
 
 ## Transient or terminal?
 
