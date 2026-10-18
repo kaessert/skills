@@ -130,65 +130,28 @@ Upjet gives some list fields misleadingly **singular** names — `attribute`,
 
 ---
 
-## Pattern: namespace propagation
+## Namespaces, connection details, ProviderConfig readiness
 
-With a namespaced XR, Crossplane sets every composed resource's `metadata.namespace` to the
-XR's, overwriting whatever the function set: managed resources, child XRs, and a `Secret` or
-`ConfigMap` you compose yourself alike. So omit it (`control-plane-project-charter` §5).
+The rules live in the charter; the code is in the language file.
 
-You choose a namespace in two cases only: a **cluster-scoped XR**, whose composed resources
-keep the namespace the function sets, and an object **embedded inside `forProvider`** (the
-`manifest` of a provider-kubernetes `Object`), which nothing fills in.
-
----
-
-## Pattern: connection details
-
-**Access observed resources by composition key**, not by the resource's rendered name. The
-key is the string you used in `rsp.desired.resources["key"]`; the rendered name is derived
-and includes a hash suffix.
-
-In v2 there is no `writeConnectionSecretsToNamespace` on the composition. To surface
-credentials, compose the `Secret` yourself (it lands in the XR's namespace), gathering values
-from the observed resources' connection details. Those arrive only from a composed resource
-that sets `writeConnectionSecretToRef`, and are empty until the provider writes that Secret, so
-compose the `Secret` only once every value is present, never with a fallback
-(`control-plane-project-charter` §5; the language file has the code).
-
-**That branch does not execute in a composition test.** It reads observed state, and a local
-render has none. `observedResources` reaches the status values but never the connection
-details, which no render passes: assert `writeConnectionSecretToRef` on the composed resource,
-and report the values as unverified
-(`control-plane-project-charter/references/charter/v2-resources.md`).
-
----
-
-## Pattern: ProviderConfig readiness
-
-The function must mark ready explicitly anything `function-auto-ready` cannot judge, such as a
-ProviderConfig you compose (a Helm or Kubernetes ProviderConfig pointing at a cluster you just
-created), or the XR never becomes ready. Setting the flag before or after writing the resource
-makes no difference (measured on function-sdk-python 0.11.0 and 0.5.0).
+- **Namespaces:** omit `metadata.namespace` on everything a namespaced XR composes, child XRs
+  and Secrets included: Crossplane overwrites it. The two exceptions are in charter §5.
+- **Connection details:** a v2 XR publishes none (no `writeConnectionSecretsToNamespace`), so
+  compose the Secret yourself from the observed resources' details, read by composition key.
+  When they arrive, and what no render shows: charter §5 and
+  `control-plane-project-charter/references/charter/v2-resources.md`.
+- **A composed ProviderConfig**, or anything else `function-auto-ready` cannot judge: mark it
+  ready explicitly, or the XR never becomes ready.
 
 ---
 
 ## Pattern: flexible maps
 
-Tags, labels and annotations are user-supplied key-value maps. Two things go wrong:
-
-1. **The XRD declares them with fixed `properties` instead of `additionalProperties`.** Every
-   key the user did not supply materialises as a null, which typed languages reject at parse
-   time — and it is what a schema inferred from an example always produces. Write the XRD:
-
-   ```yaml
-   tags:
-     type: object
-     additionalProperties:
-       type: string
-   ```
-
-2. **The value is passed straight through** as the language's schema object rather than a
-   plain map. Convert explicitly before assigning it.
+Tags, labels and annotations are user-supplied key-value maps. Declare them in the XRD with
+`additionalProperties: {type: string}`. With fixed `properties`, which a schema inferred from an
+example always has, every key the user did not supply materialises as a null that typed
+languages reject at parse time. Convert the value to the language's plain map before
+assigning it.
 
 **Label values must also be Kubernetes-legal** — no `/` or `:`, max 63 characters. Sanitize
 user-supplied tags before using them as labels.
@@ -200,9 +163,8 @@ user-supplied tags before using them as labels.
 Where a language offers a merge (KCL's `|`, a spread, a dict update), **the later operand
 wins**: defaults first, specifics last.
 
-Some "update" operations are *replacements* at the nested level rather than deep merges, so
-two successive writes to `status` leave only the second. Write one call with all the keys.
-See the language file.
+Some "update" operations replace at the nested level, so two writes to `status` leave only
+the second: write one call with all the keys (the language file).
 
 ---
 
@@ -215,9 +177,6 @@ See the language file.
 ---
 
 ## A green test with a misbehaving resource
-
-Reviewing function code, or checking your own before you report: the checks are in
-`control-plane-project-charter/references/charter/review.md`.
 
 **When a test passes but the resource misbehaves on a control plane:**
 1. Read the render (`control-plane-project-charter/references/charter/evidence.md`) — the test
