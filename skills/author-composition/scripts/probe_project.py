@@ -309,8 +309,10 @@ def main() -> int:
             else:
                 print(f"{kind}: NOT FOUND in the model tree, and no XRD in apis/ defines "
                       f"it. If it belongs to a provider, add it (`up dep add <xpkg ref>` "
-                      f"then `up project build`). If it is meant to be this project's "
-                      f"own XR, its XRD is missing.")
+                      f"then `up project build`). A Crossplane type such as ManagedResourceActivationPolicy "
+                      f"comes from `up dep add --api crossplane:<tag>` instead: read "
+                      f"author-configuration-package's mrap.md reference first. If it is meant "
+                      f"to be this project's own XR, its XRD is missing.")
             exit_code = 2  # requested Kind not found
             continue
         # Namespaced (.m.) models first, then newest version first.
@@ -336,10 +338,14 @@ def main() -> int:
             # A project's own XR reverses into io.upbound.* too when its group ends in
             # upbound.io, and an XRD legitimately serves v1 — only flag provider models.
             is_own_xr = kind.lower() in own_kinds
-            non_namespaced = (not is_own_xr
+            # up's own test and meta models (E2ETest, CompositionTest) serve v1 and v2 alike.
+            up_meta = dotted.startswith("io.upbound.dev.")
+            non_namespaced = (not is_own_xr and not up_meta
                               and dotted.startswith("io.upbound")
                               and ".m." not in f".{dotted}.")
-            if non_namespaced and generation == "v1":
+            if up_meta:
+                tag = "  <- USE THIS" if i == 0 and not ambiguous else ""
+            elif non_namespaced and generation == "v1":
                 tag = ("  <- USE THIS (this project is Crossplane v1)" if i == 0
                        else "")
             elif non_namespaced and generation == "mixed":
