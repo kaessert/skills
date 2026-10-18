@@ -52,17 +52,10 @@ replaces every occurrence; there is no `replaceAll` (`function "replaceAll" not 
 ranges in sorted key order, so iterate the XR's own list when its order matters.
 
 **Testing a Fatal.** `up` has no unit-test tier for go-templating, and a CompositionTest cannot
-assert a Fatal (author-tests, "A Fatal result"). A one-off `up test run` of a CompositionTest whose
-input reaches the `fail` exits 1 and prints the message (observed, up v0.55.0):
-
-```text
-pipeline step "network" returned a fatal result: cannot execute template: template: manifests:38:21:
-executing "manifests" at <fail (printf …)>: error calling fail: <your message>
-```
-
-That scratch test directory has to sit under `tests/`: `up test run` globs patterns relative to
-the project's tests folder, so a path outside it prints `No test files found` and exits 0 (up
-v0.55.0 source).
+assert a Fatal (author-tests, "A Fatal result"). Render the input instead (`up composition render`,
+[`evidence.md`](../charter/evidence.md#reading-the-render)): it exits 1 with
+`error calling fail: <your message>` on stderr (up v0.55.0). Match the message: a template parse
+error (`cannot parse the provided templates`) is a Fatal too.
 
 ## Tests
 
@@ -89,8 +82,8 @@ other tests use.
 
 ### Composition test template (`tests/test-<n>/test.yaml.gotmpl`)
 
-Two cases of one input branch, each with an absence guard on the composite (`resourceRefs` is a list, and
-lists match exactly), and a guard that turns a misspelt case key into a generation error:
+Two cases, two input shapes (versioning adds a resource), so each carries its shape's one `resourceRefs`
+guard; plus a guard that turns a misspelt case key into a generation error:
 
 ```yaml
 # code: language=yaml
@@ -125,7 +118,7 @@ items:
         versioning: {{ $case.versioning }}
     assertResources:
     # The composite's resourceRefs is a list, and lists match exactly: a surplus composed resource fails here.
-    # Names copied from render.log (up test run … --function-logs; renders are deterministic).
+    # Names copied from <run dir>/<test metadata.name>/render.log (up test run … --function-logs).
     - apiVersion: demo.example.org/v1alpha1
       kind: Bucket
       metadata:
@@ -180,8 +173,9 @@ Observed-state tests add `observedResources` to a case exactly as in [`yaml.md`]
 
 **Indentation is the other trap.** A value that is itself a structure is safest as `{{ toJson $v }}` on one
 line (JSON is valid YAML), and `{{-` / `-}}` trimming decides whether a block lands where you think. When a
-template change makes a test pass or fail unexpectedly, render the template alone and read the YAML before
-changing the expectation.
+template change makes a test pass or fail unexpectedly, or a parse error cites `yaml: line N`, read the
+generated YAML before changing the expectation. `up` never prints it, not even with `--debug`: render the
+files yourself with Go `text/template` and `sprig.TxtFuncMap()`, nil data, `\n---\n` after each file.
 
 ### E2E tests
 

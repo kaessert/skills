@@ -56,12 +56,9 @@ An expected resource is matched on **`apiVersion` + `kind` + `metadata.name`, pl
 annotation the expectation names** (up v0.55.0 source). For the name:
 
 - **Your function sets it:** assert it.
-- **Crossplane generates it, and the kind appears once in the render:** omit `metadata.name`.
-  An omitted name matches whatever was rendered.
-- **Crossplane generates it, and the kind appears more than once:** assert each one by the name
-  copied from the render, or omit the name and assert its `crossplane.io/composition-resource-name`
-  annotation, so each expectation matches exactly one resource. The annotation is the key your
-  function stores the resource under, so that expectation can be written before the first render.
+- **Crossplane generates it:** omit `metadata.name` while the kind appears once in the render; an
+  omitted name matches whatever was rendered. A kind that appears more than once: author-tests,
+  "Pin a kind that renders more than once".
 
 **A generated name can't be written before its resource renders.** The renderer's uid is
 internal, so don't derive the hash, and don't predict the `resourceRefs` order either: it is
@@ -106,12 +103,13 @@ It is the one assertion that catches a resource nothing else names. Its order is
 renderer's and is not part of any published contract: an upstream reordering breaks the
 assertion loudly rather than letting a real surplus through, the safe direction.
 
-**One exact `resourceRefs` assertion per input shape, not per case.** Give each distinct composed
-set (the shipped example, the minimal XR, each branch that adds or drops a resource) one guard;
-other cases of that shape, and sibling suites rendering it, leave it out. Every exact list
-changes when a resource is added, so a guard in every case turns each new resource into an edit
-of every suite. A function unit test that asserts the exact set of names (Go:
-`languages/go/functions.md`, unit-test template) guards surplus resources too.
+**One exact `resourceRefs` assertion per input shape, not per case.** A shape is the set of
+composition resource names an input renders: inputs that differ only in values, or in the XR's
+name, share one. Give each shape (the shipped example, the minimal XR, each branch that adds or
+drops a resource) one guard; other cases of that shape, and sibling suites rendering it, leave it
+out. Every exact list changes when a resource is added, so a guard in every case turns each new
+resource into an edit of every suite. A function unit test that asserts the exact set of names
+(Go: `languages/go/functions.md`, unit-test template) guards surplus resources too.
 
 **Absent fields and surplus map keys take an expression key.** `up test run` checks each
 expectation with chainsaw's assertion trees (up v0.55.0 source): a key in parentheses is a

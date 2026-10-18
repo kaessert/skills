@@ -80,7 +80,7 @@ wire; the XRD is the one file you write (Phase 3).
 | Command | Input → Output |
 |---|---|
 | `up project init <name>` | interactive wizard → a whole working project (below) |
-| `up example generate [<xrd>]` | wizard, or an XRD → `examples/<kind-lowercase>/<xr-name>.yaml`; the name defaults to the lowercase Kind (`examples/network/network.yaml`, up v0.55.0). Find the file; don't assume `example.yaml` |
+| `up example generate [<xrd>]` | wizard or flags → `examples/<kind-lowercase>/<name>.yaml`. Given an XRD: always `<kind-lowercase>.yaml`, named `<kind-lowercase>` in `default` with placeholder values, whatever `--name`/`--namespace` say. `--path` is relative to `examples/` (up v0.55.0). Find the file; don't assume `example.yaml` |
 | `up xrd generate <example.yaml>` | an example XR → an inferred `apis/<plural>/definition.yaml` + language models. Not for the XRD you ship (Phase 3) |
 | `up composition generate <xrd\|xr>` | XRD or XR → `apis/<plural>/composition.yaml`, and adds the required function packages as dependencies |
 | `up function generate <name> [<pipeline-path>]` | → `functions/<name>/…`, and wires it into that composition's pipeline. On an existing `functions/<name>` it prompts to overwrite and, without a TTY, cancels: wire the step by hand (`control-plane-project-charter/references/charter/generators.md`) |

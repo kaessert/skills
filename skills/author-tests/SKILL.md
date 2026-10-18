@@ -118,7 +118,7 @@ writing a test: it carries the templates and the silent failure modes.
 
 ## Phase 3: Write the assertion that has to fail
 
-Four things make an assertion bite:
+Five things make an assertion bite:
 
 | | |
 |---|---|
@@ -126,13 +126,13 @@ Four things make an assertion bite:
 | **Assert on the composite too.** | Every `status` field the function writes needs an assertion on the XR itself. It is the only programmatic check on composition outputs. |
 | **Cover the minimal XR.** | Use the inline `xr` field with every optional property omitted. That is the shape a real user writes first, and the one the scaffold never generates. |
 | **Use distinguishing inputs.** | Every parameter the function passes through (region, config names, CIDRs, the XR's own name, …) gets a non-default value, unique across fields, in at least one test; a required field with no default needs two tests with different values, and so does a field every test sets to the same value. An input equal to the default or to a sibling field can't tell pass-through from a hard-coded constant. Backfill check: `control-plane-project-charter/references/charter/tdd.md`. |
+| **Pin a kind that renders more than once.** | Give each of its expectations the `crossplane.io/composition-resource-name` annotation (the function's key for it, so writable before the first render) or the name copied from the render. Otherwise every one is compared with the first rendered resource of that kind only (up v0.55.0 source). |
 
 - **Define the XR inline** where the format supports it, with `namespace: default` (v2).
 - **Assert list membership on the parsed list**, not by substring matching on a joined string:
   a short token matches inside a longer one (`db` inside `db-subnet-group`).
 - **Composed-resource names:** never guess one; the naming rule is in
-  `control-plane-project-charter/references/charter/evidence.md`
-  ([test-model.md, mistake 1](references/test-model.md#1-guessed-composed-resource-names)).
+  `control-plane-project-charter/references/charter/evidence.md`.
 - **Managed resources in a test follow binding rule 4**, written as the import path in KCL,
   Python and Go and as the `apiVersion` string in YAML. Assert `providerConfigRef` and
   `managementPolicies` only where the project's spec or API sets them (whether a render keeps

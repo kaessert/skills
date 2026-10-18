@@ -203,8 +203,9 @@ class TestRunFunction(unittest.TestCase):
 ```
 
 "Nothing composed" is measurable because `response.to(req)` copies the request's desired state,
-which this request does not have. Numbers come back from a `Struct` as floats (`5432.0`), which
-`assertEqual` treats as equal to `5432`. Checked: with the Fatal branch disabled,
+which this request does not have. Numbers come back from a `Struct` as floats (`5432.0`: protobuf
+`Struct` numbers are doubles), so `assertEqual` against `5432` passes and `isinstance(v, int)` is
+`False`. Checked: with the Fatal branch disabled,
 `test_missing_region_is_fatal` fails. `self.log` lines (`[info] Running function`) in the output are
 the scaffold's logger, not failures.
 
