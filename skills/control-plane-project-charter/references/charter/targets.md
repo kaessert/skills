@@ -233,9 +233,8 @@ plane as left running, and why.
 `Cleanup summary: N deleted, M remaining` with `M` above 0 means `M` of the test's resources went
 with the control plane, and every managed resource among them left its cloud resource orphaned:
 the `Resource cleanup details` table after it gives each one's `NAME` and `EXTERNAL-NAME`. Report
-them as leftovers to remove in the cloud. `N` counts only what was left when `up`'s cleanup
-started, after the test's own delete step (source), so `0 remaining` doesn't show that every
-cloud resource is gone: only a check in the provider's API does. A test whose managed resources'
+them as leftovers to remove in the cloud. What `N` counts: e2e-test-configuration's `local.md`
+(Evidence and cleanup). A test whose managed resources'
 `managementPolicies` lack `Delete` (set through the XR, say) orphans by design: it passes with
 `0 deleted, 0 remaining` and every cloud resource stays (observed with up v0.55.0), on every run.
 Test that policy's pass-through in a composition test rather than an E2ETest.

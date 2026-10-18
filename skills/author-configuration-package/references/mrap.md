@@ -18,13 +18,15 @@ a wildcard prefix (`*.aws.m.upbound.io`), not a regular expression. Observed wit
   `activate` entries are not checked against any CRD. Whether it ships is in the package's
   `package.yaml` ([SKILL.md](../SKILL.md), Phase 9); whether it works, verify on a control plane.
 - **The default policy hides its effect.** UXP's default MRAP activates `*`. To see yours, start
-  the control plane with the Crossplane Helm value `provider.defaultActivations: []` (e.g.
-  `up project run --local --helm-values <file>`; charter §9 decides whether you may) and check
-  that exactly the MRDs you listed are Active. So an E2E run, or any control plane started with
-  the default, proves the MRAP installs, not that it activates what you listed.
+  the control plane without it (`up project run --local --no-default-mrap`; charter §9 decides
+  whether you may) and check that exactly the MRDs you listed are Active; an unlisted kind has no
+  CRD, so a `kubectl get` naming it fails, even beside others. In a local E2E, the `E2ETest`'s
+  `spec.helmValues: {provider: {defaultActivations: []}}` does the same (a Space ignores it): the
+  test readies only if your MRAP activates every composed kind. Otherwise a control plane proves
+  only that the MRAP installs.
 - **`up dep add --api crossplane:<tag>` writes `spec.apiDependencies`** (`- type: crossplane`
   with `crossplane: {version: <tag>}`), a list separate from `dependsOn`. It adds the MRAP models
-  for Go/Python/KCL; the build does not need it, and nothing in `apiDependencies` ships in the
+  for every language; the build does not need it, and nothing in `apiDependencies` ships in the
   package. `upbound/crossplane` and `upbound/controller-manager` are container images, not
   packages: a `dependsOn` entry for either fails `up project build` with `failed to extract
   package layer: blob : not found` (up v0.55.0). The tag must be a UXP version in both

@@ -58,7 +58,8 @@ up test run "tests/e2etest-<n>" --e2e <target flags>   # E2E: fails fast on a mi
 Write both commands in the project README, so nobody uses `tests/*` as the gate. **Unless the
 project's own gate (a Makefile target, CI, its README) runs `up test run tests/*`**: then keep
 it, and that run needs the e2e inputs set too. Without `--e2e` no E2E test executes, so a program
-that only checks its input is set passes with any non-empty value (observed with up v0.55.0). Say
+that only checks its input is set passes with any non-empty value (observed with up v0.55.0); with
+it, the composition tests the same programs emit are dropped (`up test run --help`). Say
 so in the README beside that command, and in your report as a departure from the `tests/test-*`
 default.
 

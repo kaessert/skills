@@ -143,7 +143,7 @@ those. Write no test program for them, and don't copy a skill's script into the 
    | the symbol you are adding is missing: Go `undefined: <symbol>` (a compile error), Python `ImportError: cannot import name …` or `AttributeError: module … has no attribute …` (unittest counts these as errors, not failures) | **not** RED. Add a stub that only returns the zero value (`""`, `None`, `{}`), then watch the assertion fail; a stub that already does the work never shows RED |
    | `failed to build function` (exit 1, `Failed tests` 0), e.g. Go `declared and not used` after deleting a call | **not** RED: nothing rendered. Make the function, or the mutant, compile, then rerun |
    | passes immediately | **not** RED — the assertion is vacuous, or the behaviour already exists |
-   | E2E: an implementation mutation (drop a composed resource others depend on, break a selector) that never readies within a short `timeoutSeconds` | valid RED, and optional (below). Editing `defaultConditions` or an expected value is not; an unparsable condition is a broken test (author-tests' `e2e.md` reference) |
+   | E2E: an implementation mutation (drop a composed resource others depend on, break a selector) that never readies within `timeoutSeconds` | valid RED, and optional (below). Editing `defaultConditions` or an expected value is not; an unparsable condition is a broken test (author-tests' `e2e.md` reference) |
 
    Filling in a generated name or the rendered `resourceRefs` order after GREEN completes an
    expectation whose RED you already saw. It is not editing an expected value
@@ -152,8 +152,9 @@ those. Write no test program for them, and don't copy a skill's script into the 
    Record the failure text: your report cites it as evidence that the test bites.
 
    **RED is required for composition tests and function unit tests, and optional for a new
-   `E2ETest`.** An e2e RED costs a real control-plane run: take it when it is cheap, as in the
-   table's last row; otherwise report the E2ETest as unproven (§4).
+   `E2ETest`.** An e2e RED costs a real control-plane run: take it only when it proves what no
+   render can (e.g. MRAP activation: author-configuration-package's `mrap.md`); otherwise report
+   the E2ETest as unproven (§4).
 
 2. **GREEN — implement** until the test passes, and no further.
 

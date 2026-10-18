@@ -213,22 +213,20 @@ func fail(format string, args ...any) {
 
 `resourcesToItems` is the helper from the composition-test template in
 `control-plane-project-charter/references/languages/go/tests.md`. The E2E run is
-`up test run "tests/e2etest-<n>" --e2e …`; the composition gate stays `"tests/test-*"`, and both go in the
-project README. If the project's own gate runs `up test run tests/*`, that run needs the e2e inputs set
-too; say so in the README and the report (`control-plane-project-charter/references/charter/container.md`).
+`up test run "tests/e2etest-<n>" --e2e …`; the composition gate stays `"tests/test-*"`
+(`control-plane-project-charter/references/charter/container.md`).
 
 ## E2E RED
 
-An e2e RED is optional (charter §3): it costs a real control-plane run, so take it when it is cheap, else
-report the E2ETest as unproven. Composition and unit tests still require RED.
+An e2e RED is optional; when to take one: charter §3.
 
 A valid e2e RED is an **implementation mutation** the control plane rejects or never readies: drop a composed
 resource the others depend on, or break a selector. Not the only composed resource: an XR that composes
-nothing is Ready at once (Crossplane v2.3.1). Run it with a short `timeoutSeconds` (300) so the RED costs
-minutes. Check the failure is the Ready assertion: the error line names `((conditions[?type == 'Ready'])[0])`.
-The diff's `status: {}` is not the real status. Make sure the failure isn't a credential error, then revert with
-git, after keeping any uncommitted work in the mutated file
-(`control-plane-project-charter/references/charter/tdd.md`), and restore the timeout. Editing
+nothing is Ready at once (Crossplane v2.3.1). Set `timeoutSeconds` just above the green run's measured
+`chainsaw/apply` time: a shorter one fails whatever you mutated. Check the failure is the Ready assertion: the
+error line names `((conditions[?type == 'Ready'])[0])`. The diff's `status: {}` is not the real status. Make
+sure the failure isn't a credential error, then revert with git, after keeping any uncommitted work in the
+mutated file (`control-plane-project-charter/references/charter/tdd.md`), and restore the timeout. Editing
 `defaultConditions` or an expected value is not RED, and an unparsable condition is a broken test.
 
 ## What an E2ETest cannot assert

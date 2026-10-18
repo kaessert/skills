@@ -68,18 +68,18 @@ at the first failure:
    `✗ Parsing tests` when an e2e input is unset. If the project's own gate runs `up test run tests/*`,
    use it, with the e2e inputs (check 3) set for that run too, and say so in the report
    (`control-plane-project-charter/references/charter/container.md`).
-3. **Credentials.** List what the test programs read, in any language, and check each:
+3. **Credentials.** List what the test programs read, in any language, and check each. A variable built
+   from others (author-tests' `e2e.md` reference) must be exported inside the Phase 4 run block, before
+   `up test run`, since one exported in an earlier command is gone: check its inputs (`AWS_*`) instead.
 
    ```bash
    grep -rhoE 'UP_[A-Z0-9_]+' tests/e2etest-*/ | sort -u
    # then, for each - test presence with -n only, inside [ ]: an echo of $VAR, ${VAR:-x} or
    # ${VAR:+set}${VAR:-unset} prints the value whenever it is set
-   [ -n "${UP_AWS_CREDENTIALS:-}" ] || echo "MISSING: UP_AWS_CREDENTIALS"
+   [ -n "${UP_<NAME>:-}" ] || echo "MISSING: UP_<NAME>"
    ```
 
-   A variable built from others (author-tests' `e2e.md` reference) must be exported inside the Phase 4 run
-   block, before `up test run`, since one exported in an earlier command is gone: check its inputs (`AWS_*`)
-   here instead. KCL and Python programs see only `UP_`-prefixed variables and no `~/.aws`; Go and
+   KCL and Python programs see only `UP_`-prefixed variables and no `~/.aws`; Go and
    go-templating programs run locally and can read any name, so also check a Go program's `os.Getenv` calls
    and a go-templating test's `env`/`expandenv` calls. An unset variable the program
    does not fail on becomes an empty Secret. That surfaces only when the provider rejects it, after a

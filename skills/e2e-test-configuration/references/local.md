@@ -82,10 +82,15 @@ in your list from before the run. The registry container is `<cluster>-registry`
 ```bash
 kind get clusters                                   # the new entry starting <project>-uptest-
 KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
-kind get kubeconfig --name <cluster> > "$KCFG"
-kubectl --kubeconfig "$KCFG" get managed -A        # not a read-back (below)
+for _ in $(seq 1 30); do                            # the file can be empty early on: retry
+  kind get kubeconfig --name <cluster> > "$KCFG" && kubectl --kubeconfig "$KCFG" --request-timeout=5s get ns &&
+    break
+  sleep 5
+done
 echo "kubeconfig: $KCFG"   # reuse the path as a value: the variable is gone by your next command
 ```
+
+`get managed` needs a provider installed: wait for `✓ Waiting for package to be ready`.
 
 Once the run has exited **and the [Leaks](#leaks) check is clean**, `rm -f <kubeconfig>`: the cluster it
 points at is gone, and the file is this run's leftover (charter §9). Until then keep it: a run that leaked (a
@@ -157,9 +162,9 @@ done
 After the run the cluster is gone, so `kubectl get managed` no longer works. The evidence is:
 
 - **The log's `Cleanup summary: N deleted, 0 remaining` line**, quoted. A remaining count above 0 means the
-  cluster was deleted with managed resources on it: their cloud resources are orphaned (what `N` counts
-  and what to report: `control-plane-project-charter/references/charter/targets.md`, Teardown and
-  leftovers).
+  cluster was deleted with managed resources on it: their cloud resources are orphaned (what to report:
+  `control-plane-project-charter/references/charter/targets.md`, Teardown and leftovers). `N` counts only
+  what outlived the test's own delete step: `0 remaining` doesn't prove the cloud is clean.
 - **A provider read taken during the run**, quoted. A resource it missed is "not verified at the provider":
   never re-run a green e2e for it.
 - **Leftovers, checked in the provider's API** by the names or tags the test used, not in Kubernetes. Don't

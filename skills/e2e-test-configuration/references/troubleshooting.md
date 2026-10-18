@@ -22,6 +22,8 @@ Known transient:
   control-plane creation: a registry rate limit. Retry with backoff rather than diagnosing it; a failure
   during control-plane creation can leave the control plane behind, so check for leftovers before the retry
   (the target's reference).
+- XR `Responsive` `False`, `WatchCircuitOpen`: a watch circuit breaker that closes again (after 5 min by
+  default); `Ready` is unaffected (Crossplane v2.1+ `internal/circuit/token_bucket.go`).
 
 Target-specific ones are in the target's reference.
 

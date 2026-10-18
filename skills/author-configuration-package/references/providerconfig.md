@@ -30,7 +30,7 @@ spec:
   credentials:
     source: Secret                       # or IRSA / WebIdentity / PodIdentity / Upbound
     secretRef:
-      namespace: crossplane-system
+      namespace: crossplane-system       # required, by the namespaced providerconfigs.aws.m.upbound.io CRD too
       name: aws-creds
       key: creds
 ```
