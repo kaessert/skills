@@ -223,8 +223,9 @@ Shape:
   `Cleanup summary` lines, provider state (the quoted read, or "not verified at the provider"), and
   leftovers (how you checked, or "not checked" and why).
 - **Stuck or failed:** 50–100 lines: test, target, exit code (or "none: terminated after <s> s"), the phase
-  reached, for a stuck run the time without output against the threshold, the last output quoted, the
-  analysis, proposed fixes, and the test directory and files involved.
+  reached, for a stuck run the time without output against the threshold (and the `timeoutSeconds` it
+  came from), the last output quoted, the analysis, proposed fixes, and the test directory and files
+  involved.
 - **Several tests:** one line each in run order, then each test's detail:
   `[2/3] e2etest-<n>  FAILED  (EXIT=1, 1310 s)`; a test not run says why (`not run: shared cause in [2/3]`).
 - **Cannot verify:** say so, name the missing artifact, and stop. An unverified run reported as a pass is
