@@ -8,11 +8,10 @@ every language. The syntax is in the charter's language files, indexed by
 - [The test object model](#the-test-object-model)
 - [Patterns](#patterns)
 - [Common mistakes](#common-mistakes)
-  1. [Guessed composed-resource names](#1-guessed-composed-resource-names)
-  2. [A composed resource with no assertion at all](#2-a-composed-resource-with-no-assertion-at-all)
-  3. [Assuming you cannot assert the composite's own status](#3-assuming-you-cannot-assert-the-composites-own-status)
-  4. [Partial for objects, exact for lists](#4-partial-for-objects-exact-for-lists--and-the-two-fail-differently)
-  5. [Designing coverage without reading the XRD's defaults](#5-designing-coverage-without-reading-the-xrds-defaults)
+  1. [A composed resource with no assertion at all](#1-a-composed-resource-with-no-assertion-at-all)
+  2. [Assuming you cannot assert the composite's own status](#2-assuming-you-cannot-assert-the-composites-own-status)
+  3. [Partial for objects, exact for lists](#3-partial-for-objects-exact-for-lists--and-the-two-fail-differently)
+  4. [Designing coverage without reading the XRD's defaults](#4-designing-coverage-without-reading-the-xrds-defaults)
 
 ---
 
