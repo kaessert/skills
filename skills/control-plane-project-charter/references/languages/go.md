@@ -5,10 +5,9 @@ Everything Go-specific for a control-plane project: composition functions and te
 The language-agnostic rules are in [`control-plane-project-charter`](../../SKILL.md); this file and
 [`go/`](go/) say how Go expresses them.
 
-Go tests produce the same `CompositionTest` and `E2ETest` objects as every other language;
-[`yaml.md`](yaml.md) shows that object model with no language in the way. Which language new
-tests use: [charter §10](../../SKILL.md#10-language-dispatch). go-templating tests (`*.gotmpl`)
-are a different language: [`go-templating.md`](go-templating.md).
+Go tests produce the same `CompositionTest` and `E2ETest` objects as every other language. Which
+language new tests use: [charter §10](../../SKILL.md#10-language-dispatch). go-templating tests
+(`*.gotmpl`) are a different language: [`go-templating.md`](go-templating.md).
 
 | | |
 |---|---|

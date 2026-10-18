@@ -2,9 +2,9 @@
 
 Composition tests for a project whose functions are written in Go. The object model — `CompositionTest`,
 `assertResources` (partial and positive for objects, **exact for lists**), `observedResources`,
-`extraResources` — is the same in every language; [`../yaml.md`](../yaml.md) shows it with no language in the
-way. What the suite must contain (one test per input shape, one per observed-state branch, every status field
-asserted on the composite, absence guarded through `resourceRefs`) is in
+`extraResources` — is the same in every language. What the suite must contain (one test per input
+shape, one per observed-state branch, every status field asserted on the composite, absence guarded
+through `resourceRefs`) is in
 [`charter/evidence.md` § Coverage](../../charter/evidence.md#coverage-what-the-suite-must-contain) and
 applies unchanged.
 
