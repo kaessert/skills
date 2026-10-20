@@ -6,7 +6,6 @@ references:
   - references/local.md
   - references/space.md
   - references/troubleshooting.md
-  - references/report-templates.md
 ---
 
 # E2E Test Runner for Crossplane Configurations
@@ -68,17 +67,18 @@ at the first failure:
    `✗ Parsing tests` when an e2e input is unset. If the project's own gate runs `up test run tests/*`,
    use it, with the e2e inputs (check 3) set for that run too, and say so in the report
    (`control-plane-project-charter/references/charter/container.md`).
-3. **Credentials.** List what the test programs read, in any language, and check each:
+3. **Credentials.** List what the test programs read, in any language, and check each. A variable built
+   from others (author-tests' `e2e.md` reference) must be exported inside the Phase 4 run block, before
+   `up test run`, since one exported in an earlier command is gone: check its inputs (`AWS_*`) instead.
 
    ```bash
    grep -rhoE 'UP_[A-Z0-9_]+' tests/e2etest-*/ | sort -u
-   # then, for each:
-   [ -n "${UP_AWS_CREDENTIALS:-}" ] || echo "MISSING: UP_AWS_CREDENTIALS"
+   # then, for each - test presence with -n only, inside [ ]: an echo of $VAR, ${VAR:-x} or
+   # ${VAR:+set}${VAR:-unset} prints the value whenever it is set
+   [ -n "${UP_<NAME>:-}" ] || echo "MISSING: UP_<NAME>"
    ```
 
-   A variable built from others (author-tests' `e2e.md` reference) must be exported inside the Phase 4 run
-   block, before `up test run`, since one exported in an earlier command is gone: check its inputs (`AWS_*`)
-   here instead. KCL and Python programs see only `UP_`-prefixed variables and no `~/.aws`; Go and
+   KCL and Python programs see only `UP_`-prefixed variables and no `~/.aws`; Go and
    go-templating programs run locally and can read any name, so also check a Go program's `os.Getenv` calls
    and a go-templating test's `env`/`expandenv` calls. An unset variable the program
    does not fail on becomes an empty Secret. That surfaces only when the provider rejects it, after a
@@ -109,9 +109,10 @@ grep -rniE 'timeoutseconds|skipdelete' tests/e2etest-<n>/
   (default 600). Scaffolds write `timeoutSeconds` 300 (Go) or 4500 (YAML, KCL, Python, go-templating).
   Typical durations differ by target: see its reference.
 - **`skipDelete: true`** leaves the control plane and the cloud resources running. Say so before you run.
-- **Stuck threshold: `min(15 min, timeoutSeconds / 3)` with no new log output.** A fixed 15 minutes never
-  fires on a 300 s test, which fails at 5 minutes. Crossing it starts an investigation (Phase 5); it is not a
-  verdict.
+- **Stuck threshold: `min(15 min, timeoutSeconds / 3)` with no new log output, counted from the line that
+  ends control-plane creation** (on kind, `✓ Creating local development control plane`). Before it, setup is
+  bounded by `setupTimeoutSeconds` and prints nothing. A fixed 15 minutes never fires on a 300 s test, which
+  fails at 5 minutes. Crossing it starts an investigation (Phase 5); it is not a verdict.
 
 ## Phase 4: Run it
 
@@ -130,21 +131,19 @@ One idiom on both targets; only the target flags differ:
   evidence. Without it you have nothing, and nothing is not a pass.
 - **Foreground** when the worst case fits the longest timeout your harness allows for one command: the call
   returns the complete log in one result.
-- **Otherwise in the background**, with your harness's own facility (charter §1; never detach it yourself with
-  `nohup` or `&`). **Whatever runs it in the background must not have a shorter timeout than the run:** give
-  it the worst case from Phase 3; a run cut off mid-install can leak its control plane (charter §1). Wait for
-  the process to exit with bounded waits only:
+- **Otherwise in the background**, with your harness's own facility and **the worst case from Phase 3 as its
+  timeout**: a run cut off mid-install can leak its control plane (charter §1). Wait for the process to exit
+  with bounded waits only:
 
   ```bash
   for _ in $(seq 1 30); do grep -q '^EXIT=' /tmp/e2e-<n>.log && break; sleep 20; done
   tail -5 /tmp/e2e-<n>.log
   ```
 
-  Size each wait to fit one command's timeout, and repeat until `EXIT=` is in the log. Never an unbounded
-  `until grep …`: if the marker never arrives, it waits until the harness kills it. If the process is gone
-  (`pgrep -f '[u]p test run'` prints nothing) and there is no `EXIT=` line, the run was cut off: report what it
-  reached, not an outcome. With no background facility, run in the foreground with the longest timeout you
-  have, and treat a timeout the same way.
+  Repeat it until `EXIT=` is in the log. Never an unbounded `until grep …`: if the marker never arrives, it
+  waits until the harness kills it. If the process is gone (`pgrep -f '[u]p test run'` prints nothing) and
+  there is no `EXIT=` line, the run was cut off: report what it reached, not an outcome. With no background
+  facility, run in the foreground with the longest timeout you have, and treat a timeout the same way.
 - **Never write a verdict from a poll.** A partial log is a progress view: resources routinely reach `Ready`
   after your last look. The run is over only when `EXIT=` is in the log.
 - If you stop a run early (wrong target, stuck with a terminal cause), say it was **terminated** and why. A
@@ -207,20 +206,28 @@ Then:
   estimate: an unrelated file's timestamp once turned a 6-minute run into "~95 min".
 - **Readiness is what you read.** The assert step passing in the log is the evidence. A resource read must be
   taken while the control plane exists: both targets tear it down after every test. Quote a status value read
-  during the run as "read-back, not asserted" (how, on kind: [local.md](references/local.md)).
+  during the run as "read-back, not asserted" (how, on kind: [local.md](references/local.md), "Reading a
+  status during the run").
 - **A claim about the provider comes from the provider:** its own read (CLI or SDK, whichever is installed),
-  taken before teardown (when: [local.md](references/local.md#reaching-the-cluster-while-it-runs)), and
-  quoted. Reading back the XR or your manifest proves only that your input round-tripped. Without that
-  read, say "not verified at the provider".
+  taken before teardown (how: [local.md](references/local.md), "A provider read"), and quoted. Reading
+  back the XR or your manifest proves only that your input round-tripped. Without that read, say "not
+  verified at the provider".
 - **Cleanup:** the target's reference says what proves it.
 - **Re-read your evidence before the verdict.** Grep what you are about to paste for `False`, `Creating`,
   `Failed`, `FAIL`. If any appears, explain it or correct the verdict.
 - Never call anything "production-ready"; that is the caller's judgement.
 
-Shape (templates in [report-templates.md](references/report-templates.md)):
+Shape:
 
-- **Pass:** 5–10 lines: test, target, exit code, duration from the log, resources, cleanup evidence.
-- **Stuck or failed:** 50–100 lines: test, phase, last output, analysis, proposed fixes.
+- **Pass:** 5–10 lines: test, target, the `EXIT=` line, duration from the log, the quoted assert and
+  `Cleanup summary` lines, provider state (the quoted read, or "not verified at the provider"), and
+  leftovers (how you checked, or "not checked" and why).
+- **Stuck or failed:** 50–100 lines: test, target, exit code (or "none: terminated after <s> s"), the phase
+  reached, for a stuck run the time without output against the threshold (and the `timeoutSeconds` it
+  came from), the last output quoted, the analysis, proposed fixes, and the test directory and files
+  involved.
+- **Several tests:** one line each in run order, then each test's detail:
+  `[2/3] e2etest-<n>  FAILED  (EXIT=1, 1310 s)`; a test not run says why (`not run: shared cause in [2/3]`).
 - **Cannot verify:** say so, name the missing artifact, and stop. An unverified run reported as a pass is
   worse than a failure: it gets relayed onward as fact.
 
@@ -230,7 +237,8 @@ Shape (templates in [report-templates.md](references/report-templates.md)):
 - Write a verdict from a poll, or report an outcome for a run that was terminated or cut off.
 - Derive a duration from file timestamps, or estimate one.
 - Report readiness or provider state you did not read.
-- Re-run a green e2e only to read a status value: read it during the run, or report "not read back".
+- Re-run a green e2e to take a missed status or provider read: report "not read back" or "not verified at
+  the provider". Re-running to reproduce a failure is fine: each run gets a fresh control plane.
 - Run an e2e test program by hand with real credentials, or print or save its output: it carries the
   credential Secret. Check or diff it with a dummy `UP_*` value (author-tests' `e2e.md` reference).
 - Local: connect to, apply to or delete a kind cluster or container this run did not create. Names

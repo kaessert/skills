@@ -95,7 +95,8 @@ writing a test: it carries the templates and the silent failure modes.
      is a broken test, not RED.
    - **What no check here reaches** — XRD `required` lists, enums and scope; the dependency set —
      stays uncovered unless the project's gate checks it (charter §4: say what you did not
-     verify).
+     verify). Through `xrdPath` the render defaults the XR; it does not reject one that breaks
+     `required`, an enum or the status schema, so an XRD mutation there stays green (up v0.55.0).
 
 3. **Organise:**
 
@@ -117,21 +118,21 @@ writing a test: it carries the templates and the silent failure modes.
 
 ## Phase 3: Write the assertion that has to fail
 
-Four things make an assertion bite:
+Five things make an assertion bite:
 
 | | |
 |---|---|
 | **Assert the field, not the existence.** | `assertResources` is partial and positive. An entry naming only `kind` passes against any resource of that kind, whatever it contains. Name the field you are adding. |
 | **Assert on the composite too.** | Every `status` field the function writes needs an assertion on the XR itself. It is the only programmatic check on composition outputs. |
 | **Cover the minimal XR.** | Use the inline `xr` field with every optional property omitted. That is the shape a real user writes first, and the one the scaffold never generates. |
-| **Use distinguishing inputs.** | Every parameter the function passes through (region, config names, CIDRs, the XR's own name, …) gets a non-default value, unique across fields, in at least one test; a required field with no default needs two tests with different values. An input equal to the default or to a sibling field can't tell pass-through from a hard-coded constant. Backfill check: `control-plane-project-charter/references/charter/tdd.md`. |
+| **Use distinguishing inputs.** | Every parameter the function passes through (region, config names, CIDRs, the XR's own name, …) gets a non-default value, unique across fields, in at least one test; a required field with no default needs two tests with different values, and so does a field every test sets to the same value. An input equal to the default or to a sibling field can't tell pass-through from a hard-coded constant. Backfill check: `control-plane-project-charter/references/charter/tdd.md`. |
+| **Pin a kind that renders more than once.** | Give each of its expectations the `crossplane.io/composition-resource-name` annotation (the function's key for it, so writable before the first render) or the name copied from the render. Otherwise every one is compared with the first rendered resource of that kind only (up v0.55.0 source). |
 
 - **Define the XR inline** where the format supports it, with `namespace: default` (v2).
 - **Assert list membership on the parsed list**, not by substring matching on a joined string:
   a short token matches inside a longer one (`db` inside `db-subnet-group`).
 - **Composed-resource names:** never guess one; the naming rule is in
-  `control-plane-project-charter/references/charter/evidence.md`
-  ([test-model.md, mistake 1](references/test-model.md#1-guessed-composed-resource-names)).
+  `control-plane-project-charter/references/charter/evidence.md`.
 - **Managed resources in a test follow binding rule 4**, written as the import path in KCL,
   Python and Go and as the `apiVersion` string in YAML. Assert `providerConfigRef` and
   `managementPolicies` only where the project's spec or API sets them (whether a render keeps
@@ -139,13 +140,12 @@ Four things make an assertion bite:
 
 ### Asserting absence
 
-`assertResources` cannot assert absence: it has no absence operator, so do not search the CLI
-for one.
+`assertResources` matches positively and partially; absence needs one of these:
 
 | Must be absent | How |
 |---|---|
-| A composed **resource** | Assert the composite's `spec.crossplane.resourceRefs` as the exact list from the render, once per input shape, not in every case. Lists match exactly, so a surplus resource fails it. The "Composition test template" sections of `control-plane-project-charter/references/languages/go/tests.md` and `control-plane-project-charter/references/languages/go-templating.md` show this guard; detail in `control-plane-project-charter/references/charter/evidence.md`, "How `assertResources` matches" |
-| A **field** | Not expressible in a composition test. Use a unit test on the function's desired state, in the function's own language (Go: `go test ./...` in `functions/<n>/`), or confirm it once in the render and report it as not asserted |
+| A composed **resource** | Assert the composite's `spec.crossplane.resourceRefs` as the exact list from the render (`up test run "tests/<t>" --function-logs`; a plain run writes no `render.log`, so a directory already under `_output/composition_test/` is another run's), once per input shape, not in every case. Lists match exactly, so a surplus resource fails it. The "Composition test template" sections of `control-plane-project-charter/references/languages/go/tests.md` and `control-plane-project-charter/references/languages/go-templating.md` show this guard; detail in `control-plane-project-charter/references/charter/evidence.md`, "How `assertResources` matches" |
+| A **field**, or a surplus **key in a map** (tag, label) | An expression key at that level (read its rules first: `control-plane-project-charter/references/charter/evidence.md`, "How `assertResources` matches"). Go and Python can also assert it in a unit test on the desired state (Go: `go test ./...` in `functions/<n>/`; Python: `control-plane-project-charter/references/languages/python/tests.md`, "Function unit tests") |
 
 ### A Fatal result
 
@@ -155,8 +155,11 @@ stops at the Fatal before any assertion: the test fails with
 field for an expected error, so not even a `resourceRefs: []` guard runs. A Fatal case under
 `tests/test-*` fails the gate. Test each fatal path in a function unit test (the message, nothing
 composed; Go: `control-plane-project-charter/references/languages/go/functions.md`, "A path that
-must return Fatal"), keep composition tests on inputs the function accepts, and don't search the
-CLI, its binaries or the web for another way.
+must return Fatal"; Python: `control-plane-project-charter/references/languages/python/tests.md`,
+"Function unit tests"; go-templating has no unit tier:
+`control-plane-project-charter/references/languages/go-templating.md`, "Testing a Fatal"), keep
+composition tests on inputs the function accepts, and don't search the CLI, its binaries or the
+web for another way.
 
 ### Asserting a property of every composed resource
 

@@ -68,7 +68,17 @@ elif "mysql" in req.observed.resources:
 ```
 
 `connection_details` values are bytes: `.decode()` them for `stringData`, or base64-encode them
-for `data`. The `k8s` core models need the `k8s` API dependency in `upbound.yaml` ([`test-templates.md`](test-templates.md)).
+for `data`. The `k8s` core models (`models.io.k8s.api.core`) exist only with the `k8s` API
+dependency in `upbound.yaml`, then `up project build`:
+
+```yaml
+spec:
+  apiDependencies:
+  - type: k8s
+    k8s:
+      version: v1.33.0
+```
+
 A test reaches this branch only with `observedResources`, and never with a password: no render
 passes connection details. Assert `writeConnectionSecretToRef` on the composed `mysql` instead
 ([`charter/v2-resources.md`](../../charter/v2-resources.md)).
@@ -151,6 +161,4 @@ Anything appended at the end inherits every guard above it: a resource added aft
 How to get and read `render.log`, and what `--debug` prints, is in
 [`charter/evidence.md`](../../charter/evidence.md). The Python-specific part: beside each test's `render.log`,
 in the directory the run prints, is `<function>.log`, the function container's output, where a
-Python traceback or `self.log` output lands. The XR's `status.conditions` message in
-`render.log` (`Unready resources: bucket, lifecycle, pab, and 2 more`) is a quick list of what
-rendered.
+Python traceback or `self.log` output lands.

@@ -14,11 +14,9 @@ cannot express, in docstrings and field descriptions: *"Required if
 the generated type means only that the **CRD**'s schema does not mark it required — a CEL rule in
 the CRD, or the provider, still can.
 
-**The CRDs carry those CEL rules.** `up` caches each provider's CRDs at
-`~/.up/cache/xpkg.upbound.io/<org>/<package>@<version>/<plural>.<group>.yaml` (the default
-`--cache-dir`). Their `x-kubernetes-validations` require parameters the generated model leaves
-optional (`spec.forProvider.versioningConfiguration is a required parameter`, provider-aws-s3
-v2.8.2); `grep -A3 x-kubernetes-validations <crd>` lists them.
+**The CRDs carry those CEL rules** (§6: where `up` caches them, and the grep that lists them).
+Their `x-kubernetes-validations` require parameters the generated model leaves optional
+(`spec.forProvider.versioningConfiguration is a required parameter`, provider-aws-s3 v2.8.2).
 
 **Expect this to be sparse, not systematic.** Measured over the namespaced AWS models in a real
 project: `Conflicts with` in 12 of 127 Kinds, `Required if` in 3, clustered in the big Kinds like

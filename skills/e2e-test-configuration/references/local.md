@@ -82,10 +82,15 @@ in your list from before the run. The registry container is `<cluster>-registry`
 ```bash
 kind get clusters                                   # the new entry starting <project>-uptest-
 KCFG=$(mktemp -t kubeconfig-e2e.XXXXXX)
-kind get kubeconfig --name <cluster> > "$KCFG"
-kubectl --kubeconfig "$KCFG" get managed -A
+for _ in $(seq 1 30); do                            # the file can be empty early on: retry
+  kind get kubeconfig --name <cluster> > "$KCFG" && kubectl --kubeconfig "$KCFG" --request-timeout=5s get ns &&
+    break
+  sleep 5
+done
 echo "kubeconfig: $KCFG"   # reuse the path as a value: the variable is gone by your next command
 ```
+
+`get managed` needs a provider installed: wait for `✓ Waiting for package to be ready`.
 
 Once the run has exited **and the [Leaks](#leaks) check is clean**, `rm -f <kubeconfig>`: the cluster it
 points at is gone, and the file is this run's leftover (charter §9). Until then keep it: a run that leaked (a
@@ -100,9 +105,11 @@ If the run never got past the package install, check that before tracing any man
 `docker logs <cluster>-registry` (the umask precondition), then `kubectl get pkgrev -o wide` and `kubectl
 describe configuration`. Then use the brief in [troubleshooting.md](troubleshooting.md).
 
-**A status field or condition.** An `E2ETest` can't assert one (author-tests' `e2e.md` reference). To read one,
-take it inside the one run you need anyway, and **watch rather than poll**: the delete starts about a second
-after the assert sees `Ready` (observed with up v0.55.0), so a read every few seconds misses the one moment the
+### Reading a status during the run (an `E2ETest` can't assert one)
+
+An `E2ETest` can't assert a status field or condition (author-tests' `e2e.md` reference). To read one, take
+it inside the one run you need anyway, and **watch rather than poll**: the delete starts about a second after
+the assert sees `Ready` (observed with up v0.55.0), so a read every few seconds misses the one moment the
 status is complete. Wait, bounded, until the XR exists, then watch that one object (`get managed -w` fails:
 `managed` is a category), bounded too:
 
@@ -120,33 +127,50 @@ grep '^True ' /tmp/e2e-<n>-status.txt | tail -1      # the last read taken while
 ```
 
 The watch prints one line per change and ends with the cluster or after 600 s: on a watch, kubectl applies
-`--request-timeout` to the whole response, so it is the time limit (stock macOS has no `timeout`). Size it to
-one command's timeout, and if it ends before `EXIT=` is in the log, start it again (it prints the current state
+`--request-timeout` to the whole response, so it is the time limit (stock macOS has no `timeout`). Size it as a
+wait (charter §1), and if it ends before `EXIT=` is in the log, start it again (it prints the current state
 first). Give every other `kubectl` call `--request-timeout`: one without it hung for 150 s once the cluster was
-gone.
+gone. A composed resource is read the same way, one watch per object.
 
 Quote it as **"read-back, not asserted"**, with its `Ready` condition: a read while `Ready` is `False` can be
-partial. It is not a provider read. Never re-run a green e2e only to read status: if the window was missed,
-report "not read back". It is report evidence, never a pass condition (author-tests' `e2e.md` reference).
+partial. It is not a provider read. If the window was missed, report "not read back" rather than re-running a
+green e2e for it or for a provider read ([SKILL.md](../SKILL.md), Never). It is report evidence, never a
+pass condition (author-tests' `e2e.md` reference).
 
-**A provider read** (the cloud's own API, by the resources' external ids) works from the moment those ids
-appear, in the XR's status or on the managed resources, until the assert sees `Ready`: nothing deletes the
-resources before then. Take it as soon as the ids appear, not at `Ready`: a read taken at `Ready` raced the
-delete and got NotFound (observed once with up v0.55.0).
+The resource tables the log prints during the assert are progress output, not a read-back: in the runs observed
+with up v0.55.0, none showed the XR `Ready` although the assert passed. Quote the assert's `PASS` line, never a
+table as a resource's state.
+
+### A provider read
+
+A provider read races the teardown: the last id can land about a second before the XR's `Ready`, the delete
+within 1–2 s after (observed with up v0.55.0). Never wait for all ids or for `Ready`: per managed resource kind,
+run the loop above with `get <kind>.<group> -n <namespace>` as the run starts, then this watch, reading each
+resource when its own external name appears:
+
+```bash
+kubectl --kubeconfig <kubeconfig> --request-timeout=600s get <kind>.<group> -n <namespace> -w \
+  -o jsonpath='{.metadata.name} {.metadata.annotations.crossplane\.io/external-name}{"\n"}' |
+while read -r name id; do              # reads run in parallel; failed reads retry on the next change
+  [ -n "$id" ] && ! grep -qs "^$name " /tmp/e2e-<n>-provider.txt &&
+    out=$(<provider read of "$id">) && echo "$name $id $out" >> /tmp/e2e-<n>-provider.txt &
+done
+```
 
 ## Evidence and cleanup
 
 After the run the cluster is gone, so `kubectl get managed` no longer works. The evidence is:
 
 - **The log's `Cleanup summary: N deleted, 0 remaining` line**, quoted. A remaining count above 0 means the
-  cluster was deleted with managed resources on it: their cloud resources are orphaned (what `N` counts
-  and what to report: `control-plane-project-charter/references/charter/targets.md`, Teardown and
-  leftovers).
-- **A provider read taken during the run**, quoted. Without one, the report says "not verified at the
-  provider".
+  cluster was deleted with managed resources on it: their cloud resources are orphaned (what to report:
+  `control-plane-project-charter/references/charter/targets.md`, Teardown and leftovers). `N` counts only
+  what outlived the test's own delete step: `0 remaining` doesn't prove the cloud is clean.
+- **A provider read taken during the run**, quoted. A resource it missed is "not verified at the provider":
+  never re-run a green e2e for it.
 - **Leftovers, checked in the provider's API** by the names or tags the test used, not in Kubernetes. Don't
   assume a provider CLI exists: `command -v <cli>` first, then use whatever is installed (observed: no `aws`
-  CLI, but an SDK such as boto3). If neither is available, say the leftovers were not checked.
+  CLI, but an SDK such as boto3). If neither is available, say the leftovers were not checked. A name or tag
+  match is a candidate, not proof it is this run's (`control-plane-project-charter/references/charter/targets.md`).
 - **`kind get clusters`** lists no `<project>-uptest-*` cluster beyond those in your list from before the run.
 
 ## Leaks

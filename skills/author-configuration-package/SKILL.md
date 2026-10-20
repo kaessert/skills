@@ -80,7 +80,7 @@ wire; the XRD is the one file you write (Phase 3).
 | Command | Input → Output |
 |---|---|
 | `up project init <name>` | interactive wizard → a whole working project (below) |
-| `up example generate [<xrd>]` | wizard, or an XRD → `examples/<kind-lowercase>/<xr-name>.yaml`; the name defaults to the lowercase Kind (`examples/network/network.yaml`, up v0.55.0). Find the file; don't assume `example.yaml` |
+| `up example generate [<xrd>]` | wizard or flags → `examples/<kind-lowercase>/<name>.yaml`. Given an XRD: always `<kind-lowercase>.yaml`, named `<kind-lowercase>` in `default` with placeholder values, whatever `--name`/`--namespace` say. `--path` is relative to `examples/` (up v0.55.0). Find the file; don't assume `example.yaml` |
 | `up xrd generate <example.yaml>` | an example XR → an inferred `apis/<plural>/definition.yaml` + language models. Not for the XRD you ship (Phase 3) |
 | `up composition generate <xrd\|xr>` | XRD or XR → `apis/<plural>/composition.yaml`, and adds the required function packages as dependencies |
 | `up function generate <name> [<pipeline-path>]` | → `functions/<name>/…`, and wires it into that composition's pipeline. On an existing `functions/<name>` it prompts to overwrite and, without a TTY, cancels: wire the step by hand (`control-plane-project-charter/references/charter/generators.md`) |
@@ -106,7 +106,8 @@ anything else (`control-plane-project-charter/references/charter/generators.md`)
   included (up v0.55.0).
 - `up project init` rewrites `metadata.name` and `spec.repository` but never `spec.source`, so
   every template leaves its own (`github.com/upbound/project-template-scratch`, `…-aws-s3`),
-  along with a placeholder `maintainer`. Generated Go module paths, for tests and for functions,
+  along with a placeholder `maintainer` and `readme` (`This is where you can add a readme…`).
+  Generated Go module paths, for tests and for functions,
   come from `spec.source` (`<source>/tests/<dir>`, `<source>/functions/<name>`).
   `up project build` publishes it as the package's `meta.crossplane.io/source` annotation.
   **Set `repository`, `source` and `maintainer` before any generator runs**: `spec.repository`
@@ -193,7 +194,8 @@ CEL budget, or that redefining `READY` prints the column twice. XRD versions mus
 that ships.
 `control-plane-project-charter/references/charter/xrd-design.md` has the rules. Run the
 mechanical ones before the first build with the script in this skill's directory
-(`<author-configuration-package>`, the directory containing this SKILL.md). Invoke it by its
+(`<author-configuration-package>` below is a placeholder for the absolute path of the directory
+containing this SKILL.md; it is not a project path). Invoke it by its
 path in the skill directory, with the project root as the working directory: don't copy it into
 the project, and don't write a test for the XRD (charter §3).
 
@@ -287,14 +289,16 @@ package name.
 
 Writing a ManagedResourceActivationPolicy, or running `up dep add --api crossplane:<tag>`:
 read [mrap.md](references/mrap.md) first. The manifest must sit under `apis/` or it is
-silently left out of the package, and `up project build` barely validates it.
+silently left out of the package, `up project build` barely validates it, and `--api` writes
+`spec.apiDependencies`: a `dependsOn` entry for the Crossplane API fails the build.
 
 ## Phase 5: Generate the composition
 
 `up composition generate apis/<plural>/definition.yaml` writes a `mode: Pipeline` composition
 with an auto-ready step, and adds `crossplane-contrib/function-auto-ready` at `'>=v0.0.0'` to
 `dependsOn` — even when the project already declares another auto-ready function, which then
-gets a step too (up v0.55.0). When the project declares its own function set, delete the
+gets a step too (up v0.55.0); only an existing `xpkg.upbound.io/crossplane-contrib/function-auto-ready`
+entry keeps it from adding one. When the project declares its own function set, delete the
 duplicate step and its dependency, and say so; otherwise give the dependency a constraint.
 
 `mode: Resources` was removed in Crossplane v2: only `Pipeline` is valid. `up test run`'s
@@ -329,19 +333,33 @@ directory containing that skill's SKILL.md, beside this skill's directory (why i
 config (charter §5). Without it, every managed resource sits unauthenticated while the build
 and the tests pass. Read [providerconfig.md](references/providerconfig.md) before you write
 it: the manifest, its family-group apiVersion, and the credential secret the README must
-list.
+list. A README that documents the tests carries the command pair in
+`control-plane-project-charter/references/charter/container.md` (the README note), and claims
+for the e2e test only what author-tests' `e2e.md` says an `E2ETest` asserts.
 
 ## Phase 9: Final build, and report
 
 `up project build` again; it produces the package under `_output/` (`.uppkg`).
 
-A `.uppkg` is a tar of gzipped layers (`manifest.json` lists them). The configuration's
-`package.yaml` (meta, XRDs, compositions, an MRAP) is in one layer, and the examples are in
-another as `.up/examples.yaml` (up v0.55.0). To check that a file ships, extract into a fresh
-directory, so an older extraction cannot make the grep pass:
-`pkg=$(mktemp -d) && tar -xf _output/<name>.uppkg -C "$pkg" && echo "extracted: $pkg"`. The
-variable is gone by your next command, so reuse the printed path: `tar -xzOf <dir>/<layer>` for
-each layer and grep, then `rm -rf <dir>`. That proves it ships, not that a control plane
+A `.uppkg` is a tar of gzipped layers, `<sha256>.tar.gz` files that `manifest.json` lists. The
+configuration's `package.yaml` (meta, XRDs, compositions, an MRAP) is in one layer, and the
+examples are in another as one multi-document `.up/examples.yaml`; an empty twin of that file in
+another layer is normal (up v0.55.0). Each embedded function adds layers of its own: a second,
+small `package.yaml` (`kind: Function`) and its image files. A Python function's `site-packages`
+hold model files for its dependencies' Kinds, so a whole-layer grep matches Kinds the
+configuration does not ship (an MRAP model there is not a shipped MRAP). To check that an XRD,
+composition or MRAP ships, read only the configuration's `package.yaml`, extracted into a fresh
+directory so an older extraction cannot make the grep pass (one command):
+
+```bash
+pkg=$(mktemp -d) && tar -xf _output/<name>.uppkg -C "$pkg" && echo "extracted: $pkg"
+for l in "$pkg"/*.tar.gz; do
+  if tar -xzOf "$l" package.yaml 2>/dev/null | grep -qx 'kind: Configuration'; then tar -xzOf "$l" package.yaml; fi
+done > "$pkg/configuration.yaml"   # then grep this file
+```
+
+The variable is gone by your next command, so reuse the printed path: grep
+`<dir>/configuration.yaml`, then `rm -rf <dir>`. That proves it ships, not that a control plane
 accepts it.
 
 Then report what ran and what it printed, not a checklist (`control-plane-project-charter` §4):

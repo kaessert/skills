@@ -3,7 +3,6 @@ name: verify-configuration
 description: Verify a Crossplane configuration package before committing - build it, run its composition tests and read the render, and optionally orchestrate its E2E tests or run the project on a development control plane ("verify the configuration", "validate the project", "is this ready to commit", "run the tests", "run the project", "deploy it", "spin it up", "try it on a control plane", "up project run", "dev control plane"). Use it instead of running raw `up project run` - on a Space context that run pushes to a private repository the control plane cannot pull, hangs on `Waiting for package to be ready` and dies with `context deadline exceeded`; this skill checks for that first and hands the choice of target back rather than falling back to `--local`. Not for writing tests (author-tests) or running a single E2E test (e2e-test-configuration).
 license: Apache-2.0
 references:
-  - references/report-templates.md
   - references/dev-control-plane.md
 ---
 
@@ -62,10 +61,13 @@ render and asserted: one rendered but not asserted is a gap to report, not a pas
 
 ## Phase 3: Report, then offer E2E
 
-**If failed:** report the failures and stop. Do not offer E2E tests.
+**If failed:** report each command with its exit code and each failing test by name with its
+failure message quoted, say it cannot be committed, and stop. Do not offer E2E tests.
 
-**If passed:** report what ran, as a summary rather than full logs
-([report-templates.md](references/report-templates.md)).
+**If passed:** report what ran, as a summary rather than full logs: each command with its exit
+code and the summary line it printed, the package in `_output/`, the render check from Phase 2
+(every new or changed resource asserted, or the gaps), and the layer reached (composition test:
+not deployed, provider validity unchecked).
 
 Two things a composition run does not prove, so don't report them as verified (charter §8):
 - **Readiness branches** run only in a test that sets `spec.observedResources`, and even then
@@ -100,9 +102,11 @@ Then E2E, unless the project rules it out:
    as that test's failure. Stop the remaining tests only when the failure is shared — a
    precondition, the target or the package install (`Waiting for package to be ready`) would
    fail every test the same way — and list what did not run.
-4. **Write the report** `e2e-test-report-YYYY-MM-DD.md` and output a short summary: pass/fail
-   count with each test's duration from its run's log
-   ([report-templates.md](references/report-templates.md)).
+4. **Write the report** `e2e-test-report-YYYY-MM-DD.md`: the target; totals passed, failed and
+   not run; a table of test, status and duration; then each sub-agent's summary or failure
+   analysis. Durations come from each run's own log, never from file timestamps or estimates.
+   Reply with a short summary: Y/X passed, the target, the report path, and one line per test
+   with its duration and, for a failure or a test not run, a one-line cause.
 
 ## Phase 5: Run it on a dev control plane (when asked to run/deploy)
 

@@ -5,10 +5,9 @@ Everything Go-specific for a control-plane project: composition functions and te
 The language-agnostic rules are in [`control-plane-project-charter`](../../SKILL.md); this file and
 [`go/`](go/) say how Go expresses them.
 
-Go tests produce the same `CompositionTest` and `E2ETest` objects as every other language;
-[`yaml.md`](yaml.md) shows that object model with no language in the way. Which language new
-tests use: [charter §10](../../SKILL.md#10-language-dispatch). go-templating tests (`*.gotmpl`)
-are a different language: [`go-templating.md`](go-templating.md).
+Go tests produce the same `CompositionTest` and `E2ETest` objects as every other language. Which
+language new tests use: [charter §10](../../SKILL.md#10-language-dispatch). go-templating tests
+(`*.gotmpl`) are a different language: [`go-templating.md`](go-templating.md).
 
 | | |
 |---|---|
@@ -17,7 +16,7 @@ are a different language: [`go-templating.md`](go-templating.md).
 | Models | `.up/go/models`, written by `up project build`. `.up/` is gitignored, so on a fresh clone run `up project build` |
 | Fast tier | `go test ./...` in `functions/<n>/` — calls `RunFunction` directly, about a second, no project build |
 | Run a test | `up test run tests/test-<n>` runs `go run .` with the test dir as CWD; the program must print `items: [<CompositionTest>…]`. `items: []` is zero tests, and a run with zero tests prints `No test files found` and exits 0 — nothing ran |
-| Compile | `go vet ./...` or `go build -o /dev/null ./...` — plain `go build ./...` in a single-package module (every generated function) writes the executable into the function directory, and it ends up committed |
+| Compile | `go vet ./...` or `go build -o /dev/null ./...` — plain `go build ./...` in a single-package module (every generated function and test) writes the executable into that directory (`tests/<t>/<t>` too), and it ends up committed |
 | Before committing | `gofmt -l .` (prints nothing), `go vet ./...`, `go mod tidy` in every function and test module |
 
 ## Where everything is
@@ -59,6 +58,10 @@ field is a pointer with `omitempty`. Read field names from the file; don't guess
 ```bash
 grep -n 'type BucketSpecForProvider struct' -A 60 .up/go/models/io/upbound/m/aws/s3/v1beta1/bucket.go
 ```
+
+A multi-word Kind's file is its lower-cased name (`routetableassociation.go`). Go field names upper-case
+initialisms (`MapPublicIPOnLaunch` for `mapPublicIpOnLaunch`, `EnableDNSHostnames`), so search by the JSON
+tag, not a guessed field name: `grep -n 'json:"mapPublicIpOnLaunch' <file>`.
 
 The `apiVersion` and `kind` constants are generated, and their spelling varies **per kind within one tree**:
 v0.55.0 writes `VPCApiVersionec2AwsMUpboundIoV1Beta1` next to `InternetGatewayAPIVersionec2AwsMUpboundIoV1Beta1`.

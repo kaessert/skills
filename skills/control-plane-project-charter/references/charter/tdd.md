@@ -12,6 +12,7 @@ function build, package build, push to the local daemon. There is no flag to ski
 |---|---|---|
 | KCL | ~12–16 s | minutes |
 | Python, embedded | 11–50 s, scaling with the number of test cases (11 s for two, 36 s for six) | minutes |
+| Python, SDK (`pyproject.toml`) | 52–69 s for one or two test cases, 206–240 s for 15–17 | minutes |
 
 These are composition-test runs. E2E durations are in e2e-test-configuration's `local.md` and
 `space.md` references.
@@ -20,11 +21,11 @@ Use both tiers:
 
 | Tier | ~time | Catches |
 |---|---|---|
-| Fast — run the function body directly, if the language offers a way (see [`languages/`](../languages/); Python: `run_function.py`, Go: `go test ./...` against `RunFunction`) | ~1s | exceptions, wrong resource count, missing fields, the minimal-XR branch |
+| Fast — run the function body directly, if the language offers a way (see [`languages/`](../languages/); Python: the [`unittest` harness](../languages/python/tests.md#function-unit-tests), Go: `go test ./...` against `RunFunction`) | ~1s | exceptions, wrong resource count, missing fields, the minimal-XR branch |
 | Assertion — `up test run "tests/<t>"` | tens of seconds warm, minutes cold | everything the suite asserts — this is the one that goes RED and GREEN |
 
-The fast tier never replaces the RED/GREEN cycle: Python's asserts nothing, and Go's unit tests
-run no pipeline. It saves you a whole build to find a typo.
+The fast tier never replaces the RED/GREEN cycle: unit tests run no pipeline. It saves you a
+whole build to find a typo.
 
 ## Backfilling tests for code that already exists
 
@@ -33,8 +34,8 @@ no natural RED. That is fine, but a test written against passing code has never 
 observed to fail, and is where false coverage claims come from.
 
 **Prove it can fail with a deliberate mutation.** Break what the test should catch, confirm
-*that test* goes red while the others stay green, then restore the file. Copy it out first, and
-restore from that copy:
+*that test* goes red while the others in its directory stay green, then restore the file. Copy
+it out first, and restore from that copy:
 
 ```bash
 keep=$(mktemp -d) && cp <file> "$keep"/ && echo "copy: $keep"   # the variable is gone by the next command
@@ -42,10 +43,12 @@ keep=$(mktemp -d) && cp <file> "$keep"/ && echo "copy: $keep"   # the variable i
 
 1. Mutate `<file>` with your editor or file-edit tool (delete the field, move the block below
    an early return, ...). This is an edit, not a command, so the steps are not one script.
-2. `up test run "tests/test-*"`: expect exactly the new test to fail, naming the right field.
+2. `up test run "tests/<t>"`, only the directory that should catch it: expect exactly the new
+   test to fail, naming the right field.
 3. Restore and check the restore, using the printed path:
    `cp <copy-dir>/<name> <file> && cmp <copy-dir>/<name> <file> && rm -rf <copy-dir>`.
-4. `up test run "tests/test-*"`: expect green again.
+4. Copy again for the next mutant. After the last restore, run `up test run "tests/test-*"`
+   once: expect green.
 
 **Restore from the copy, not from git.** `git checkout -- <file>` puts back the last commit and
 discards every uncommitted change in the file, not only the mutation: mutate a file holding the

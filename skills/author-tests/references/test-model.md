@@ -8,11 +8,10 @@ every language. The syntax is in the charter's language files, indexed by
 - [The test object model](#the-test-object-model)
 - [Patterns](#patterns)
 - [Common mistakes](#common-mistakes)
-  1. [Guessed composed-resource names](#1-guessed-composed-resource-names)
-  2. [A composed resource with no assertion at all](#2-a-composed-resource-with-no-assertion-at-all)
-  3. [Assuming you cannot assert the composite's own status](#3-assuming-you-cannot-assert-the-composites-own-status)
-  4. [Partial for objects, exact for lists](#4-partial-for-objects-exact-for-lists--and-the-two-fail-differently)
-  5. [Designing coverage without reading the XRD's defaults](#5-designing-coverage-without-reading-the-xrds-defaults)
+  1. [A composed resource with no assertion at all](#1-a-composed-resource-with-no-assertion-at-all)
+  2. [Assuming you cannot assert the composite's own status](#2-assuming-you-cannot-assert-the-composites-own-status)
+  3. [Partial for objects, exact for lists](#3-partial-for-objects-exact-for-lists--and-the-two-fail-differently)
+  4. [Designing coverage without reading the XRD's defaults](#4-designing-coverage-without-reading-the-xrds-defaults)
 
 ---
 
@@ -31,7 +30,7 @@ Python and Go builders and raw YAML all render to exactly this shape.
 | `spec.xr` | The XR under test, defined **inline** (recommended). Some layouts use `xrPath` instead; the two are mutually exclusive |
 | `spec.validate` | `false`, the scaffold default; leave it. `up test run` never reads it (up v0.55.0 source), so `true` checks nothing: an unknown field or a wrong type in a composed resource passes either way |
 | `spec.timeoutSeconds` | **≥60** |
-| `spec.assertResources` | Expected rendered resources. Assert the fields, not just existence. Matches the **composite** as well as composed resources ([mistake 3](#3-assuming-you-cannot-assert-the-composites-own-status)) |
+| `spec.assertResources` | Expected rendered resources. Assert the fields, not just existence. Matches the **composite** as well as composed resources ([mistake 2](#2-assuming-you-cannot-assert-the-composites-own-status)) |
 | `spec.observedResources` | Optional. Pre-existing resources (with mocked `status`) fed into the render, to test dependency ordering and status-driven branches |
 
 ### E2ETest (real cloud lifecycle)
@@ -70,7 +69,7 @@ Test resource **dependencies** and **status-driven branches** without a cloud, b
 - Mock only the status fields the composition reads (e.g. `status.atProvider.state: deployed`, a
   condition `type: Ready, status: "True"`, or a provider-specific contract like
   `status.eks.clusterArn`). What a mock needs to be observed at all (the annotation, and for a
-  namespaced XR its namespace and the render's name) and the condition rules:
+  namespaced XR the XR's namespace), what its name does, and the condition rules:
   `control-plane-project-charter/references/charter/evidence.md`, "Coverage".
 
 This verifies "resource B only renders once resource A is Ready" and "the XR surfaces field X once
@@ -85,22 +84,14 @@ YAML: `control-plane-project-charter/references/languages/yaml.md`).
 Language-neutral mistakes beyond the rules in SKILL.md. KCL import-syntax and Python
 dump-mode mistakes live in their language files.
 
-### 1. Guessed composed-resource names
-
-**Wrong:** `name: test-vpc` (a guess).
-**Right:** omit `metadata.name` when a kind appears once in the render; when it appears more
-than once, assert each by the name copied from the render, which is deterministic there, or by
-its `crossplane.io/composition-resource-name` annotation
-(`control-plane-project-charter/references/charter/evidence.md`).
-
-### 2. A composed resource with no assertion at all
+### 1. A composed resource with no assertion at all
 
 `assertResources` ignores every resource it does not list (charter §8), so an extra managed resource
 left a 2-test suite at 2/2 PASS. **Right:** assert every resource the composition can emit,
 conditional ones in their own test; cross-check against the render and assert the composite's exact
 `spec.crossplane.resourceRefs` (`control-plane-project-charter/references/charter/evidence.md`).
 
-### 3. Assuming you cannot assert the composite's own `status`
+### 2. Assuming you cannot assert the composite's own `status`
 
 `assertResources` is named for composed resources and typed
 `Optional[List[Dict[str, Any]]]`, so it looks like it takes only composed resources.
@@ -133,14 +124,14 @@ Verified by mutating one expected value, which fails with an exact field path an
 Any XR whose `status` is populated from observed resources needs this — it is the only
 programmatic check on composition outputs.
 
-### 4. Partial for objects, exact for lists — and the two fail differently
+### 3. Partial for objects, exact for lists — and the two fail differently
 
 Charter §8: an asserted object is partial at every depth (the surplus is never reported); an
 asserted list must match exactly, in length and order (`lengths of slices don't match`).
-**Right:** assert a whole list, in order. An exact key set on a mapping is not expressible in
-`assertResources`: read it from the render, and say which of the two claims you made.
+**Right:** assert a whole list, in order. An exact key set on a mapping: see
+`control-plane-project-charter/references/charter/evidence.md`.
 
-### 5. Designing coverage without reading the XRD's defaults
+### 4. Designing coverage without reading the XRD's defaults
 
 A test's input is not the XR you wrote but the XR **after the XRD's defaults have been
 applied**. A field you omitted to exercise the "unset" branch is not unset if the XRD gives it
