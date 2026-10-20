@@ -57,7 +57,8 @@ The function the [`tests.md`](tests.md) template tests: a Bucket, a BucketVersio
 is true, and `status.bucketArn` from the observed bucket. Keep the shape; replace the resources.
 
 Leave `DesiredComposed.Ready` unset unless the project says otherwise; a function-auto-ready step later in the
-pipeline marks readiness.
+pipeline marks readiness. Where you set it, it takes `resource.ReadyTrue` (type `resource.Ready`);
+`fnv1.Ready_READY_TRUE` is the response's proto value, which a unit test reads back, and does not compile there.
 
 ```go
 package main
@@ -221,8 +222,9 @@ left by an earlier reconcile.
 ## Unit-test template: the fast tier (`functions/<n>/fn_test.go`)
 
 `go test ./...` in `functions/<n>/` calls `RunFunction` directly: about a second, no project build. It is
-also where absence goes: `assertResources` cannot say a field is absent; a Go unit test on the desired
-state can. Asserting the exact set of resource names catches a surplus resource too.
+also the easiest home for absence: a typed model can't carry `assertResources`' expression key
+(`charter/evidence.md`), and a Go unit test on the desired state compares a whole map. Asserting the
+exact set of resource names catches a surplus resource too.
 
 The unit test supplements `up test run`; it never replaces it. It does not run the composition pipeline,
 the XRD defaults, or the other functions.
@@ -276,7 +278,7 @@ func TestRunFunction(t *testing.T) {
 			if !slices.Equal(got, tc.wantNames) {
 				t.Errorf("desired resources: want %v, got %v", tc.wantNames, got)
 			}
-			// Absence, which assertResources cannot express: forProvider holds region and nothing else.
+			// Absence: forProvider holds region and nothing else.
 			bucket := rsp.GetDesired().GetResources()["bucket"].GetResource().AsMap()
 			fp, _ := bucket["spec"].(map[string]any)["forProvider"].(map[string]any)
 			if len(fp) != 1 || fp["region"] != "eu-central-1" {
@@ -301,9 +303,11 @@ for name, r := range rsp.GetDesired().GetResources() {
 ```
 
 `GetDesired().GetResources()` is a `map[string]*fnv1.Resource`: index it with a `string`, not a
-`resource.Name`. A status branch needs observed composed state, which the template does not feed. In a
-unit test, key `Observed.Resources` by composition resource name; the SDK uses that map key, not the
-annotation inside (a CompositionTest's mocks match differently: `charter/evidence.md`, Coverage):
+`resource.Name`. `AsMap()` returns every number as `float64` (protobuf `structpb`): compare with
+`float64(5432)`, since `5432` never matches. A status branch needs observed composed state, which
+the template does not feed. In a unit test, key `Observed.Resources` by composition resource name;
+the SDK uses that map key, not the annotation inside (in a CompositionTest the renderer builds that
+key from each mock's composition-resource-name annotation: `charter/evidence.md`, Coverage):
 
 ```go
 req := &fnv1.RunFunctionRequest{Observed: &fnv1.State{
@@ -327,7 +331,9 @@ if rsp.GetDesired().GetResources()["bucket"].GetReady() != fnv1.Ready_READY_UNSP
 The template fails on any Fatal. For an input the function must reject, write a sibling test that
 expects one: a composition test can't (author-tests, "A Fatal result"). It asserts the message, that
 nothing was composed, and that no success condition was set. "Nothing composed" is measurable because
-a request built with `Observed` only carries no desired state for `response.To` to copy.
+a request built with `Observed` only carries no desired state for `response.To` to copy. Compare the
+message whole, as below; a message listing names checked per name with `strings.Contains` is the
+substring trap in author-tests, Phase 3: a short name matches inside a longer listed one.
 
 ```go
 // fatalMessages returns the message of every Fatal result in rsp.

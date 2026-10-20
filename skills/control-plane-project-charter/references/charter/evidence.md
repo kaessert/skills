@@ -56,19 +56,19 @@ An expected resource is matched on **`apiVersion` + `kind` + `metadata.name`, pl
 annotation the expectation names** (up v0.55.0 source). For the name:
 
 - **Your function sets it:** assert it.
-- **Crossplane generates it, and the kind appears once in the render:** omit `metadata.name`.
-  An omitted name matches whatever was rendered.
-- **Crossplane generates it, and the kind appears more than once:** assert each one by the name
-  copied from the render, or omit the name and assert its `crossplane.io/composition-resource-name`
-  annotation, so each expectation matches exactly one resource. The annotation is the key your
-  function stores the resource under, so that expectation can be written before the first render.
+- **Crossplane generates it:** omit `metadata.name` while the kind appears once in the render; an
+  omitted name matches whatever was rendered. A kind that appears more than once: author-tests,
+  "Pin a kind that renders more than once".
 
 **A generated name can't be written before its resource renders.** The renderer's uid is
-internal, so don't derive the hash, and don't predict the `resourceRefs` order either: observed
-with up v0.55.0, it is sorted by `apiVersion`+`kind`+`name`, not by composition order. For a new
-resource, RED is an expectation without `metadata.name` (`no actual resource found: …/<Kind>/`),
-or a `resourceRefs` list one entry short. After GREEN, copy any names you assert, and the whole
-`resourceRefs` list in its rendered order, from `render.log`.
+internal, so don't derive the hash, and don't predict the `resourceRefs` order either: it is
+sorted by the joined string `apiVersion`+`kind`+`name` (Crossplane v2.3.1 `UpdateResourceRefs`),
+not by composition order, so `RouteTableAssociation` and `RouteTable` come before `Route`, and
+two resources of one kind follow their generated names, which change with the XR's name but not
+between runs of one test. For a new resource, RED is an expectation without `metadata.name`
+(`no actual resource found: …/<Kind>/`), or a `resourceRefs` list one entry short. After GREEN,
+copy any names you assert, and the whole `resourceRefs` list in its rendered order, from
+`render.log`.
 
 **A generated name copied from a render is stable in a render.** §5's warning that generated
 names change across re-creations is about a live control plane, where the XR's uid is real. A
@@ -78,13 +78,17 @@ every run).
 
 Renaming the XR or a composition resource changes every generated name. That is correct:
 renaming a composition resource orphans resources on a live platform (author-composition's
-`patterns.md`, "The composition key is an API"), and you want a test that says so.
+`patterns.md`, "The composition key is an API"), and you want a test that says so. The converse
+holds too: the same XR (apiVersion, kind, namespace, name) and composition resource name render
+the same generated name in every suite, since the name is derived from nothing else (Crossplane
+v2.3.1 source).
 
 A failure to match reads as `no actual resource found: <group>/<version>/<Kind>/<name>`; a
 trailing slash means the expectation named no name. Observed with up v0.55.0, an expectation
-whose name matches but whose annotations differ (one missing, or another value) fails the same
-way, with no field diff: the annotations take part in the match. Labels and every other field are
-compared only after the match, and a mismatch there prints `* <path>: Invalid value`.
+that names an annotation the resource lacks, or gives it another value, fails the same way, with
+no field diff. Annotations the expectation doesn't name are ignored: an extra annotation never
+breaks a match (how to assert absence: below). Labels and every other field are compared only
+after the match, and a mismatch there prints `* <path>: Invalid value`.
 
 `assertResources` ignores what it does not list, so a *surplus* resource is invisible: a
 function that composes a resource it should have skipped leaves the suite green. To close that,
@@ -99,24 +103,38 @@ It is the one assertion that catches a resource nothing else names. Its order is
 renderer's and is not part of any published contract: an upstream reordering breaks the
 assertion loudly rather than letting a real surplus through, the safe direction.
 
-**One exact `resourceRefs` assertion per input shape, not per case.** Give each distinct composed
-set (the shipped example, the minimal XR, each branch that adds or drops a resource) one guard;
-other cases of that shape, and sibling suites rendering it, leave it out. Every exact list
-changes when a resource is added, so a guard in every case turns each new resource into an edit
-of every suite. A function unit test that asserts the exact set of names (Go:
-`languages/go/functions.md`, unit-test template) guards surplus resources too.
+**One exact `resourceRefs` assertion per input shape, not per case.** A shape is the set of
+composition resource names an input renders: inputs that differ only in values, or in the XR's
+name, share one. Give each shape (the shipped example, the minimal XR, each branch that adds or
+drops a resource) one guard; other cases of that shape, and sibling suites rendering it, leave it
+out. Every exact list changes when a resource is added, so a guard in every case turns each new
+resource into an edit of every suite. A function unit test that asserts the exact set of names
+(Go: `languages/go/functions.md`, unit-test template) guards surplus resources too.
 
-**That covers surplus resources, not absent fields.** `assertResources` has no absence
-operator, so a composition test cannot assert "this field is not set", and searching the CLI
-for one wastes time. Assert it in a unit test on the function's desired state, in
-the function's own language, or confirm it once in `render.log` and report it as not asserted.
+**Absent fields and surplus map keys take an expression key.** `up test run` checks each
+expectation with chainsaw's assertion trees (up v0.55.0 source): a key in parentheses is a
+JMESPath expression on the object at that level. Under `spec.forProvider`,
+`(mapPublicIpOnLaunch == null): true` passes while the field is absent or `null`. Beside `tags`,
+not inside it, `(length(keys(tags))): 3` fails on a fourth key; on an absent `tags` it fails with
+`invalid type for: <nil>`. A `metadata.labels` count includes the `crossplane.io/composite` label
+on every composed resource, in a render too. Objects otherwise match as subsets, so a surplus
+key passes. A plain `field: null` fails on an absent field
+(`Required value: field not found in the input object`) and `tags: {}` matches any map: neither
+asserts absence (probed with up v0.55.0). An expression key inside `metadata.annotations` turns
+annotation matching off for that expectation, so it is compared with an arbitrary resource of its
+kind (and name, if given); put it under `metadata`, quoting a dotted key:
+`(annotations."crossplane.io/external-name" == null): true`. A typed model (Go struct, KCL
+schema, Pydantic model) can't carry the key: write that level as a plain map, or use a unit test
+on the desired state (Go, Python).
 
 ## Coverage: what the suite must contain
 
-The scaffold generates **one** test, against **one** example XR, asserting **only** composed
-resources. That suite is green over a function that crashes on a minimal XR, silently drops
-status fields, and never runs its readiness branch. "The tests pass" is not a verification
-claim until the suite covers these three shapes. Each language file shows them in its own
+The usual first suite is **one** test against the shipped example XR (`xrPath` plus `xrdPath`),
+asserting **only** composed resources. Write that test yourself: `up test generate`'s stub leaves
+`xrPath` empty ([`generators.md`](generators.md)), and the inline-`xr` tests below add to it,
+they don't replace it. Alone, that suite is green over a function that crashes on a minimal XR,
+silently drops status fields, and never runs its readiness branch. "The tests pass" is not a
+verification claim until the suite covers these three shapes. Each language file shows them in its own
 syntax (Python: `languages/python/tests.md`; Go: `languages/go/tests.md`; YAML:
 `languages/yaml.md`).
 
@@ -135,16 +153,20 @@ instead of `*Path`), `extraResources`, `context`, and `functionCredentialsPath`.
 **never executes** when `observedResources` is empty — it is unexercised, not merely
 unasserted. Supply the observed state explicitly:
 
-- Every observed resource needs the `crossplane.io/composition-resource-name` annotation: the
-  renderer rejects the whole test without it (`encountered composed resource without required
-  "crossplane.io/composition-resource-name" annotation`). Required, but **not** what matches a
-  mock to the XR's composed resource.
-- **For a namespaced XR, every `observedResources` entry also needs `metadata.namespace` set to
-  the XR's namespace, and `metadata.name` set to the name the render gave that resource.** Copy
-  the names from `render.log` (run with `--function-logs`, above); they are stable in a render.
-  A mock without the XR's namespace is silently not observed: no error, the function sees no
-  observed resources, and the test fails only on its own assertions, as if the function were
-  wrong (observed with up v0.55.0).
+- **Every observed resource needs the `crossplane.io/composition-resource-name` annotation.** It
+  is the key that matches a mock to the composed resource the function stores under that name;
+  without it the renderer rejects the whole test (`encountered composed resource without required
+  "crossplane.io/composition-resource-name" annotation`).
+- **For a namespaced XR, every mock also needs `metadata.namespace` set to the XR's namespace.**
+  The renderer looks mocks up in the XR's namespace, so one without it is silently not observed:
+  no error, the function sees no observed resources, and the test fails only on its own
+  assertions, as if the function were wrong (observed with up v0.55.0).
+- **The mock's `metadata.name` becomes the composed resource's name.** Any valid name is
+  observed, and the render keeps it instead of generating one, in the resource and in the
+  composite's `resourceRefs`; an invalid name fails the render. So in a mocked case, assert the
+  mock's names. To keep them equal to an unmocked case's generated names, copy those from that
+  case's `render.log` (above). Checking that the mock names appear in the render proves nothing:
+  they always do (Crossplane v2.3.1 source, the renderer up v0.55.0 runs; observed).
 - **Prove the mocks are used** with a case that fails when they are ignored: assert a value only
   an observed resource can supply, such as a status field copied from a mock. A case that
   expects empty or default status passes whether the mocks are observed or not.
@@ -155,6 +177,13 @@ unasserted. Supply the observed state explicitly:
 Two cases, *observed but not ready* and *observed and ready*, are what separate a readiness
 check from an existence check in your assertions; with only the ready case, a function that
 never checks readiness passes.
+
+**The composite's `Ready` is the render's readiness check.** It is `False` (`Unready resources:
+<first three names, sorted>, and N more`) while any desired resource is not marked ready, unless
+the pipeline sets the composite's readiness itself (Crossplane v2.3.1 source). Assert the key
+`(conditions[?type == 'Ready'] | [0].status)` under the composite's `status`: `"True"` where every
+composed resource is observed ready, else `"False"`. That proves the function, or
+function-auto-ready, marks readiness.
 
 **3. Assert every `status` field the function writes, on the composite.** `assertResources`
 matches the composite ([§8](../../SKILL.md#8-a-green-run-is-not-evidence)). Without this, a
@@ -176,7 +205,3 @@ omitted-lifecycleRules branch; the composite's resourceRefs assertion fails if a
 resource appears."* Without one: *"absence was confirmed once by reading render.log and is not
 asserted by the suite."* Never *"validates that no lifecycle resource is created"* unless
 something actually fails when one is.
-
-**Out of scope for any composition test.** Assertions are partial-positive, so a *stray*
-field — an external-name annotation on a resource whose external name the provider assigns —
-is never flagged. That class fails only on a live control plane.

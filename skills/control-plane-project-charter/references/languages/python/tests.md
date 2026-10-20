@@ -5,6 +5,13 @@ why, is in [`charter/evidence.md`](../../charter/evidence.md#coverage-what-the-s
 this file is the Python syntax for it. Templates are in [`test-templates.md`](test-templates.md);
 the Python index is [`../python.md`](../python.md).
 
+Field names, import paths and class names come from `probe_project.py --fields <Kind>`
+([`../python.md`](../python.md)). It takes Kinds and prints `forProvider` (an XR's `spec`) one
+level deep and the `*Ref`/`*Selector` names. For the rest (a nested class, a selector's fields,
+`atProvider`), read the module its import line names:
+`.up/python/models/<reversed-group>/<kind, lowercased>/<version>.py`. Passed a class name, the
+probe answers `NOT FOUND`, which means "not a Kind", not a missing dependency.
+
 ## The coverage shapes in Python
 
 **A minimal XR, inline** (only the XRD-required fields):
@@ -77,8 +84,9 @@ observedResources=[{
 **Status on the composite.** In Python the write that loses fields is more than one
 `resource.update(rsp.desired.composite, {"status": …})` ([`patterns.md`](patterns.md)).
 
-**Absence through `resourceRefs`** on the composite. Copy the list out of `render.log`; it is
-matched exactly in length and order:
+**Absence through `resourceRefs`** on the composite. Copy the list out of `render.log` (written
+only by `--function-logs`: [`charter/evidence.md`](../../charter/evidence.md#reading-the-render));
+it is matched exactly in length and order:
 
 ```python
 "spec": {"crossplane": {"resourceRefs": [
@@ -112,9 +120,10 @@ convention; projects vary (one embedded project uses `exclude_unset=True` withou
 1. Asserted resources carry `apiVersion` and `kind`, unlike resources a function builds.
 2. `metadata.namespace` is optional on an expectation: the render carries the XR's namespace,
    and assertions are partial.
-3. Do not set `managementPolicies=["*"]` on an expected resource: `exclude_unset` keeps what you
-   set, and the assertion then fails against a render that correctly omits it. No
-   `exclude={"spec": {"deletionPolicy"}}` either: the `.m.` Spec has no such field.
+3. Set `managementPolicies` or `providerConfigRef` on an expected resource only where the
+   function sets them (charter §5): `exclude_unset` keeps what you set, and whether the render
+   has a default-valued one depends on the function's dump ([`patterns.md`](patterns.md#building-a-managed-resource)).
+   No `exclude={"spec": {"deletionPolicy"}}` either: the `.m.` Spec has no such field.
 4. Never exclude `writeConnectionSecretToRef`: it is an API contract.
 
 ## Python-specific mistakes
@@ -123,4 +132,88 @@ convention; projects vary (one embedded project uses `exclude_unset=True` withou
 |---|---|
 | `exclude_none=True` on asserted resources (compares too much), or `exclude_unset=True` on the top-level test | asserted resources `exclude_unset=True`; top-level test `exclude_none=True` |
 | `up test generate` before `.up/python` exists: imports do not resolve | `up project build` first, so `crossplane-models` is wired into `pyproject.toml` |
-| A function sets, and a test asserts, `providerConfigRef` equal to the model default `{kind: ClusterProviderConfig, name: default}` | up to function-sdk-python 0.12.0 (`up function generate` pins 0.11.0) `resource.update()` dumps with `exclude_defaults`, so that value is missing from the render and the assertion fails; from 0.13.0 `exclude_unset` keeps it. Do not set or assert the default (charter §5); a non-default `providerConfigRef` the project asks for serializes under every version |
+| A mutant through the model (it drops a keyword the Kind lacks: render unchanged) or a nested `resource.update` (it replaces the sibling keys: red for the wrong reason) | `d = resource.struct_to_dict(r.resource)`, change one key in `d`, `resource.update(r, d)` |
+
+## Function unit tests
+
+`up` has no Python unit-test runner and the scaffold ships no test. What works with the venv
+`setup_venv.py` builds (checked against function-sdk-python 0.11.0, the version `up function
+generate` pins):
+
+| | |
+|---|---|
+| Framework | stdlib `unittest`: the venv has no pytest, and installing one adds a dependency the project doesn't pin |
+| Layout | `functions/<n>/tests/__init__.py` plus `test_*.py`. Without `__init__.py`, discovery fails with `Start directory is not importable` or prints `NO TESTS RAN` (exit 5). The wheel packages only `function/`, so the tests do not ship |
+| Imports | `from function import fn`; models as in the function (`from models.io…`) |
+| Run | `.venv/bin/python -m unittest discover -s functions/<n>/tests -t functions/<n>` from the project root. `-t` puts `functions/<n>` first on `sys.path`, so `function` is this function even when several functions share the venv (each scaffold names its package `function`). A system `python3` has neither `models` nor the SDK |
+
+A unit test calls `RunFunction` the way Crossplane does, with observed state only. Nothing applies
+the XRD: pass every field the XRD requires, defaulted ones included, or the XR model raises
+`ValidationError … Field required`.
+
+```python
+# functions/<n>/tests/test_fn.py
+import asyncio
+import unittest
+
+from crossplane.function import resource
+from crossplane.function.proto.v1 import run_function_pb2 as fnv1
+
+from function import fn
+
+XR = {
+    "apiVersion": "demo.example.org/v1alpha1",
+    "kind": "Bucket",
+    "metadata": {"name": "example", "namespace": "default"},
+    "spec": {"region": "eu-central-1"},
+}
+
+
+def run(xr, observed=None):
+    req = fnv1.RunFunctionRequest()
+    resource.update(req.observed.composite, xr)
+    for key, obj in (observed or {}).items():  # keyed by composition resource name
+        resource.update(req.observed.resources[key], obj)
+    return asyncio.run(fn.FunctionRunner().RunFunction(req, None))
+
+
+def fatal_messages(rsp):
+    return [r.message for r in rsp.results if r.severity == fnv1.SEVERITY_FATAL]
+
+
+class TestRunFunction(unittest.TestCase):
+    def test_composes_exactly_the_bucket(self):
+        rsp = run(XR)
+        self.assertEqual(fatal_messages(rsp), [])
+        self.assertEqual(sorted(rsp.desired.resources.keys()), ["bucket"])  # surplus fails too
+        bucket = resource.struct_to_dict(rsp.desired.resources["bucket"].resource)
+        self.assertEqual(bucket["spec"]["forProvider"], {"region": "eu-central-1"})  # absence too
+
+    def test_status_from_observed(self):
+        rsp = run(XR, observed={"bucket": {
+            "apiVersion": "s3.aws.m.upbound.io/v1beta1", "kind": "Bucket",
+            "status": {"atProvider": {"arn": "arn:aws:s3:::example"}},
+        }})
+        status = resource.struct_to_dict(rsp.desired.composite.resource).get("status")
+        self.assertEqual(status, {"bucketArn": "arn:aws:s3:::example"})
+        self.assertEqual(rsp.desired.resources["bucket"].ready, fnv1.READY_UNSPECIFIED)
+
+    def test_missing_region_is_fatal(self):
+        rsp = run({**XR, "spec": {}})
+        self.assertEqual(fatal_messages(rsp), ["spec.region is required"])
+        self.assertEqual(len(rsp.desired.resources), 0)  # nothing composed
+```
+
+"Nothing composed" is measurable because `response.to(req)` copies the request's desired state,
+which this request does not have. Numbers come back from a `Struct` as floats (`5432.0`: protobuf
+`Struct` numbers are doubles), so `assertEqual` against `5432` passes and `isinstance(v, int)` is
+`False`. Checked: with the Fatal branch disabled,
+`test_missing_region_is_fatal` fails. `self.log` lines (`[info] Running function`) in the output are
+the scaffold's logger, not failures.
+
+Keep the template's two checks when you adapt it: the whole-`forProvider` `assertEqual` and
+`ready == fnv1.READY_UNSPECIFIED`. A composition test sees a surplus key only through an expression key
+([`evidence.md`](../../charter/evidence.md#how-assertresources-matches-and-how-to-make-a-suite-exhaustive)),
+so compare whole maps (`forProvider`, `tags`, `labels`) once per variant the function
+distinguishes; a key-by-key `assertEqual` or `assertNotIn` lets one through. Readiness is each
+desired resource's `ready` field, not a condition in its body.

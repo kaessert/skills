@@ -1,9 +1,8 @@
 ---
 name: control-plane-project-charter
-description: Shared rules and per-language references for the Upbound control-plane-project skills - agent behaviour, the test-first loop, what a v2 composed resource needs, the container boundary, what a green run proves, how to report, and the KCL, Python, TypeScript, Go and YAML references. To review a change to a control-plane project ("review this change", "review the PR", "check this work"), load it on its own and open its references/charter/review.md, where the review checks are. To do the work, load it alongside the task skill (a task skill does not load it) - author-composition for composition function code, author-tests for composition or E2E tests, author-configuration-package for scaffolding, XRDs and dependencies, verify-configuration to build, verify or run the project, e2e-test-configuration to run E2E tests, and plan-v2-migration or execute-v2-migration for a Crossplane v2 migration.
+description: Shared rules and per-language references for the Upbound control-plane-project skills - agent behaviour, the test-first loop, what a v2 composed resource needs, the container boundary, what a green run proves, how to report, and the KCL, Python, TypeScript, Go, go-templating and YAML references. To review a change to a control-plane project ("review this change", "review the PR", "check this work"), load it on its own and open its references/charter/review.md, where the review checks are. To do the work, load it alongside the task skill (a task skill does not load it) - author-composition for composition function code, author-tests for composition or E2E tests, author-configuration-package for scaffolding, XRDs and dependencies, verify-configuration to build, verify or run the project, e2e-test-configuration to run E2E tests, and plan-v2-migration or execute-v2-migration for a Crossplane v2 migration.
 license: Apache-2.0
 references:
-  - references/charter/agent-context.md
   - references/charter/container.md
   - references/charter/evidence.md
   - references/charter/generators.md
@@ -24,7 +23,6 @@ references:
   - references/languages/kcl/pitfalls.md
   - references/languages/kcl/tests.md
   - references/languages/python.md
-  - references/languages/python/examples.md
   - references/languages/python/imports.md
   - references/languages/python/patterns.md
   - references/languages/python/pitfalls.md
@@ -44,10 +42,10 @@ names:
 
 | Work | Load | And read |
 |---|---|---|
-| reviewing | no task skill | open [`references/charter/review.md`](references/charter/review.md) now: the review checks are there, not in this file. Then the language file's failure modes for what changed |
+| reviewing | no task skill | open [`references/charter/review.md`](references/charter/review.md) now: the review checks are there, not in this file. Then the language file's failure modes for what changed (Python: `references/languages/python/pitfalls.md`; go-templating: `references/languages/go-templating.md`, "Failure modes") |
 | XRD, `upbound.yaml`, dependencies, examples, ProviderConfig, MRAP | author-configuration-package | `author-configuration-package/references/mrap.md` for an MRAP |
-| function code | author-composition | the language file (§10), e.g. `references/languages/go.md` (models, imports) and `references/languages/go/functions.md` |
-| anything under `tests/` | author-tests | the test language's file, e.g. `references/languages/go/tests.md`; an `E2ETest`: `author-tests/references/e2e.md` |
+| function code | author-composition | the language's index (§10) in `references/languages/` (`go.md`, `python.md`, `go-templating.md` …): models, imports, and the files beside it, e.g. `go/functions.md`. Language files live only there, never in a task skill |
+| anything under `tests/` | author-tests | the test language's file, e.g. `references/languages/go/tests.md`, and its index beside it (`go.md`, `python.md`); an `E2ETest`: `author-tests/references/e2e.md` |
 | running E2E tests, re-runs included | e2e-test-configuration | `e2e-test-configuration/references/local.md` or `space.md` beside it |
 
 A path starting `references/` is in this skill's directory; one starting with a skill's name is
@@ -76,10 +74,14 @@ How you were started decides whether you can ask anything; every skill's mode li
 **When nobody can answer, never block on a question** — that includes a caller that cannot
 relay one. Wherever a skill says to ask, read it with this rule.
 
-**Detail:** [`charter/agent-context.md`](references/charter/agent-context.md) has what each
-context may and may not do, why a fork's only output channel is prose, and how to hand work to a
-sub-agent or run a long command when your harness cannot: in band and in the foreground, never
-detached by you.
+**A brief for a sub-agent, with no sub-agents:** follow it yourself, in this conversation; you
+are then inline.
+
+**Long commands** (an e2e run, a cold first build, a loop of `up test run`s): give the call a
+timeout no shorter than the command's worst case, since a killed `up` run can leave its kind
+cluster or containers behind. Put it in the background only with your harness's own facility,
+never detach it yourself (`&`, `nohup`), and make each wait on it as long as one call may run:
+every wait re-sends your context.
 
 ## 2. Discover, do not interview
 
@@ -95,7 +97,7 @@ from a skill's default and why.
 | XR kind, group, version, spec schema | `apis/*/definition.yaml` |
 | Existing composition + `functionRef` | `apis/*/composition.yaml` |
 | Available provider families | `upbound.yaml` `spec.dependsOn` |
-| Example XR shape | the file `up example generate` writes: `examples/<kind-lowercase>/<xr-name>.yaml`, the name defaulting to the lowercase Kind (`examples/network/network.yaml`, up v0.55.0). Find it; don't assume `example.yaml` |
+| Example XR shape | the file under `examples/` (what `up example generate` writes: author-configuration-package, Phase 2) |
 | Composition language | `functions/*/` contents — see [`languages/`](references/languages/) |
 | Test language | the `tests/*/` dirs that produce a `CompositionTest` or `E2ETest` — may differ from the composition language; with none yet, §10 picks it |
 | Provider field names, types and constraints | the generated models under `.up/` |
@@ -113,9 +115,9 @@ detail.
 
 **Test-first is for behaviour:** the function, the composition, how status is derived.
 Scaffolding, `upbound.yaml` metadata, dependencies, the XRD, an MRAP and the examples are
-declarative: `up project build`, author-configuration-package's `check_xrd_schema.py` and the
-composition tests that use them check those. Write no test program for them, and don't copy a
-skill's script into the project.
+declarative: `up project build`, `author-configuration-package/scripts/check_xrd_schema.py` (in
+that skill's directory, not a project path) and the composition tests that use them check
+those. Write no test program for them, and don't copy a skill's script into the project.
 
 **Why:** watching a test fail first makes a coverage claim checkable.
 
@@ -137,9 +139,10 @@ skill's script into the project.
    | `no actual resource found` for the resource you are about to compose, or for one whose annotation you are adding | valid RED |
    | a field mismatch naming the exact field you are adding | valid RED |
    | a syntax error, an unresolved import, a missing `compositionPath`, a run that stops at `✗ Parsing tests`, a bug in the test's own logic | **not** RED, even though it exits 1 — the test is broken, not the code. Fix it before writing any implementation |
-   | a compiled language (Go): `undefined: <symbol you are adding>` | **not** RED — a compile error. Add a stub that only returns the zero value, then watch the assertion fail; a stub that already does the work never shows RED |
+   | the symbol you are adding is missing: Go `undefined: <symbol>` (a compile error), Python `ImportError: cannot import name …` or `AttributeError: module … has no attribute …` (unittest counts these as errors, not failures) | **not** RED. Add a stub that only returns the zero value (`""`, `None`, `{}`), then watch the assertion fail; a stub that already does the work never shows RED |
+   | `failed to build function` (exit 1, `Failed tests` 0), e.g. Go `declared and not used` after deleting a call | **not** RED: nothing rendered. Make the function, or the mutant, compile, then rerun |
    | passes immediately | **not** RED — the assertion is vacuous, or the behaviour already exists |
-   | E2E: an implementation mutation (drop a composed resource others depend on, break a selector) that never readies within a short `timeoutSeconds` | valid RED, and optional (below). Editing `defaultConditions` or an expected value is not; an unparsable condition is a broken test (author-tests' `e2e.md` reference) |
+   | E2E: an implementation mutation (drop a composed resource others depend on, break a selector) that never readies within `timeoutSeconds` | valid RED, and optional (below). Editing `defaultConditions` or an expected value is not; an unparsable condition is a broken test (author-tests' `e2e.md` reference) |
 
    Filling in a generated name or the rendered `resourceRefs` order after GREEN completes an
    expectation whose RED you already saw. It is not editing an expected value
@@ -148,8 +151,9 @@ skill's script into the project.
    Record the failure text: your report cites it as evidence that the test bites.
 
    **RED is required for composition tests and function unit tests, and optional for a new
-   `E2ETest`.** An e2e RED costs a real control-plane run: take it when it is cheap, as in the
-   table's last row; otherwise report the E2ETest as unproven (§4).
+   `E2ETest`.** An e2e RED costs a real control-plane run: take it only when it proves what no
+   render can (e.g. MRAP activation: author-configuration-package's `mrap.md`); otherwise report
+   the E2ETest as unproven (§4).
 
 2. **GREEN — implement** until the test passes, and no further.
 
@@ -272,7 +276,11 @@ whether the provider accepts the resource, and a composition test passes either 
 
 **Check every Kind you compose against its provider.** Read the conditional rules the
 generated models record in docstrings and field descriptions (`Required if …`, `Conflicts
-with …`): optional in the type means only that the CRD does not require it. Then check the
+with …`), and the CRD's CEL rules, which can require a field the model leaves optional. `up`
+caches each provider's CRDs at
+`~/.up/cache/xpkg.upbound.io/<org>/<package>@<version>/<plural>.<group>.yaml`, one directory per
+version pulled (take the one the build resolved); `grep -E '^ *(- )?(rule|message): ' <crd>`
+prints every `x-kubernetes-validations` rule (its first line) with its message. Then check the
 cloud API's own rules (name formats, reserved prefixes, create-only fields), and treat *one
 list element → one object* as a decision you justify, not the default.
 
@@ -307,7 +315,7 @@ boundary around function rendering.
 | Green thing | What it actually proves |
 |---|---|
 | `up project build` | the package was assembled, never that the function *runs*. Only Go compiles here; what each language's build checks: [`charter/evidence.md`](references/charter/evidence.md#what-a-clean-up-project-build-checks) |
-| `up test run` printing `No test files found`, or an `--e2e` run printing `Total Tests Executed: 0` | **nothing ran.** No test was collected, and it exits 0 anyway — that is not a pass. `--e2e` over directories that produce no `E2ETest` (a `test-*` glob, or a program emitting only `CompositionTest`s) builds the whole package, runs nothing and exits 0 (up v0.55.0). A test directory that emits no `CompositionTest`, such as a Go test program printing `items: []`, contributes zero tests; next to real tests it just drops out of the count. Report "no tests ran". |
+| `up test run` printing `No test files found`, or an `--e2e` run printing `Total Tests Executed: 0` | **nothing ran.** No test was collected, and it exits 0 anyway — that is not a pass. `--e2e` over directories that produce no `E2ETest` (a `test-*` glob, or a program emitting only `CompositionTest`s) builds the whole package, runs nothing and exits 0 (up v0.55.0). A pattern globs directories under `tests/` (`tests/test-<n>`), never a test's `metadata.name`: one naming a test prints this too. A test directory that emits no `CompositionTest`, such as a Go test program printing `items: []`, contributes zero tests; next to real tests it just drops out of the count. Report "no tests ran". |
 | A composition test suite | the assertions you wrote held against the render. `assertResources` is **partial and positive for objects**: it ignores composed resources it does not list, and within a resource it checks only the fields you name, at every depth. **Lists are the exception** — an asserted list must match the rendered one exactly in length *and* order, or you get `lengths of slices don't match`. A short list assertion is not a weak assertion; it is a failing one. |
 | A render | the function produced objects. Not that the API server accepts them, and not that the provider does. |
 | `Ready=True` | the provider reconciled *something*. Read back the field you meant, from the live object, not from the input manifest. |
@@ -324,8 +332,9 @@ fields.
 **Observed-state branches are reachable, and you are expected to reach them.** A render starts
 with no observed resources *unless the test supplies `spec.observedResources`*. So code gated
 on observed-and-ready is dead in a test that omits that field and live in one that sets it —
-write the second test rather than declaring the branch untestable. For a namespaced XR, give
-each mock the XR's namespace and the render's name: without the namespace it is silently ignored
+write the second test rather than declaring the branch untestable. A mock is matched by its
+composition-resource-name annotation, and for a namespaced XR needs the XR's namespace: without
+it the mock is silently ignored. Its own name replaces the generated one
 ([`charter/evidence.md`](references/charter/evidence.md), Coverage). Such a test proves your
 branch logic given the status you wrote, not that a provider ever reports that status. For
 that, `--e2e` or a live apply — or say it is unverified.
@@ -356,7 +365,9 @@ to make it work is.
 - **Never pass a `--kubeconfig` you did not write and check in this run.**
 - **Delete what this run created, and nothing else.** Your own leftovers — a control plane, a
   kind cluster and its registry container, a scratch directory — must be removed before
-  you report; for anything else, report what you would delete and let the user choose.
+  you report; for anything else, report what you would delete and let the user choose. A cloud
+  resource Crossplane no longer manages is "anything else", even one your own test orphaned
+  ([`charter/targets.md`](references/charter/targets.md), Teardown and leftovers).
 - **Delete a control plane only once no managed resource is left on it.** Deleting it first
   leaves their cloud resources running, tracked by nothing: delete the XRs, wait until
   `kubectl get managed -A` is empty, and if that hangs, keep the control plane and report what

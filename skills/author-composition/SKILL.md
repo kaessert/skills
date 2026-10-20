@@ -1,6 +1,6 @@
 ---
 name: author-composition
-description: Use this skill when the user asks to create, extend, modify, or debug a Crossplane composition function in a control-plane project — in any language (KCL, Python, TypeScript, Go). Detects the function language and applies the matching reference. Also use when asked about Crossplane v2 composition patterns, model/type import paths, namespaced `.m.` APIs, or why a composition renders green but the resource never reconciles. For authoring the tests themselves use author-tests; for XRD design use author-configuration-package. Always load this skill before writing or changing composition function code, instead of writing it directly - also when you get there partway through another skill's workflow, such as scaffolding a new package. It enforces the v2 rules that composition tests cannot catch — `forProvider`-only resources, no dangling `providerConfigRef`, resolved import paths — and the test-first loop that makes a coverage claim checkable.
+description: Use this skill when the user asks to create, extend, modify, or debug a Crossplane composition function in a control-plane project — in any language (KCL, Python, TypeScript, Go, go-templating). Detects the function language and applies the matching reference. Also use when asked about Crossplane v2 composition patterns, model/type import paths, namespaced `.m.` APIs, or why a composition renders green but the resource never reconciles. For authoring the tests themselves use author-tests; for XRD design use author-configuration-package. Always load this skill before writing or changing composition function code, instead of writing it directly - also when you get there partway through another skill's workflow, such as scaffolding a new package. It enforces the v2 rules that composition tests cannot catch — `forProvider`-only resources, no dangling `providerConfigRef`, resolved import paths — and the test-first loop that makes a coverage claim checkable.
 license: Apache-2.0
 references:
   - references/patterns.md
@@ -93,8 +93,8 @@ function body empty or unchanged.
 
 **Python:** before Phase 3, run what
 `control-plane-project-charter/references/languages/python.md` says with this skill's
-[`scripts/`](scripts/): `scripts/setup_venv.py`, `scripts/probe_project.py` (layout, imports,
-fields, generation) and `scripts/run_function.py` (the fast tier).
+[`scripts/`](scripts/): `scripts/setup_venv.py` and `scripts/probe_project.py` (layout,
+imports, fields, generation).
 
 **Never hand-derive an import path and never guess a provider field name.** Both are one
 command away.
@@ -153,9 +153,9 @@ The language file has the bootstrap and the syntax. Language-independent, in ord
    return (patterns.md: the guard-clause chain).
 
 For iterating on a crash rather than an assertion, use the fast tier where the language
-offers one (Python: `run_function.py`; Go: `go test ./...` in `functions/<n>/` — the scaffold's
-`fn_test.go` is an empty table that passes with zero cases, so add one before you count it).
-It supplements the loop and never replaces it.
+offers one (Python: `unittest` in `functions/<n>/tests/`; Go: `go test ./...` in
+`functions/<n>/` — the scaffold's `fn_test.go` is an empty table that passes with zero cases,
+so add one before you count it). It supplements the loop and never replaces it.
 
 ## Phase 6: REFACTOR and verify — coverage, not a green exit code
 
@@ -174,8 +174,9 @@ repeat. Before you call anything covered (charter §8):
    it.
 3. **Read the render, not the assertions:** `up test run "tests/test-*" --function-logs`, then
    read it as `control-plane-project-charter/references/charter/evidence.md` says (the directory
-   the run prints as `Test artifacts written to <dir>`). Add each emitted resource to `assertResources`; until you do, it is
-   untested even though the suite is green.
+   the run prints as `Test artifacts written to <dir>`). A run without the flag writes nothing,
+   and any existing directory is stale. Add each emitted resource to `assertResources`; until you
+   do, it is untested even though the suite is green.
 4. **The suite satisfies `control-plane-project-charter/references/charter/evidence.md`
    "Coverage"**: each input shape including a minimal XR, each observed-state branch, every
    `status` field on the composite.
@@ -187,9 +188,8 @@ they talk to no provider and install nothing, so never "production-ready", "depl
 "verified".
 
 **Out of reach locally:** external-name semantics — whether a resource's external name is
-provider-assigned or the identifier you set — are undiscoverable from CRDs or models, and
-`assertResources` is partial-positive, so a stray annotation is never flagged. Check it on
-a live control plane, or say it is unchecked.
+provider-assigned or the identifier you set — are undiscoverable from CRDs or models. Check it
+on a live control plane, or say it is unchecked.
 
 ## Success criteria
 

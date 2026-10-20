@@ -9,15 +9,53 @@ The language-agnostic rules are in [`control-plane-project-charter`](../../SKILL
 | | |
 |---|---|
 | Scaffold a function | `up function generate <n> --language go-templating` → `functions/<n>/00-prelude.yaml.gotmpl`, `01-compose.yaml.gotmpl` |
-| Scaffold a test | `up test generate <n> --language go-templating` → `tests/test-<n>/test.yaml.gotmpl` (add `--e2e`) |
+| Scaffold a test | `up test generate <n> --language go-templating` → `tests/test-<n>/test.yaml.gotmpl` (with `--e2e`: `tests/e2etest-<n>/`) |
 | Run tests | `up test run tests/test-<n>` |
+| Provider fields | `.up/json/models/<reversed-group>-<version>-<Kind>.schema.json`, e.g. `io-upbound-m-aws-ec2-v1beta1-VPC.schema.json` (also `.up/go/models/io/upbound/m/aws/ec2/v1beta1/vpc.go`). Each Kind's cluster-scoped twin `io-upbound-aws-…` sits beside it: read the `-m-` file. Each file is a JSON Schema of the object, not a CRD: fields under `properties.spec.properties.forProvider.properties`. CRD rules: [`../charter/provider-schema.md`](../charter/provider-schema.md) |
 
 ## Functions
 
-This reference does not yet cover writing go-templating **functions** beyond the scaffold. The function's own
-template functions (`getCompositeResource`, `setResourceNameAnnotation`, `getComposedResource`, …) are in
-the [function-go-templating README](https://github.com/crossplane-contrib/function-go-templating#using-this-function).
-Everything the charter says about v2 managed resources (§5) and test-first development (§3) applies.
+`up` v0.55.0 builds a go-templating function on `function-go-templating-base:v0.9.0-13-gd1fa2e3`
+(its `internal/language/images.yaml`). Everything below holds in function-go-templating v0.9.0 and
+v0.13.0; the [upstream README](https://github.com/crossplane-contrib/function-go-templating#using-this-function)
+on `main` also documents newer helpers. Everything the charter says about v2 managed resources (§5)
+and test-first development (§3) applies.
+
+**Layout.** `up function generate` writes `00-prelude.yaml.gotmpl` (`{{ $xr := getCompositeResource . }}`)
+and `01-compose.yaml.gotmpl`. The function reads every file in lexical order, appends `---` to each,
+and parses the result as one template named `manifests`: a variable set in the prelude is visible
+in later files, and an error's `manifests:<line>` counts lines across the joined files. The
+scaffold's commented example uses `s3.aws.upbound.io`, a v1 group; a v2 project needs the `.m.` groups.
+
+**Input.** `.` is the `RunFunctionRequest` as JSON maps (`.observed.composite.resource`,
+`.observed.resources.<name>.resource`, `.desired`, `.context`). An empty field is absent: until
+something is observed, `.observed.resources` is nil.
+
+| To | Write | What happens |
+|---|---|---|
+| read an observed composed resource | `{{ $vpc := getComposedResource . "vpc" }}` | the manifest, or nil; keyed by composition resource name, and never an error. `index .observed.resources "vpc"` fails with `index of untyped nil` while nothing is observed |
+| read a field that may be missing | `{{ if $vpc.status.atProvider.id }}` | a missing key chains to no value without an error: falsy in `if`, `<no value>` when printed, nothing through `quote` (a YAML `null`). `index` on an absent map errors: test the map first |
+| compose a resource | `{{ setResourceNameAnnotation "vpc" }}` as a line under `metadata.annotations` | prints `gotemplating.fn.crossplane.io/composition-resource-name: vpc`; the function strips it and uses the value as the composition resource name. Any other document without it (not the XR, not a `meta.gotemplating…` kind) is a Fatal: `"<Kind>" template is missing required … annotation` |
+| write XR status | a document with the XR's `apiVersion` and `kind`, a `status:`, and no resource-name annotation | merged into the desired XR's status; several such documents merge rather than replace. With the annotation it is composed as a resource instead |
+| return a Fatal result | `{{ fail "message" }}` | any execution error returns Fatal `cannot execute template: …` before one document is decoded, so nothing the template printed is composed, wherever the `fail` sits |
+| mark readiness | nothing: function-auto-ready decides. For what it cannot judge, `gotemplating.fn.crossplane.io/ready: "True"` | annotation values must be strings: an unquoted `True` is a Fatal `invalid annotations` |
+| pass data to a later step | a document `apiVersion: meta.gotemplating.fn.crossplane.io/v1alpha1`, `kind: Context`, `data:` | pipeline context, not XR status |
+
+**Functions available:** Sprig without `env` and `expandenv` (removed, unlike the test side), plus
+`getCompositeResource`, `getComposedResource`, `getResourceCondition "Ready" (index .observed.resources
+"<name>")` (the entry, not the manifest), `setResourceNameAnnotation`, `toYaml`, `fromYaml`,
+`include`, `randomChoice`. No `required`. `getExtraResources` (v0.11.0) and
+`getComposedConnectionDetails` (v0.13.0) are newer than the base. Sprig's `replace "old" "new" $s`
+replaces every occurrence; there is no `replaceAll` (`function "replaceAll" not defined`).
+
+**Go template traps:** `range $k := $map` binds the values; keys need `range $k, $v := $map`. A map
+ranges in sorted key order, so iterate the XR's own list when its order matters.
+
+**Testing a Fatal.** `up` has no unit-test tier for go-templating, and a CompositionTest cannot
+assert a Fatal (author-tests, "A Fatal result"). Render the input instead (`up composition render`,
+[`evidence.md`](../charter/evidence.md#reading-the-render)): it exits 1 with
+`error calling fail: <your message>` on stderr (up v0.55.0). Match the message: a template parse
+error (`cannot parse the provided templates`) is a Fatal too.
 
 ## Tests
 
@@ -32,6 +70,9 @@ Verified against `up` v0.55.0:
 - **There is no input**: `.` is nil. The function-side helpers (`getCompositeResource` and friends) do not exist
   here, and neither do Helm's (`required`, `toYaml`, `include`): calling one fails with `function "…" not
   defined`. Sprig's `fail`, `hasKey`, `dict`, `list`, `toJson` are what you have.
+- **No file access** either (no `readFile`): an `E2ETest`'s `manifests` can't read `examples/`, so inline the
+  example XR. A `CompositionTest` doesn't need it: `xrPath` is a field of the emitted object, and `up` resolves
+  it from the project root after the template has rendered (up v0.55.0 source), as for every test language.
 - The output must be `items:` with a list of `CompositionTest` objects — the same object model as YAML tests
   ([`yaml.md`](yaml.md)).
 
@@ -41,8 +82,8 @@ other tests use.
 
 ### Composition test template (`tests/test-<n>/test.yaml.gotmpl`)
 
-Two cases of one input branch, each with an absence guard on the composite (`resourceRefs` is a list, and
-lists match exactly), and a guard that turns a misspelt case key into a generation error:
+Two cases, two input shapes (versioning adds a resource), so each carries its shape's one `resourceRefs`
+guard; plus a guard that turns a misspelt case key into a generation error:
 
 ```yaml
 # code: language=yaml
@@ -77,7 +118,7 @@ items:
         versioning: {{ $case.versioning }}
     assertResources:
     # The composite's resourceRefs is a list, and lists match exactly: a surplus composed resource fails here.
-    # Names copied from render.log (renders are deterministic).
+    # Names copied from <run dir>/<test metadata.name>/render.log (up test run … --function-logs).
     - apiVersion: demo.example.org/v1alpha1
       kind: Bucket
       metadata:
@@ -126,14 +167,15 @@ Observed-state tests add `observedResources` to a case exactly as in [`yaml.md`]
 |---|---|
 | Misspell a case key (`$case.versionin`) | **silently renders `<no value>`** into the manifest. In the reproduction the XR got `versioning: <no value>`, the function read it as false, and the test passed for the wrong reason. Guard keys with `hasKey` + `fail` as above, and never let `<no value>` reach a manifest |
 | Template syntax error / unknown function | the **whole run** fails at generation (`failed to parse templates`) |
-| A non-template file in the test directory | the run fails: `No test files found` |
+| A non-template file in the test directory | nothing runs: `No test files found`, exit 0 |
 | Expectation with the wrong shape (a list where the API has an object) | **passes** if the function writes the same wrong shape: assertions compare test against render, never against the CRD. Check field shapes in the provider's CRD (or the generated models) before writing them into a template |
 | Expectation indented one level off | the assertion silently moves to another field or object; read the rendered manifest back if a test passes that should not |
 
 **Indentation is the other trap.** A value that is itself a structure is safest as `{{ toJson $v }}` on one
 line (JSON is valid YAML), and `{{-` / `-}}` trimming decides whether a block lands where you think. When a
-template change makes a test pass or fail unexpectedly, render the template alone and read the YAML before
-changing the expectation.
+template change makes a test pass or fail unexpectedly, or a parse error cites `yaml: line N`, read the
+generated YAML before changing the expectation. `up` never prints it, not even with `--debug`: render the
+files yourself with Go `text/template` and `sprig.TxtFuncMap()`, nil data, `\n---\n` after each file.
 
 ### E2E tests
 

@@ -2,9 +2,9 @@
 
 Composition tests for a project whose functions are written in Go. The object model — `CompositionTest`,
 `assertResources` (partial and positive for objects, **exact for lists**), `observedResources`,
-`extraResources` — is the same in every language; [`../yaml.md`](../yaml.md) shows it with no language in the
-way. What the suite must contain (one test per input shape, one per observed-state branch, every status field
-asserted on the composite, absence guarded through `resourceRefs`) is in
+`extraResources` — is the same in every language. What the suite must contain (one test per input
+shape, one per observed-state branch, every status field asserted on the composite, absence guarded
+through `resourceRefs`) is in
 [`charter/evidence.md` § Coverage](../../charter/evidence.md#coverage-what-the-suite-must-contain) and
 applies unchanged.
 
@@ -15,7 +15,7 @@ mutant both turn it red, and the failure modes in the last section are reproduce
 
 | | |
 |---|---|
-| Scaffold | `up test generate <n> --language go` → `tests/test-<n>/{go.mod,main.go}`. Pass the bare name: `up` adds the prefix (`test-x` gives `tests/test-test-x`; with `--e2e`, `e2etest-`) |
+| Scaffold | `up test generate <n> --language go` → `tests/test-<n>/{go.mod,main.go}`, no `go.sum`: run `go mod tidy` before your own `go vet`, `go build` or `go run .` (`up test run` tidies first). Pass the bare name: `up` adds the prefix (`test-x` gives `tests/test-test-x`; with `--e2e`, `e2etest-`). Each directory is its own `package main` module, so no other directory can import its helpers: add a case to an existing program before scaffolding another |
 | Detected by | a `go.mod` in the test directory |
 | Generation | `go mod tidy`, then `go run .`, both **with the test directory as CWD**, in your working tree, on your machine (no container). A file the program opens itself resolves from `tests/test-<n>/`; the paths it *emits* (`compositionPath`, `xrdPath`) are resolved by `up` from the project root |
 | Contract | the program prints `{items: [CompositionTest, …]}` as YAML on stdout. A non-zero exit fails the whole run at `✗ Parsing tests`, before any render. `items: []` is zero tests, not a passing test. An `E2ETest` program's output carries the credential Secret: run it by hand only with a dummy value (author-tests' `e2e.md` reference) |
@@ -57,7 +57,9 @@ typed `BucketVersioning` model the list does not compile.
 Three tests for the function template in [`functions.md`](functions.md): one per input branch (with an
 absence guard on the composite) and one observed-state test that drives a status field. Adapt the helpers; keep
 the shape. The status test asserts the bucket too: a test that asserts only the composite stays green if that
-branch stops composing anything.
+branch stops composing anything. The shipped-example test (charter `evidence.md`, Coverage) sets
+`spec.XrPath = ptr.To("examples/<…>.yaml")` and leaves `Xr` nil: with both set, `up` silently renders the
+inline `Xr`. The path resolves from the project root, like `compositionPath`.
 
 ```go
 // Package main generates the composition tests for Bucket.
@@ -95,9 +97,9 @@ func main() {
 			bucket("eu-central-1"),
 			versioning("eu-central-1"),
 		),
-		// Fails if the mock is ignored: bucketArn can only come from it. A namespaced XR's mock needs the XR's
-		// namespace and the render's name (copied from render.log); without the namespace it is silently
-		// ignored, with no error (charter/evidence.md, Coverage).
+		// Fails if the mock is ignored: bucketArn can only come from it. The annotation matches the mock; a
+		// namespaced XR's mock also needs the XR's namespace, or it is silently ignored, with no error. Its
+		// name replaces the generated one; this one equals it (charter/evidence.md, Coverage).
 		compositionTest("status-from-observed-bucket", inlineXR(map[string]any{"region": "eu-central-1"}),
 			[]any{map[string]any{
 				"apiVersion": "s3.aws.m.upbound.io/v1beta1",
