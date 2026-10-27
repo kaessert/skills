@@ -20,6 +20,11 @@ import sys
 from pathlib import Path
 
 
+def is_up_meta(dotted: str) -> bool:
+    """up's own test and meta models (E2ETest, CompositionTest) serve v1 and v2 projects alike."""
+    return dotted.startswith("io.upbound.dev.")
+
+
 def find_root(start: Path) -> Path | None:
     for d in [start, *start.parents]:
         if (d / "upbound.yaml").is_file():
@@ -271,8 +276,7 @@ def main() -> int:
             print(f"{label:<9} {d.relative_to(root)}  layout={lay}  import prefix={import_prefix(lay)!r}")
 
     # The is_dir() guard must sit before the iterdir() it protects: in a comprehension
-    # the inner iterable is evaluated eagerly, so a trailing `if` does not prevent the
-    # call. A project with no tests/ directory used to crash here with FileNotFoundError.
+    # the inner iterable is evaluated eagerly, so a trailing `if` does not prevent the call.
     layouts = {layout_of(d)
                for base in ("functions", "tests")
                if (root / base).is_dir()
@@ -320,8 +324,10 @@ def main() -> int:
             dotted, version = m
             namespaced = ".m." in f".{dotted}." or not dotted.startswith("io.upbound")
             # A v1 project wants the non-namespaced models; ranking .m. first there would
-            # recommend an import that breaks it.
-            wanted = (not namespaced) if generation == "v1" else namespaced
+            # recommend an import that breaks it. up's own models fit every generation, so
+            # they rank as wanted, the same rule the tag below applies.
+            wanted = (is_up_meta(dotted) or
+                      ((not namespaced) if generation == "v1" else namespaced))
             # Newest API version first. Plain string order puts v1beta1 above v1beta2 and
             # would label the older module "USE THIS".
             return (0 if wanted else 1, version_key(version))
@@ -338,8 +344,7 @@ def main() -> int:
             # A project's own XR reverses into io.upbound.* too when its group ends in
             # upbound.io, and an XRD legitimately serves v1 — only flag provider models.
             is_own_xr = kind.lower() in own_kinds
-            # up's own test and meta models (E2ETest, CompositionTest) serve v1 and v2 alike.
-            up_meta = dotted.startswith("io.upbound.dev.")
+            up_meta = is_up_meta(dotted)
             non_namespaced = (not is_own_xr and not up_meta
                               and dotted.startswith("io.upbound")
                               and ".m." not in f".{dotted}.")
