@@ -46,6 +46,7 @@ class ProbeProjectTest(unittest.TestCase):
         models = root / ".up" / "python" / "models"
         for dotted, cls in (
             ("io.upbound.dev.meta.e2etest", "E2ETest"),
+            ("io.upbound.dev.meta.compositiontest", "CompositionTest"),
             ("io.upbound.aws.ec2.vpc", "VPC"),
             ("io.upbound.m.aws.ec2.vpc", "VPC"),
         ):
@@ -91,6 +92,29 @@ class ProbeProjectTest(unittest.TestCase):
         out = self.probe(self.project("v2"), "VPC")
         self.assertIn("USE THIS", self.line(out, "io.upbound.m.aws.ec2.vpc"))
         self.assertIn("do NOT use in v2", self.line(out, "io.upbound.aws.ec2.vpc"))
+
+    def test_dev_meta_composition_test_model_is_used_in_v2(self):
+        out = self.probe(self.project("v2"), "CompositionTest")
+        line = self.line(out, "io.upbound.dev.meta.compositiontest")
+        self.assertIn("USE THIS", line)
+        self.assertNotIn("do NOT use", line)
+
+    def test_v1_project_uses_the_non_namespaced_provider_model(self):
+        out = self.probe(self.project("v1"), "VPC")
+        self.assertIn("USE THIS (this project is Crossplane v1)", self.line(out, "io.upbound.aws.ec2.vpc"))
+        self.assertIn("only after migrating", self.line(out, "io.upbound.m.aws.ec2.vpc"))
+
+    def test_dev_meta_model_sorts_first_when_a_provider_kind_shares_its_name(self):
+        # rank() and the tag must agree: a non-namespaced provider Kind named like up's own
+        # model (tagged "do NOT use in v2") must not sort above the meta model, whose place
+        # decides which classes get listed.
+        root = self.project("v2")
+        pkg = root / ".up" / "python" / "models" / "io" / "upbound" / "example" / "e2etest"
+        pkg.mkdir(parents=True)
+        (pkg / "v1beta1.py").write_text("from pydantic import BaseModel\nclass E2ETest(BaseModel):\n    x: str\n")
+        out = self.probe(root, "E2ETest").splitlines()
+        first = next(l for l in out if l.lstrip().startswith("from models."))
+        self.assertIn("io.upbound.dev.meta.e2etest", first)
 
     def test_missing_kind_names_the_crossplane_api_dependency(self):
         out = self.probe(self.project("v2"), "ManagedResourceActivationPolicy")
