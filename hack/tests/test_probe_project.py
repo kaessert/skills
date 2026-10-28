@@ -116,6 +116,31 @@ class ProbeProjectTest(unittest.TestCase):
         first = next(l for l in out if l.lstrip().startswith("from models."))
         self.assertIn("io.upbound.dev.meta.e2etest", first)
 
+    def test_dev_meta_model_sorts_first_in_a_v1_project_too(self):
+        # In v1 both models are wanted, so without the meta-first rule the provider's newer
+        # v1beta1 would beat up's v1alpha1 and get "USE THIS (this project is Crossplane v1)".
+        root = self.project("v1")
+        pkg = root / ".up" / "python" / "models" / "io" / "upbound" / "example" / "e2etest"
+        pkg.mkdir(parents=True)
+        (pkg / "v1beta1.py").write_text("from pydantic import BaseModel\nclass E2ETest(BaseModel):\n    x: str\n")
+        out = self.probe(root, "E2ETest").splitlines()
+        first = next(l for l in out if l.lstrip().startswith("from models."))
+        self.assertIn("io.upbound.dev.meta.e2etest", first)
+        self.assertNotIn("USE THIS (this project is Crossplane v1)", "\n".join(out))
+
+    def test_other_dev_upbound_groups_keep_the_namespaced_preference(self):
+        # Only io.upbound.dev.meta.* is up's own; another *.dev.upbound.io group is an
+        # ordinary API group and its .m. model stays first in v2, even on an older version.
+        root = self.project("v2")
+        for path, version in (("io/upbound/dev/m/widgets/widget", "v1beta1"),
+                              ("io/upbound/dev/widgets/widget", "v1beta2")):
+            pkg = root / ".up" / "python" / "models" / path
+            pkg.mkdir(parents=True)
+            (pkg / f"{version}.py").write_text("from pydantic import BaseModel\nclass Widget(BaseModel):\n    x: str\n")
+        out = self.probe(root, "Widget").splitlines()
+        first = next(l for l in out if l.lstrip().startswith("from models."))
+        self.assertIn("io.upbound.dev.m.widgets.widget", first)
+
     def test_missing_kind_names_the_crossplane_api_dependency(self):
         out = self.probe(self.project("v2"), "ManagedResourceActivationPolicy")
         self.assertIn("NOT FOUND", out)

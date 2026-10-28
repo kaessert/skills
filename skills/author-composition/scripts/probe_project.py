@@ -22,7 +22,7 @@ from pathlib import Path
 
 def is_up_meta(dotted: str) -> bool:
     """up's own test and meta models (E2ETest, CompositionTest) serve v1 and v2 projects alike."""
-    return dotted.startswith("io.upbound.dev.")
+    return dotted.startswith("io.upbound.dev.meta.")
 
 
 def find_root(start: Path) -> Path | None:
@@ -324,13 +324,15 @@ def main() -> int:
             dotted, version = m
             namespaced = ".m." in f".{dotted}." or not dotted.startswith("io.upbound")
             # A v1 project wants the non-namespaced models; ranking .m. first there would
-            # recommend an import that breaks it. up's own models fit every generation, so
-            # they rank as wanted, the same rule the tag below applies.
-            wanted = (is_up_meta(dotted) or
-                      ((not namespaced) if generation == "v1" else namespaced))
+            # recommend an import that breaks it. up's own models fit every generation and
+            # rank ahead of everything else, so a provider Kind with the same name never
+            # wins on a newer API version.
+            if is_up_meta(dotted):
+                return (0, version_key(version))
+            wanted = (not namespaced) if generation == "v1" else namespaced
             # Newest API version first. Plain string order puts v1beta1 above v1beta2 and
             # would label the older module "USE THIS".
-            return (0 if wanted else 1, version_key(version))
+            return (1 if wanted else 2, version_key(version))
 
         # Same Kind can exist in unrelated API groups: a project XR and a provider MR, or
         # two providers (aws s3 Bucket vs gcp storage Bucket). Compare the group — the module
