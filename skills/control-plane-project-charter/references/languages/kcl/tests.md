@@ -35,7 +35,7 @@ _items = [
             assertResources: [
                 ec2v1beta1.VPC{
                     # No metadata.name while VPC appears once in the render; with several,
-                    # copy each name from render.log (charter/evidence.md).
+                    # pin each (author-tests, "Pin a kind that renders more than once").
                     spec.forProvider: {
                         region: "us-west-2"
                         tags: { Environment: "test" }
@@ -141,7 +141,7 @@ _buildTest = lambda v {
                 metadata: { name: "test-${v.name}", namespace: "default" }
                 spec: { region: "us-west-2", **v.spec }
             }
-            assertResources: []        # what this variant expects
+            assertResources: []        # fill in: an empty list asserts nothing (charter §8)
         }
     }
 }

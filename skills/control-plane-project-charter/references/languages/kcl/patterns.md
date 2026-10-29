@@ -118,7 +118,7 @@ Set `metadata.name` only when the resource needs a stable external name.
 ## Composing a connection Secret
 
 A v2 XR publishes no connection details, so compose a Secret yourself
-(`plan-v2-migration` `breaking-changes.md`, "Connection secrets"). No `metadata.namespace`: Crossplane
+(author-composition's `patterns.md`). No `metadata.namespace`: Crossplane
 puts it in the XR's namespace
 ([charter §5](../../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs)).
 

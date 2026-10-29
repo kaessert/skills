@@ -34,7 +34,7 @@ references:
 ---
 # Development Charter
 
-**Every skill in this plugin follows this charter:** how to behave as an agent, how to
+**Every control-plane-project skill follows this charter:** how to behave as an agent, how to
 develop, what Crossplane v2 requires, and how to report what you did.
 
 **It does not replace the task skill.** Before you write or review, load what your row
