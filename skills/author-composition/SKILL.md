@@ -43,7 +43,8 @@ design or gate script wins over these: say where you departed.
 3. **Test first: watch each new composition or unit test fail for the reason you intended**;
    for a new E2ETest this is optional. A syntax error, a missing path, `✗ Parsing tests`, a
    compile error or a bug in the test's own logic is a broken test, not RED. Backfill by
-   mutating the implementation, never the expected value (§3).
+   mutating the implementation, never the expected value; a surviving mutant of your change
+   is a missing test (§3).
 4. **In a v2 project, managed resources carry `forProvider` only**, on the `.m.` API groups,
    unless the project's spec or API sets more: no `deletionPolicy`, `managementPolicies` or
    `metadata.namespace`; omit `providerConfigRef` if and only if `ClusterProviderConfig/default`
@@ -54,7 +55,7 @@ design or gate script wins over these: say where you departed.
    `$?` (`cmd > /tmp/x.log 2>&1; echo "exit=$?"`); after a pipe, bash `${PIPESTATUS[0]}`,
    zsh `$pipestatus[1]`. `No test files found` means nothing ran. Name the layer you reached —
    render, composition test, local control plane, cloud — and never claim one you did not
-   reach; for each new test, the change that turns it red, or call it unproven. Comments and
+   reach; for each new composition or unit test, the change that turns it red. Comments and
    docs claim no more (§4, §8).
 
 ## Phase 1: Detect the language and the Crossplane generation — do not ask

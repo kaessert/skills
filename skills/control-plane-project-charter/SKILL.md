@@ -165,10 +165,16 @@ constant stays green (author-tests Phase 3). For a pass-through field, expected 
 correct; prove it by hard-coding the field in the function and seeing a test go red, never by
 editing the expectation.
 
+**A test must be able to fail, and a surviving mutant of the change's behaviour is a defect
+fixed in the same change.** Prove a test you did not watch fail (a backfill, a review) by
+mutating the implementation, never its expected value. An assertion that can't fail, or a
+mutant (a dropped field, a hard-coded pass-through, a skipped branch) that leaves the suite
+green, needs its killing test now; listing it as a gap does not finish the change. Only what
+no render or unit test reaches (XRD `required`, enums, provider behaviour) is reported
+uncovered (§4).
+
 **Detail:** [`charter/tdd.md`](references/charter/tdd.md) has the two-tier inner loop (every
-`up test run` pays a full build, so use a fast tier for crashes), and how to backfill tests for
-code that already works by proving each one can fail: mutate the implementation, never the
-test's expected value.
+`up test run` pays a full build, so use a fast tier for crashes) and the mutation procedure.
 
 ## 4. Report the effect, not the intent
 

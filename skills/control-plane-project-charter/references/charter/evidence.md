@@ -200,8 +200,6 @@ the provider.
 3. A read of `render.log` confirming the conditional resource is absent, quoted in your
    summary — that is where you get the `resourceRefs` order from anyway.
 
-Report it accurately. With a `resourceRefs` assertion: *"test 4 covers the
-omitted-lifecycleRules branch; the composite's resourceRefs assertion fails if a lifecycle
-resource appears."* Without one: *"absence was confirmed once by reading render.log and is not
-asserted by the suite."* Never *"validates that no lifecycle resource is created"* unless
-something actually fails when one is.
+Report it as *"test 4 covers the omitted-lifecycleRules branch; the composite's resourceRefs
+assertion fails if a lifecycle resource appears"*, never as *"validates that no lifecycle
+resource is created"* unless something fails when one is (charter §3, §4).
