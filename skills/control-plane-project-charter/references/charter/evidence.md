@@ -161,15 +161,19 @@ unasserted. Supply the observed state explicitly:
   The renderer looks mocks up in the XR's namespace, so one without it is silently not observed:
   no error, the function sees no observed resources, and the test fails only on its own
   assertions, as if the function were wrong (observed with up v0.55.0).
-- **The mock's `metadata.name` becomes the composed resource's name.** Any valid name is
-  observed, and the render keeps it instead of generating one, in the resource and in the
-  composite's `resourceRefs`; an invalid name fails the render. So in a mocked case, assert the
+- **Every mock needs a `metadata.name`, and it becomes the composed resource's name.** Without
+  one the mock is silently not observed, like one outside the XR's namespace (up v0.55.1). Any
+  valid name is observed, and the render keeps it instead of generating one, in the resource and
+  in the composite's `resourceRefs`; an invalid name fails the render. So in a mocked case, assert the
   mock's names. To keep them equal to an unmocked case's generated names, copy those from that
   case's `render.log` (above). Checking that the mock names appear in the render proves nothing:
   they always do (Crossplane v2.3.1 source, the renderer up v0.55.0 runs; observed).
 - **Prove the mocks are used** with a case that fails when they are ignored: assert a value only
   an observed resource can supply, such as a status field copied from a mock. A case that
-  expects empty or default status passes whether the mocks are observed or not.
+  expects empty or default status passes whether the mocks are observed or not. Where the
+  function keeps an observed resource instead of rendering it afresh, give the mock a value the
+  fresh render would not produce (a label, a `forProvider` field): a mock equal to the fresh
+  render can't tell the two branches apart.
 - Without `status.conditions` the resource is observed but **not** ready, which is its own
   useful test case. Add `Ready` and `Synced` conditions with status `True` to drive the ready
   branch.

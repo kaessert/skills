@@ -110,9 +110,7 @@ spec:
         k8gb:
           enabled: "yes"
   observedResources:
-  # Each mock: the composition-resource-name annotation (the match key), and for a namespaced XR
-  # the XR's namespace - without it the mock is silently ignored. The mock's name becomes the
-  # composed resource's name (charter/evidence.md, Coverage).
+  # What each mock needs, and what its name does: charter/evidence.md, Coverage.
   # EKS cluster name/account come from the observed EKS XR status contract.
   - apiVersion: aws.platform.upbound.io/v1alpha1
     kind: EKS

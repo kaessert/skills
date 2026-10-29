@@ -97,9 +97,8 @@ func main() {
 			bucket("eu-central-1"),
 			versioning("eu-central-1"),
 		),
-		// Fails if the mock is ignored: bucketArn can only come from it. The annotation matches the mock; a
-		// namespaced XR's mock also needs the XR's namespace, or it is silently ignored, with no error. Its
-		// name replaces the generated one; this one equals it (charter/evidence.md, Coverage).
+		// Fails if the mock is ignored: bucketArn can only come from it. What a mock needs, and what its name
+		// does (this one equals the generated name): charter/evidence.md, Coverage.
 		compositionTest("status-from-observed-bucket", inlineXR(map[string]any{"region": "eu-central-1"}),
 			[]any{map[string]any{
 				"apiVersion": "s3.aws.m.upbound.io/v1beta1",
