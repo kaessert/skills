@@ -225,8 +225,8 @@ resource the others depend on, or break a selector. Not the only composed resour
 nothing is Ready at once (Crossplane v2.3.1). Set `timeoutSeconds` just above the green run's measured
 `chainsaw/apply` time: a shorter one fails whatever you mutated. Check the failure is the Ready assertion: the
 error line names `((conditions[?type == 'Ready'])[0])`. The diff's `status: {}` is not the real status. Make
-sure the failure isn't a credential error, then revert with git, after keeping any uncommitted work in the
-mutated file (`control-plane-project-charter/references/charter/tdd.md`), and restore the timeout. Editing
+sure the failure isn't a credential error, then restore the mutated file from its copy, not from git
+(`control-plane-project-charter/references/charter/tdd.md`), and restore the timeout. Editing
 `defaultConditions` or an expected value is not RED, and an unparsable condition is a broken test.
 
 ## What an E2ETest cannot assert

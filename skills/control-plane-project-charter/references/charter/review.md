@@ -25,8 +25,8 @@ code, tests, the package — beyond reading the diff. The rules behind them are 
   was seen failing. An `E2ETest` may instead be reported unproven (§3, §4).
 - A mutant of the change's behaviour that the suite survives is a defect in this change (§3).
 - **Check one yourself:** mutate the implementation (delete the field, move the block below an
-  early return), confirm that exactly that test goes red, then revert with git, after keeping
-  any uncommitted change in that file: the revert discards it
+  early return), confirm that exactly that test goes red, then restore the file from a copy
+  taken before the mutation, not from git
   ([`tdd.md`](tdd.md#backfilling-tests-for-code-that-already-exists)). A RED produced by editing
   the expected value does not count, and neither does a syntax error, a missing path or a
   compile error (§3).
