@@ -61,7 +61,9 @@ design or gate script wins over these: say where you departed.
 
 **Language:** detect it as charter §10 says and read the language file before writing a line;
 its layout, imports and bootstrap are wrong by default if you guess. No functions yet: take it
-from `upbound.yaml`, else an existing function, else ask — a decision, not a discoverable fact.
+from `upbound.yaml`, else an existing function, else as
+`control-plane-project-charter/references/languages/README.md` says (and when to add a step in
+another language).
 
 **Generation**, which governs more of the guidance than the language does:
 

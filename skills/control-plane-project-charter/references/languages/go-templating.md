@@ -77,10 +77,6 @@ Verified against `up` v0.55.0:
 - The output must be `items:` with a list of `CompositionTest` objects — the same object model as YAML tests
   ([`yaml.md`](yaml.md)).
 
-Over plain YAML, templating buys a **test matrix**: one test body, ranged over a list of cases, with per-case
-conditional expectations. If a test has no matrix, plain YAML is clearer — but match the language the project's
-other tests use.
-
 ### Composition test template (`tests/test-<n>/test.yaml.gotmpl`)
 
 Two cases, two input shapes (versioning adds a resource), so each carries its shape's one `resourceRefs`

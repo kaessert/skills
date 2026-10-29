@@ -62,8 +62,9 @@ design or gate script wins over these: say where you departed.
 From the spec: project name, API group, cloud, organisation, maintainer; then the resource Kind,
 its plural and its version (`v1alpha1` for a new API,
 `control-plane-project-charter/references/charter/xrd-design.md`); and the function language for
-Phase 7 (`kcl`, `python`, `go`, `go-templating`) — from the spec or an existing function, else
-ask: it is a decision, not a discoverable fact. New tests follow it (charter §10). Interactive
+Phase 7 (`kcl`, `python`, `go`, `go-templating`) — from the spec or an existing function, else as
+`control-plane-project-charter/references/languages/README.md` says. New tests follow it
+(charter §10). Interactive
 and not in the spec: ask, with the tables in
 [templates.md](references/templates.md#questions-for-a-new-project).
 
