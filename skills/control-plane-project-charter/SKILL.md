@@ -162,16 +162,14 @@ those. Write no test program for them, and don't copy a skill's script into the 
 **Use distinguishing inputs.** Every value the function passes through gets, in at least one
 test, an input that is neither its default nor shared with a sibling field, or a hard-coded
 constant stays green (author-tests Phase 3). For a pass-through field, expected == input is
-correct; prove it by hard-coding the field in the function and seeing a test go red, never by
-editing the expectation.
+correct.
 
 **A test must be able to fail, and a surviving mutant of the change's behaviour is a defect
-fixed in the same change.** Prove a test you did not watch fail (a backfill, a review) by
-mutating the implementation, never its expected value. An assertion that can't fail, or a
-mutant (a dropped field, a hard-coded pass-through, a skipped branch) that leaves the suite
-green, needs its killing test now; listing it as a gap does not finish the change. Only what
-no render or unit test reaches (XRD `required`, enums, provider behaviour) is reported
-uncovered (§4).
+fixed in the same change.** Prove a test you did not watch fail by mutating the
+implementation, never its expected value. An assertion that can't fail, or a mutant (a dropped
+field, a hard-coded pass-through, a skipped branch) that leaves the suite green, needs its
+killing test now, not a gap in the report. Only what no render or unit test reaches (XRD
+`required`, enums, provider behaviour) is reported uncovered (§4).
 
 **Detail:** [`charter/tdd.md`](references/charter/tdd.md) has the two-tier inner loop (every
 `up test run` pays a full build, so use a fast tier for crashes) and the mutation procedure.

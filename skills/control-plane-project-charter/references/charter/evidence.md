@@ -170,10 +170,9 @@ unasserted. Supply the observed state explicitly:
   they always do (Crossplane v2.3.1 source, the renderer up v0.55.0 runs; observed).
 - **Prove the mocks are used** with a case that fails when they are ignored: assert a value only
   an observed resource can supply, such as a status field copied from a mock. A case that
-  expects empty or default status passes whether the mocks are observed or not. Where the
-  function keeps an observed resource instead of rendering it afresh, give the mock a value the
-  fresh render would not produce (a label, a `forProvider` field): a mock equal to the fresh
-  render can't tell the two branches apart.
+  expects empty or default status passes whether the mocks are observed or not. A resource the
+  function keeps from observed state needs a mock with a value the fresh render lacks (a label,
+  a `forProvider` field), or kept and fresh look the same.
 - Without `status.conditions` the resource is observed but **not** ready, which is its own
   useful test case. Add `Ready` and `Synced` conditions with status `True` to drive the ready
   branch.

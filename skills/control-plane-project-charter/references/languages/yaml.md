@@ -18,8 +18,8 @@ references point here for it. When to write tests in YAML rather than the compos
 
 ## Composition test
 
-One `CompositionTest` rendering the composition against an inline XR. It asserts the fields the
-function sets, not only each resource's kind and name, and the composite's `resourceRefs`.
+One `CompositionTest` against an inline XR, asserting fields, not only names, and the
+composite's `resourceRefs`.
 
 ```yaml
 # tests/test-controlplane/test.yaml
@@ -51,15 +51,6 @@ spec:
     spec:
       parameters:
         region: eu-west-3
-  # Namespaced provider API in the apiVersion string (.m.).
-  - apiVersion: helm.m.crossplane.io/v1beta1
-    kind: Release
-    metadata:
-      name: test-cp-uxp
-    spec:
-      forProvider:
-        chart:
-          version: "2.2.1-up.1"
   # The composite. resourceRefs is a list, and lists match exactly, so a surplus resource fails
   # here. Copied from render.log (charter/evidence.md).
   - apiVersion: aws.platform.upbound.io/v1alpha1

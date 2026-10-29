@@ -62,11 +62,9 @@ Don't revert by editing back: `up test run`, like `up project build`,
 drops its comments (author-configuration-package, Phase 4), so a mutation commented out there
 cannot be found again.
 
-**The mutation is the regression the test exists to catch**, never an edit of its expected
-value, which turns any test red (charter §3). Report it and the tests it turned red: *"Moving
-the lifecycle block below the versioning guard turned test 3 red and left the other three
-green"* is a coverage claim with evidence behind it. *"Coverage: complete"* is not. A mutation
-that leaves the suite green is a missing test: write it (§3).
+**The mutation is the regression the test exists to catch**, never an edit of the expected
+value, which turns any test red. Report it and the tests it turned red. A mutation that leaves
+the suite green is a missing test: write it (charter §3, §4).
 
 ## Distinguishing inputs
 

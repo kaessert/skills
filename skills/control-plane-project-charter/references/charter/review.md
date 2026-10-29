@@ -23,8 +23,7 @@ code, tests, the package — beyond reading the diff. The rules behind them are 
 
 - For each new test, the report names the implementation change that turns it red and says it
   was seen failing. An `E2ETest` may instead be reported unproven (§3, §4).
-- A mutant of the change's behaviour that leaves the suite green is a defect to fix in this
-  change, not a coverage note (§3).
+- A mutant of the change's behaviour that the suite survives is a defect in this change (§3).
 - **Check one yourself:** mutate the implementation (delete the field, move the block below an
   early return), confirm that exactly that test goes red, then revert with git, after keeping
   any uncommitted change in that file: the revert discards it
