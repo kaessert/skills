@@ -16,10 +16,10 @@ references point here for it. When to write tests in YAML rather than the compos
 - **Comment what each test proves** and what it deliberately does not cover; real configurations
   do, and it makes the suite readable without the function open.
 
-## Composition test (real example)
+## Composition test
 
-Two `CompositionTest` documents in one `test.yaml`, each rendering the composition against an
-inline XR.
+One `CompositionTest` rendering the composition against an inline XR. It asserts the fields the
+function sets, not only each resource's kind and name, and the composite's `resourceRefs`.
 
 ```yaml
 # tests/test-controlplane/test.yaml
@@ -37,24 +37,21 @@ spec:
     kind: ControlPlane
     metadata:
       name: test-cp
+      namespace: default
     spec:
       parameters:
         id: test-cp
-        region: us-east-1
+        region: eu-west-3        # not the XRD default, so a hard-coded region fails
         version: "1.34"
-        nodes:
-          count: 2
-          instanceType: t3.small
   assertResources:
   - apiVersion: aws.platform.upbound.io/v1alpha1
     kind: Network
     metadata:
       name: test-cp
-  - apiVersion: aws.platform.upbound.io/v1alpha1
-    kind: EKS
-    metadata:
-      name: test-cp
-  # Assert the fields that matter, not just existence: here the chart version.
+    spec:
+      parameters:
+        region: eu-west-3
+  # Namespaced provider API in the apiVersion string (.m.).
   - apiVersion: helm.m.crossplane.io/v1beta1
     kind: Release
     metadata:
@@ -63,50 +60,24 @@ spec:
       forProvider:
         chart:
           version: "2.2.1-up.1"
----
-apiVersion: meta.dev.upbound.io/v1alpha1
-kind: CompositionTest
-metadata:
-  name: backup-enabled          # feature-enabled variant, same directory
-spec:
-  compositionPath: apis/ctp/composition.yaml
-  xrdPath: apis/ctp/definition.yaml
-  validate: false
-  timeoutSeconds: 60
-  xr:
-    apiVersion: aws.platform.upbound.io/v1alpha1
+  # The composite. resourceRefs is a list, and lists match exactly, so a surplus resource fails
+  # here. Copied from render.log (charter/evidence.md).
+  - apiVersion: aws.platform.upbound.io/v1alpha1
     kind: ControlPlane
     metadata:
       name: test-cp
     spec:
-      parameters:
-        id: test-cp
-        region: us-east-1
-        version: "1.34"
-        nodes: { count: 2, instanceType: t3.small }
-        backup:
-          enabled: "yes"
-          location: arn:aws:s3:::my-backup-bucket
-  assertResources:
-  # Namespaced provider API in the apiVersion string (.m.).
-  - apiVersion: s3.aws.m.upbound.io/v1beta1
-    kind: Bucket
-    metadata:
-      name: test-cp-backup-bucket
-    spec:
-      forProvider:
-        region: us-east-1
-  - apiVersion: kubernetes.m.crossplane.io/v1alpha1
-    kind: Object
-    metadata:
-      name: test-cp-backup-config
-    spec:
-      forProvider:
-        manifest:
-          spec:
-            objectStorage:
-              credentials:
-                source: InjectedIdentity
+      crossplane:
+        resourceRefs:
+        - apiVersion: aws.platform.upbound.io/v1alpha1
+          kind: EKS
+          name: test-cp
+        - apiVersion: aws.platform.upbound.io/v1alpha1
+          kind: Network
+          name: test-cp
+        - apiVersion: helm.m.crossplane.io/v1beta1
+          kind: Release
+          name: test-cp-uxp
 ```
 
 ## Observed state (real example)
