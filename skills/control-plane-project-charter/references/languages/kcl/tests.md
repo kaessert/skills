@@ -156,7 +156,7 @@ feeding the previous resource's status in through `observedResources`. Split the
 into files of the same test directory:
 
 ```text
-tests/test-<resource>-sequence/
+tests/test-<resource>/
 ├── main.k         # the tests
 ├── resources.k    # resource1, resource2: expectations, each with its crossplane.io/composition-resource-name annotation
 ├── conditions.k   # shared condition sets

@@ -106,10 +106,11 @@ writing a test: it carries the templates and the silent failure modes.
    | Composition | `test-` | ≥60s | `false` (scaffold default) | local render, no cloud |
    | E2E | `e2etest-` | sized to what you provision ([e2e.md](references/e2e.md)) | n/a | real cloud lifecycle |
 
-   Consolidate in one directory: the same resource type in different configs, feature on/off
-   variants, 3–5 related scenarios. Separate directories: different resource types, complex
-   sequential dependencies, and every E2E test. `up test run` runs every matched dir's program,
-   so the composition gate is `up test run "tests/test-*"` (charter §7).
+   **One composition-test directory per composition**, every resource type and sequence
+   included, split into files as it grows (the language file shows how). A new directory only
+   for another composition, another test language or an E2E test: directories share no code,
+   so copied helpers drift. `up test run` runs every matched dir's program, so the composition
+   gate is `up test run "tests/test-*"` (charter §7).
 
 4. **Scaffold with `up test generate <name> [--e2e] --language <lang>`** (`kcl`, `python`,
    `yaml`, `go`, `go-templating`); never create a test directory by hand. Pass the bare name:

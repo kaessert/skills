@@ -68,6 +68,10 @@ Verified against `up` v0.55.0:
   next to the template and `up test run` stops with `No test files found`.
 - All files in the directory are concatenated (lexical order, `---` between them) and rendered **once** with Go
   `text/template` plus [Sprig](https://masterminds.github.io/sprig/) — in-process, on your machine.
+- **Only the first YAML document is read**, so a later file's own `items:` is silently dropped. To
+  split a suite: shared `define`s in `00-helpers.yaml.gotmpl`, each concern's cases in a `define`
+  in `10-<concern>.yaml.gotmpl`, and `items:` once, in `01-items.yaml.gotmpl`, calling each with
+  `template` (up v0.55.1).
 - **There is no input**: `.` is nil. The function-side helpers (`getCompositeResource` and friends) do not exist
   here, and neither do Helm's (`required`, `toYaml`, `include`): calling one fails with `function "…" not
   defined`. Sprig's `fail`, `hasKey`, `dict`, `list`, `toJson` are what you have.

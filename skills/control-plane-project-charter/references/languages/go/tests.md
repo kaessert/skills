@@ -15,7 +15,7 @@ mutant both turn it red, and the failure modes in the last section are reproduce
 
 | | |
 |---|---|
-| Scaffold | `up test generate <n> --language go` → `tests/test-<n>/{go.mod,main.go}`, no `go.sum`: run `go mod tidy` before your own `go vet`, `go build` or `go run .` (`up test run` tidies first). Pass the bare name: `up` adds the prefix (`test-x` gives `tests/test-test-x`; with `--e2e`, `e2etest-`). Each directory is its own `package main` module, so no other directory can import its helpers: add a case to an existing program before scaffolding another |
+| Scaffold | `up test generate <n> --language go` → `tests/test-<n>/{go.mod,main.go}`, no `go.sum`: run `go mod tidy` before your own `go vet`, `go build` or `go run .` (`up test run` tidies first). Pass the bare name: `up` adds the prefix (`test-x` gives `tests/test-test-x`; with `--e2e`, `e2etest-`) |
 | Detected by | a `go.mod` in the test directory |
 | Generation | `go mod tidy`, then `go run .`, both **with the test directory as CWD**, in your working tree, on your machine (no container). A file the program opens itself resolves from `tests/test-<n>/`; the paths it *emits* (`compositionPath`, `xrdPath`) are resolved by `up` from the project root |
 | Contract | the program prints `{items: [CompositionTest, …]}` as YAML on stdout. A non-zero exit fails the whole run at `✗ Parsing tests`, before any render. `items: []` is zero tests, not a passing test. An `E2ETest` program's output carries the credential Secret: run it by hand only with a dummy value (author-tests' `e2e.md` reference) |
@@ -214,6 +214,10 @@ func resourcesToItems[T any](resources ...any) []T {
 	return items
 }
 ```
+
+**Add a case to this program before scaffolding another** (author-tests, Phase 2): each test
+directory is its own `package main` module, so no other can import its helpers. As it grows,
+split it into files of the one package (`main.go`, `xr.go`, `expect_<concern>.go`).
 
 Run it and read the render before trusting an expectation you typed
 ([`charter/evidence.md`](../../charter/evidence.md) says how, and why the generated `resourceRefs` names

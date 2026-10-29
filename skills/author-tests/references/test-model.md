@@ -49,9 +49,9 @@ Ways of *structuring* tests. Each language file shows the syntax.
 
 ### Resource-focused bundle
 
-Group 3-5 related tests in one directory that share a base spec (composition/XRD path,
-timeout, validate) and vary only the XR and the expected resources: basic, feature-enabled,
-feature-disabled. Syntax: KCL spread, a Python helper, YAML `---` documents.
+One directory per composition (author-tests, Phase 2), its tests sharing a base spec
+(composition/XRD path, timeout, validate) and varying the XR and the expected resources.
+Syntax: KCL spread, a Python helper, YAML `---` documents.
 
 ### Parameterized test matrix
 
