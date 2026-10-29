@@ -167,7 +167,7 @@ Without `x-kubernetes-list-type`, a list is atomic: duplicates are accepted, and
 
 ## `status` is the half of the API people forget
 
-Crossplane injects `status.conditions` and nothing else (§5: an empty `status` hides what the composition computed). Callers usually cannot derive the URL, the key it actually got or the resolved identifier themselves, because composition naming is rarely the object name. Surface what the caller cannot compute:
+Crossplane injects `status.conditions` and nothing else. Callers usually cannot derive the URL, the key it actually got or the resolved identifier themselves, because composition naming is rarely the object name. Surface what the caller cannot compute:
 
 ```yaml
 status:

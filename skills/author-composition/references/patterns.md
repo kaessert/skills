@@ -127,9 +127,9 @@ API:
    lifecycle does: one `BucketLifecycleConfiguration` holding N rules.
 3. **Is there an account- or region-scoped limit** that N elements would breach?
 
-`control-plane-project-charter` §6 has the rule classes and where they are written down. If
-the models cannot answer, say which API-level rule you could not confirm rather than
-assuming independence.
+`control-plane-project-charter/references/charter/provider-schema.md` has the rule classes and
+where they are written down. If the models cannot answer, say which API-level rule you could
+not confirm rather than assuming independence.
 
 Upjet gives some list fields misleadingly **singular** names — `attribute`,
 `globalSecondaryIndex`. Read the generated type, not the field name.
