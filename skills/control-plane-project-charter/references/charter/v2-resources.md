@@ -1,8 +1,8 @@
 # Crossplane v2 resources: the detail
 
 What `.m.` means, the verified behaviour behind §5's field table, authoring the XRD, what the
-CRD defaults do to a render, how connection details reach a function, choosing a ProviderConfig,
-and what a missing one looks like.
+CRD defaults do to a render, what the function returns for the XR, how connection details reach
+a function, choosing a ProviderConfig, and what a missing one looks like.
 [`control-plane-project-charter` §5](../../SKILL.md#5-crossplane-v2-what-a-composed-resource-actually-needs) states the rules.
 
 ---
@@ -119,6 +119,20 @@ omits fails the assertion.
 
 Both fields come from the same place: the embedded `ManagedResourceSpec` struct in
 crossplane-apis v2 (`core/v2/resource_namespace.go`), which every namespaced provider MR inlines.
+
+---
+
+## What the function returns for the XR
+
+Each pipeline run starts from empty desired state, and Crossplane applies the XR status it
+returns with server-side apply (`composition_functions.go`, v2.4.3):
+
+- **A key the pipeline stops writing is removed.** Clear nothing yourself.
+- **Never write `null`:** the API server rejects it for a typed field, and the XR gets no status.
+- **A render keeps the input XR's status keys the function didn't write** (up v0.55.1).
+- **Custom conditions go in the response's conditions** (the language file), not desired
+  `status.conditions`, where Crossplane's copy of the current ones freezes them at their first
+  value. Returned `Ready`, `Synced`, `Healthy` are ignored.
 
 ---
 
