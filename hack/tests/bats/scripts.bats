@@ -341,6 +341,16 @@ teardown() { teardown_stubs; }
   [ "$status" -eq 2 ]
 }
 
+@test "hub-types matches a provider family's v2 .m. groups too" {
+  # Crossplane v2 namespaced MRs live in ec2.aws.m.upbound.io, which does not
+  # end with aws.upbound.io.
+  run "$SKILL_DIR/scripts/hub-types" aws.upbound.io
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"ec2.aws.upbound.io"* ]]
+  [[ "$output" == *"ec2.aws.m.upbound.io"* ]]
+  [[ "$output" != *"spaces.upbound.io"* ]]
+}
+
 # --- the agent drives setup, the user does not ------------------------------
 
 @test "hub-setup exits 3 when no endpoint is configured" {

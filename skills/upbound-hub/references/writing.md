@@ -130,11 +130,11 @@ A subresource POST. The body must carry full TypeMeta matching the parent kind
 even though it is otherwise ignored, and `-f /dev/null` therefore fails:
 
 ```bash
-# apiVersion is fleet.hub.upbound.io/v1beta1 on Hub 1.1.0
+# fleet.hub.upbound.io/v1beta1 on Hub 1.1.0, in the body and the URL alike
 printf '%s' '{"apiVersion":"hub.upbound.io/v1beta1","kind":"ControlPlane",
   "metadata":{"name":"<name>","namespace":"<realm>"}}' \
 | scripts/hub-kubectl create --raw \
-    "/apis/fleet.hub.upbound.io/v1beta1/namespaces/<realm>/controlplanes/<name>/registrationtoken" \
+    "/apis/hub.upbound.io/v1beta1/namespaces/<realm>/controlplanes/<name>/registrationtoken" \
     -f - \
 | jq -r '.status.registrationToken'
 ```

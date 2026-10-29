@@ -135,8 +135,14 @@ if [ "\${HUB_STUB_SHAPE:-1.0.x}" = "1.1.0" ]; then
   iam_resources='"identityproviders","users","groups","organizationrolebindings","realmrolebindings","selfsubjectaccessreviews"'
 fi
 body='{"items":[],"metadata":{"total":{"count":0,"relation":"eq"}}}'
+# One provider family's v1 and v2 (.m.) groups, and a group outside it.
+typedefinitions='{"items":[
+  {"definition":{"kind":"VPC","group":"ec2.aws.upbound.io","scope":"Cluster"}},
+  {"definition":{"kind":"VPC","group":"ec2.aws.m.upbound.io","scope":"Namespaced"}},
+  {"definition":{"kind":"ControlPlane","group":"spaces.upbound.io","scope":"Namespaced"}}]}'
 case "\$path" in
   /apis) body="\$discovery" ;;
+  /apis/*/*/typedefinitions) body="\$typedefinitions" ;;
   /apis/*/*/*) : ;;                       # collection: keep the item list
   /apis/hub.upbound.io/*)                 body="\$(mk_list "\$hub_resources")" ;;
   /apis/authentication.hub.upbound.io/*)  body="\$(mk_list "\$authn_resources")" ;;
