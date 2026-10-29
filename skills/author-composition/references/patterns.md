@@ -92,8 +92,14 @@ When resource B needs an ARN, ID, or name produced by resource A:
 
 | Approach | Cost |
 |---|---|
-| **`*Ref` / `*Selector` field** — the provider resolves it | single-pass composition, no readiness branch, nothing to test |
-| Read A's `status` and write it into B | a second reconcile, a readiness branch, a branch that never executes in a composition test |
+| **`*Ref` / `*Selector` field** — the provider resolves it | single-pass composition, no readiness branch; assert the ref or selector |
+| Read A's `status` and write it into B | a second reconcile, and a readiness branch only a test with `observedResources` reaches |
+
+**Not inside a list.** A `*Ref` or `*Selector` in a `forProvider` list without
+`x-kubernetes-list-type: map` never settles: the provider's forced server-side apply of the
+resolved value takes the whole list, and Crossplane's next apply takes it back
+(crossplane-runtime `pkg/reconciler/managed/api.go`). No render shows it. Read the target's ID
+from its observed status instead.
 
 **Check for a `*Ref` before writing any status-plumbing logic.** The generated schema lists
 them. A DynamoDB `Table` encrypted by a `Key` you also create needs only
@@ -184,6 +190,8 @@ the second: write one call with all the keys (the language file).
 2. Look for a `providerConfigRef` whose `kind` and name match no object that exists; the
    symptoms are in `control-plane-project-charter/references/charter/v2-resources.md`.
 3. Check the guard-clause chain and readiness branches; neither is exercised locally.
+4. Generation climbs, or the XR reports `WatchCircuitOpen`: a reference inside a list
+   ([above](#pattern-references-beat-status-plumbing)).
 
 Language-specific error messages — Pydantic validation, KCL type errors, TypeScript
 compilation — are in the matching `languages/` file.
