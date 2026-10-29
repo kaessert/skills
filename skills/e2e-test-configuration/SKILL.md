@@ -70,12 +70,12 @@ at the first failure:
 3. **Credentials.** List what the test programs read, in any language, and check each. A variable built
    from others (author-tests' `e2e.md` reference) must be exported inside the Phase 4 run block, before
    `up test run`, since one exported in an earlier command is gone: check its inputs (`AWS_*`) instead.
+   **Never echo a credential variable, in any form**; the loop prints only the names that are missing.
 
    ```bash
    grep -rhoE 'UP_[A-Z0-9_]+' tests/e2etest-*/ | sort -u
-   # then, for each - test presence with -n only, inside [ ]: an echo of $VAR, ${VAR:-x} or
-   # ${VAR:+set}${VAR:-unset} prints the value whenever it is set
-   [ -n "${UP_<NAME>:-}" ] || echo "MISSING: UP_<NAME>"
+   # list every name the run needs: the UP_* above and the inputs of a built one
+   for v in UP_<NAME> AWS_<NAME>; do [ -n "${!v:-}" ] || echo "MISSING: $v"; done
    ```
 
    KCL and Python programs see only `UP_`-prefixed variables and no `~/.aws`; Go and
